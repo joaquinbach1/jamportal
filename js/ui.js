@@ -343,6 +343,7 @@ export function personPicker({ opciones, seleccionados = [], onChange, placehold
   /* El menú va pegado al body y posicionado a mano: dentro de un modal, que
      tiene overflow, un menú absoluto queda recortado y no se puede clickear. */
   function ubicarMenu() {
+    if (!inp.isConnected) { menu.remove(); return; }
     const r = inp.getBoundingClientRect();
     Object.assign(menu.style, {
       position: 'fixed',
@@ -359,22 +360,48 @@ export function personPicker({ opciones, seleccionados = [], onChange, placehold
     clear(menu);
     libres.forEach(o => menu.appendChild(h('div.ac-item', {
       onmousedown: e => e.preventDefault(),
-      onclick: () => { seleccionados = [...seleccionados, o]; onChange(seleccionados); render(); inp.value = ''; sugerir(); },
+      onclick: () => sumar(o),
     }, h('div.ac-t', {}, o))));
     if (q && !libres.some(o => o.toLowerCase() === q)) {
       menu.appendChild(h('div.ac-item.new', {
         onmousedown: e => e.preventDefault(),
-        onclick: () => { seleccionados = [...seleccionados, inp.value.trim()]; onChange(seleccionados); render(); inp.value = ''; sugerir(); },
+        onclick: () => sumar(inp.value),
       }, h('div.ac-t', {}, `＋ Agregar «${inp.value.trim()}»`)));
     }
     menu.style.display = menu.children.length ? 'block' : 'none';
     if (menu.children.length) { document.body.appendChild(menu); ubicarMenu(); }
   }
 
+  /** Suma un nombre y deja el campo listo para el siguiente. */
+  function sumar(nombre) {
+    const n = (nombre || '').trim();
+    if (!n || seleccionados.includes(n)) return;
+    seleccionados = [...seleccionados, n];
+    onChange(seleccionados);
+    render();
+    inp.value = '';
+    sugerir();
+  }
+
   inp.addEventListener('input', sugerir);
   inp.addEventListener('focus', sugerir);
   inp.addEventListener('blur', () => setTimeout(() => menu.remove(), 160));
   window.addEventListener('scroll', () => { if (menu.isConnected) ubicarMenu(); }, true);
+
+  /* Con Enter se agrega sin tener que ir al mouse: toma la primera sugerencia
+     y, si no hay ninguna, el nombre tal como lo escribiste. */
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const primera = menu.isConnected && menu.querySelector('.ac-item:not(.new) .ac-t');
+      sumar(primera ? primera.textContent : inp.value);
+    } else if (e.key === 'Escape') {
+      menu.remove(); inp.blur();
+    } else if (e.key === 'Backspace' && !inp.value && seleccionados.length) {
+      seleccionados = seleccionados.slice(0, -1);   // borra el último chip
+      onChange(seleccionados); render(); sugerir();
+    }
+  });
 
   render();
   cont.append(chips, wrap);

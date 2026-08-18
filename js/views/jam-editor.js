@@ -9,7 +9,7 @@
 
 import { store, norm, franjaDeBpm, FRANJA_LABEL } from '../store.js';
 import {
-  h, frag, clear, poner, field, input, select, personPicker, toast, modal, songAutocomplete,
+  h, frag, clear, poner, field, input, select, personPicker, toast, modal, confirmar, songAutocomplete,
   catPill, catCorta, franjaDot, fechaLinda, copiar, debounce,
 } from '../ui.js';
 import { buscarEnWeb, webAResultado, buscarBpm, temasDeArtista } from '../lookup.js';
@@ -18,6 +18,7 @@ import { chipTempo } from '../tempo.js';
 import { dialogoCancion } from './song-form.js';
 import { seccionEnsayos } from './ensayos.js';
 import { borrarJam } from './jams.js';
+import { refrescar } from '../app.js';
 import { estadoInicial, filtrosMagicList, generarPropuesta, propuestaAItems } from '../magiclist.js';
 
 /* ============================================================
@@ -150,6 +151,11 @@ export function vistaEditor(jamId) {
 
   const guardar = debounce(() => store.commit(), 250);
 
+  /* Las jams históricas son el registro de lo que ya pasó: se abren cerradas
+     para no romperlas sin querer. El candado se puede abrir a propósito. */
+  let desbloqueada = false;
+  const bloqueada = () => jam.historica && !desbloqueada;
+
   /* ---------- contenedores ---------- */
   const setlistCont = h('div.setlist');
   const energyCont  = h('div.energy');
@@ -257,7 +263,7 @@ export function vistaEditor(jamId) {
   }
 
   setlistCont.addEventListener('dragover', e => {
-    if (!arrastre) return;
+    if (!arrastre || bloqueada()) return;
     // si está encima de un medley, el medley se encarga (soltar adentro)
     if (e.target.closest && e.target.closest('.sl-medley')) { limpiarLineas(); return; }
     e.preventDefault();
@@ -269,7 +275,7 @@ export function vistaEditor(jamId) {
   });
 
   setlistCont.addEventListener('drop', e => {
-    if (!arrastre) return;
+    if (!arrastre || bloqueada()) return;
     if (e.target.closest && e.target.closest('.sl-medley')) return;   // lo maneja el medley
     e.preventDefault();
     const indice = indiceParaY(e.clientY);
@@ -291,7 +297,7 @@ export function vistaEditor(jamId) {
       ondragstart: e => { arrastre = { tipo: 'item', index: i }; row.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', s.titulo); },
       ondragend: () => { row.classList.remove('dragging'); arrastre = null; },
     },
-      manija(),
+      bloqueada() ? null : manija(),
       h('span.sl-num', {}, numero),
       h('div.sl-main', {},
         h('div.sl-title', {}, s.titulo),
@@ -299,7 +305,9 @@ export function vistaEditor(jamId) {
           franjaDot(s.franja),
           h('span', {}, s.artista),
           catPill(s.categoria),
-          chipTempo(s, () => pintarTodo()),
+          bloqueada()
+            ? (s.bpm ? h('span.mono.dim', {}, (s.bpmFuente === 'sugerido' ? '≈ ' : '') + s.bpm + ' bpm') : null)
+            : chipTempo(s, () => pintarTodo()),
           s.esIdea
             ? h('span.chip.idea', { title: 'Sigue en Ideas: pasa al repertorio cuando la fecha de esta jam quede atrás' }, '💡 idea')
             : ((s.jams || []).length
@@ -307,9 +315,11 @@ export function vistaEditor(jamId) {
                 : h('span.dim', {}, 'nunca tocada')),
           (s.patches || []).length ? h('span.chip', { title: 'Patch de teclado' }, '🎹 ' + s.patches.join(' ')) : null,
           s.cifraUrl ? h('a.print-link', { href: s.cifraUrl, target: '_blank', rel: 'noopener' }, '🎸 cifra') : null,
-          chipsPersonas(it.cantantes || [], opcionesGente(), v => { it.cantantes = v; guardar(); pintarTodo(); }, s.cantantes || []),
+          bloqueada()
+            ? (it.cantantes || []).map(n => h('span.chip.sel', {}, n))
+            : chipsPersonas(it.cantantes || [], opcionesGente(), v => { it.cantantes = v; guardar(); pintarTodo(); }, s.cantantes || []),
         )),
-      h('div.sl-actions', {},
+      bloqueada() ? h('div.sl-actions', {}, botonCifra(s, () => pintarTodo())) : h('div.sl-actions', {},
         botonCifra(s, () => pintarTodo()),
         h('button.icon-btn', { title: 'Unir en medley con el siguiente', onclick: () => unirEnMedley(i) }, '⛓'),
         h('button.icon-btn', { title: 'Editar el tema en DBSongs', onclick: () => dialogoCancion(s, () => pintarTodo()) }, '✎'),
@@ -323,14 +333,14 @@ export function vistaEditor(jamId) {
       ondragstart: e => { arrastre = { tipo: 'item', index: i }; row.classList.add('dragging'); e.dataTransfer.setData('text/plain', 'BREAK'); },
       ondragend: () => { row.classList.remove('dragging'); arrastre = null; },
     },
-      manija(),
+      bloqueada() ? null : manija(),
       h('span.sl-num', {}, '—'),
       h('div.sl-main', { style: { display: 'flex', alignItems: 'center', gap: '10px' } },
-        h('input', { value: it.label || 'BREAK', oninput: e => { it.label = e.target.value; guardar(); }, style: { width: '160px' } }),
-        h('input', { type: 'number', min: 1, max: 90, value: it.minutos || 15, style: { width: '64px' },
+        h('input', { value: it.label || 'BREAK', disabled: bloqueada(), oninput: e => { it.label = e.target.value; guardar(); }, style: { width: '160px' } }),
+        h('input', { type: 'number', min: 1, max: 90, value: it.minutos || 15, disabled: bloqueada(), style: { width: '64px' },
           oninput: e => { it.minutos = parseInt(e.target.value, 10) || 0; guardar(); pintarStats(); } }),
         h('span.dim', { style: { fontSize: '11px', letterSpacing: 0, textTransform: 'none' } }, 'minutos')),
-      h('div.sl-actions', {}, h('button.icon-btn.danger', { title: 'Quitar', onclick: () => quitar(i) }, '✕')),
+      bloqueada() ? null : h('div.sl-actions', {}, h('button.icon-btn.danger', { title: 'Quitar', onclick: () => quitar(i) }, '✕')),
     );
     return row;
   }
@@ -340,11 +350,11 @@ export function vistaEditor(jamId) {
       ondragstart: e => { arrastre = { tipo: 'item', index: i }; row.classList.add('dragging'); e.dataTransfer.setData('text/plain', it.label || 'BLOQUE'); },
       ondragend: () => { row.classList.remove('dragging'); arrastre = null; },
     },
-      manija(),
+      bloqueada() ? null : manija(),
       h('div.sl-main', {},
-        h('input', { value: it.label || '', placeholder: 'Nombre del bloque (ROCK NACIONAL, 2000s, PIANO BAR…)',
+        h('input', { value: it.label || '', disabled: bloqueada(), placeholder: 'Nombre del bloque (ROCK NACIONAL, 2000s, PIANO BAR…)',
           oninput: e => { it.label = e.target.value; guardar(); } })),
-      h('div.sl-actions', {}, h('button.icon-btn.danger', { title: 'Quitar bloque', onclick: () => quitar(i) }, '✕')),
+      bloqueada() ? null : h('div.sl-actions', {}, h('button.icon-btn.danger', { title: 'Quitar bloque', onclick: () => quitar(i) }, '✕')),
     );
     return row;
   }
@@ -356,7 +366,7 @@ export function vistaEditor(jamId) {
       /* Se le puede soltar adentro un tema de la paleta o uno que ya está
          en la lista (en ese caso se lo saca de su posición y entra al medley). */
       ondragover: e => {
-        if (!arrastre) return;
+        if (!arrastre || bloqueada()) return;
         if (arrastre.tipo === 'song' || arrastre.tipo === 'propuesta'
             || (arrastre.tipo === 'item' && arrastre.index !== i)) {
           e.preventDefault();
@@ -394,11 +404,11 @@ export function vistaEditor(jamId) {
 
     poner(cont,
       h('div.med-head', {},
-        manija(),
+        bloqueada() ? null : manija(),
         h('span.sl-num', {}, numero),
         h('span.med-badge', {}, 'MEDLEY'),
-        h('input', { value: it.titulo || 'Medley', oninput: e => { it.titulo = e.target.value; guardar(); } }),
-        h('div.sl-actions', {},
+        h('input', { value: it.titulo || 'Medley', disabled: bloqueada(), oninput: e => { it.titulo = e.target.value; guardar(); } }),
+        bloqueada() ? null : h('div.sl-actions', {},
           h('button.icon-btn', { title: 'Desarmar el medley', onclick: () => desarmarMedley(i) }, '⊟'),
           h('button.icon-btn.danger', { title: 'Quitar', onclick: () => quitar(i) }, '✕'))),
       h('div.med-songs', {},
@@ -408,10 +418,14 @@ export function vistaEditor(jamId) {
             franjaDot(s && s.franja),
             h('span', {}, s ? s.titulo : '—'),
             h('span.dim', { style: { fontSize: '11px' } }, s ? s.artista : ''),
-            s ? chipTempo(s, () => pintarTodo()) : null,
+            s ? (bloqueada()
+              ? (s.bpm ? h('span.mono.dim', { style: { fontSize: '11px' } }, s.bpm) : null)
+              : chipTempo(s, () => pintarTodo())) : null,
             s && s.cifraUrl ? h('a.print-link', { href: s.cifraUrl, target: '_blank', rel: 'noopener' }, '🎸 cifra') : null,
-            chipsPersonas(ms.cantantes || [], opcionesGente(), v => { ms.cantantes = v; guardar(); pintarTodo(); }, (s && s.cantantes) || []),
-            h('div.sl-actions', { style: { marginLeft: 'auto' } },
+            bloqueada()
+              ? (ms.cantantes || []).map(n => h('span.chip.sel', {}, n))
+              : chipsPersonas(ms.cantantes || [], opcionesGente(), v => { ms.cantantes = v; guardar(); pintarTodo(); }, (s && s.cantantes) || []),
+            bloqueada() ? null : h('div.sl-actions', { style: { marginLeft: 'auto' } },
               s ? botonCifra(s, () => pintarTodo()) : null,
               k > 0 ? h('button.icon-btn', { title: 'Subir', onclick: () => { const [x] = it.songs.splice(k, 1); it.songs.splice(k - 1, 0, x); guardar(); pintarTodo(); } }, '↑') : null,
               k < it.songs.length - 1 ? h('button.icon-btn', { title: 'Bajar', onclick: () => { const [x] = it.songs.splice(k, 1); it.songs.splice(k + 1, 0, x); guardar(); pintarTodo(); } }, '↓') : null,
@@ -424,7 +438,7 @@ export function vistaEditor(jamId) {
                 onclick: () => { it.songs.splice(k, 1); if (!it.songs.length) quitar(i); else { guardar(); pintarTodo(); } },
               }, '✕')));
         }),
-        h('div', { style: { marginTop: '6px' } },
+        bloqueada() ? null : h('div', { style: { marginTop: '6px' } },
           h('button.btn.xs.ghost', {
             onclick: () => dialogoAgregarAMedley(it),
           }, '＋ tema al medley'))));
@@ -544,6 +558,25 @@ export function vistaEditor(jamId) {
 
   function pintarSide() {
     clear(sidePanel);
+    if (bloqueada()) {
+      sidePanel.append(
+        h('h2.sec', {}, 'Jam histórica'),
+        h('div.method-hint', {},
+          'Está cerrada para que no se rompa el registro de lo que pasó esa noche. ',
+          'Si querés usarla de base, duplicala: la copia se edita libremente.'),
+        h('button.btn.primary', { style: { width: '100%', justifyContent: 'center' },
+          onclick: () => { const j = store.duplicateJam(jam.id); if (j) { toast('Jam duplicada', 'ok'); location.hash = '#/jams/' + j.id; } } },
+          '⧉ Duplicar para editar'),
+        h('button.btn.ghost', { style: { width: '100%', justifyContent: 'center', marginTop: '8px' },
+          onclick: async () => {
+            if (await confirmar('Vas a poder editar esta jam histórica. Es el registro de lo que se tocó esa noche: si la cambiás, cambian también los contadores y las estadísticas.',
+              { titulo: 'Desbloquear jam histórica', okText: 'Desbloquear' })) {
+              desbloqueada = true; pintarTodo(); pintarSide(); pintarInsertBar(); refrescar();
+              toast('Jam desbloqueada', '');
+            }
+          } }, '🔓 Desbloquear igual'));
+      return;
+    }
     sidePanel.append(
       h('div.tabs', {},
         h('button' + (tab === 'pegar' ? '.on' : ''), { onclick: () => { tab = 'pegar'; pintarSide(); } }, '1 · Pegar / arrastrar'),
@@ -872,7 +905,7 @@ export function vistaEditor(jamId) {
   /* ============================================================
      Encabezado + metadatos
      ============================================================ */
-  const nombreInput = input({ value: jam.nombre, placeholder: 'Nombre de la jam', oninput: e => { jam.nombre = e.target.value; tituloEnc.textContent = e.target.value || 'Jam sin nombre'; guardar(); } });
+  const nombreInput = input({ value: jam.nombre, disabled: bloqueada(), placeholder: 'Nombre de la jam', oninput: e => { jam.nombre = e.target.value; tituloEnc.textContent = e.target.value || 'Jam sin nombre'; guardar(); } });
   tituloEnc.textContent = jam.nombre || 'Jam sin nombre';
 
   const ensayosCont = seccionEnsayos(jam);
@@ -951,9 +984,9 @@ export function vistaEditor(jamId) {
   const metaBody = h('div', { style: { display: metaAbierto ? 'block' : 'none' } },
     h('div.meta-grid', {},
       field('Nombre', nombreInput),
-      field('Fecha', h('input', { type: 'date', value: jam.fecha || '', oninput: e => { jam.fecha = e.target.value; guardar(); pintarConvocados(); } })),
-      field('Horario', h('input', { type: 'time', value: jam.hora || '', oninput: e => { jam.hora = e.target.value; guardar(); } }))),
-    h('div', { style: { marginTop: '12px' } }, field('Lugar', input({ value: jam.lugar || '', placeholder: 'Portal, Makena, Serena…', oninput: e => { jam.lugar = e.target.value; guardar(); pintarConvocados(); } }))),
+      field('Fecha', h('input', { type: 'date', value: jam.fecha || '', disabled: bloqueada(), oninput: e => { jam.fecha = e.target.value; guardar(); pintarConvocados(); } })),
+      field('Horario', h('input', { type: 'time', value: jam.hora || '', disabled: bloqueada(), oninput: e => { jam.hora = e.target.value; guardar(); } }))),
+    h('div', { style: { marginTop: '12px' } }, field('Lugar', input({ value: jam.lugar || '', disabled: bloqueada(), placeholder: 'Portal, Makena, Serena…', oninput: e => { jam.lugar = e.target.value; guardar(); pintarConvocados(); } }))),
   );
 
   const metaCard = h('div.card.no-print', {},
@@ -975,7 +1008,7 @@ export function vistaEditor(jamId) {
     ensayosCont,
     h('div', { style: { marginTop: '18px' } }, convocadosCont),
     h('div', { style: { marginTop: '18px' } },
-      field('Notas', h('textarea', { value: jam.notas || '', oninput: e => { jam.notas = e.target.value; guardar(); } }))));
+      field('Notas', h('textarea', { value: jam.notas || '', disabled: bloqueada(), oninput: e => { jam.notas = e.target.value; guardar(); } }))));
 
   const produccionCard = h('div.card.no-print', { style: { marginTop: '16px' } },
     h('div.card-head', { style: { marginBottom: '0', cursor: 'pointer' },
@@ -1117,6 +1150,8 @@ export function vistaEditor(jamId) {
 
   function pintarInsertBar() {
     clear(insertBar);
+    if (bloqueada()) { insertBar.style.display = 'none'; return; }
+    insertBar.style.display = '';
     insertBar.append(
       buscadorDeTemas(s => { agregarSong(s.id); toast(`«${s.titulo}» agregada`, 'ok'); }),
       h('button.btn.sm', { onclick: () => insertar({ tipo: 'break', label: 'BREAK', minutos: 15 }) }, '＋ BREAK'),
@@ -1137,7 +1172,7 @@ export function vistaEditor(jamId) {
           h('a.btn.sm.ghost', { href: '#/jams', title: 'Volver a la lista de jams' }, '← Volver'),
           tituloEnc),
         h('p.sub', {}, jam.historica
-          ? 'Jam histórica reconstruida — editá nombre y fecha acá abajo, o duplicala para usarla de base.'
+          ? 'Jam histórica: es el registro de lo que se tocó esa noche, así que está cerrada. Duplicala para usarla de base.'
           : 'Armá la lista con cualquiera de los tres métodos del panel derecho.')),
       acciones),
 
@@ -1152,7 +1187,7 @@ export function vistaEditor(jamId) {
           energyCont,
           setlistCont,
           insertBar),
-        produccionCard),
+        bloqueada() ? null : produccionCard),
       h('div.editor-side', {}, sidePanel)),
   );
 }

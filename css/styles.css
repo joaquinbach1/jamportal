@@ -761,7 +761,7 @@ pre.sql {
 .jam-card .jc-tools .icon-btn { opacity: 0; transition: opacity .12s; }
 .jam-card:hover .jc-tools .icon-btn { opacity: 1; }
 @media (hover: none) { .jam-card .jc-tools .icon-btn { opacity: .7; } }
-.jam-card h3 { padding-right: 78px; }
+.jam-card h3 { padding-right: 92px; }
 
 /* ============================================================
    CANTANTES

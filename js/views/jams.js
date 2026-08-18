@@ -93,11 +93,13 @@ function tarjeta(jam, onCambio) {
     onclick: () => location.hash = '#/jams/' + jam.id,
   },
     h('div.jc-tools', {},
-      h('button.icon-btn', {
-        title: 'Editar nombre y fecha',
-        onclick: e => { e.stopPropagation(); dialogoDatosJam(jam, onCambio); },
-      }, '✎'),
-      jam.historica ? h('span.jc-tag', {}, 'histórica') : null),
+      // las históricas están cerradas: se abren desde adentro, a propósito
+      jam.historica
+        ? h('span.jc-tag', { title: 'Cerrada: es el registro de lo que se tocó' }, '🔒 histórica')
+        : h('button.icon-btn', {
+            title: 'Editar nombre y fecha',
+            onclick: e => { e.stopPropagation(); dialogoDatosJam(jam, onCambio); },
+          }, '✎')),
     h('h3', {}, jam.nombre || 'Jam sin nombre'),
     h('div.jc-date', {}, jam.fecha ? fechaLinda(jam.fecha) + (jam.hora ? ' · ' + jam.hora : '') : (jam.historica ? 'Sin fecha registrada' : 'Sin fecha')),
     h('div.jc-meta', {},
@@ -127,7 +129,7 @@ export function vistaJams() {
     const proximas = ordenar(store.jams.filter(j => !j.historica));
     const historicas = ordenar(store.jams.filter(j => j.historica));
 
-    resumen.textContent = `${proximas.length} en preparación · ${historicas.length} históricas · ${store.songs.length} temas en DBSongs`;
+    resumen.textContent = `${proximas.length} en preparación · ${historicas.length} históricas · ${store.repertorio.length} temas en Canciones DB`;
 
     clear(gridProx);
     proximas.forEach(j => gridProx.appendChild(tarjeta(j, pintar)));
@@ -160,7 +162,7 @@ export function vistaJams() {
     store.jams.some(j => j.historica) ? h('div', { style: { marginTop: '32px' } },
       h('div', { style: { display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '12px' } },
         h('h2.sec', { style: { margin: 0 } }, 'Jams anteriores'),
-        h('span.dim', { style: { fontSize: '12px' } }, 'clic en ✎ para ponerles nombre y fecha · sirven para copiar setlists')),
+        h('span.dim', { style: { fontSize: '12px' } }, 'cerradas para no romper el registro · duplicalas para usarlas de base')),
       gridHist) : null,
   );
 }
