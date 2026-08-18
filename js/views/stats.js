@@ -44,9 +44,9 @@ function tarjeta(titulo, bajada, contenido) {
     contenido);
 }
 
-const COLOR_CAT = c => c.match(/nacional|rioplatense/i) ? '#c79bff'
-  : c.match(/latino|espa/i) ? '#ffab6b'
-  : c.match(/cumbia|tropical/i) ? '#6fd99a' : '#7fb4ff';
+const COLOR_CAT = c => c.match(/nacional|rioplatense/i) ? 'var(--cat-nac-fg)'
+  : c.match(/latino|espa/i) ? 'var(--cat-lat-fg)'
+  : c.match(/cumbia|tropical/i) ? 'var(--cat-cum-fg)' : 'var(--cat-intl-fg)';
 
 /* ============================================================
    Vista
@@ -157,7 +157,7 @@ export function vistaStats() {
       { etiqueta: 'Low', valor: porFranja.get('low') || 0, color: 'var(--low)' },
       { etiqueta: 'Mid', valor: porFranja.get('mid') || 0, color: 'var(--mid)' },
       { etiqueta: 'High', valor: porFranja.get('high') || 0, color: 'var(--high)' },
-      { etiqueta: 'Sin tempo', valor: porFranja.get('sin') || 0, color: '#3b3b4a' },
+      { etiqueta: 'Sin tempo', valor: porFranja.get('sin') || 0, color: 'var(--rayado)' },
     ];
 
     /* ---------- histograma de BPM ---------- */
@@ -207,7 +207,7 @@ export function vistaStats() {
             : h('div.dim', {}, 'Todavía no hay jams con temas')),
 
         tarjeta('Bandas que más suenan', 'sumando todos sus temas',
-          bandas.length ? ranking(bandas, { color: '#7fb4ff', unidad: '×' })
+          bandas.length ? ranking(bandas, { color: 'var(--cat-intl-fg)', unidad: '×' })
             : h('div.dim', {}, 'Sin datos')),
 
         tarjeta('Cantantes', 'temas cantados y en cuántas jams',
@@ -229,7 +229,7 @@ export function vistaStats() {
             ranking([
               { etiqueta: 'Sonaron 1 sola vez', valor: unaVez, color: 'var(--warn)' },
               { etiqueta: 'Repetidos', valor: distintos - unaVez, color: 'var(--ok)' },
-              { etiqueta: 'Nunca sonaron', valor: sinTocar, color: '#3b3b4a' },
+              { etiqueta: 'Nunca sonaron', valor: sinTocar, color: 'var(--rayado)' },
             ], { max: Math.max(1, distintos, sinTocar) }),
             h('div.dim', { style: { fontSize: '11.5px', marginTop: '10px', lineHeight: '1.5' } },
               `De ${songs.length} temas en DBSongs, ${distintos} pisaron el escenario `

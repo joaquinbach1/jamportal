@@ -506,7 +506,7 @@ export function vistaEditor(jamId) {
         // sin BPM cargado dibujamos una barra neutra a media altura
         const alto = bpm ? Math.max(16, Math.min(100, ((bpm - 55) / 130) * 100)) : 28;
         energyCont.appendChild(h('div.bar', {
-          style: { height: alto + '%', background: s && s.franja ? `var(--${s.franja})` : '#3b3b4a' },
+          style: { height: alto + '%', background: s && s.franja ? `var(--${s.franja})` : 'var(--rayado)' },
           title: s ? `${s.titulo}${bpm ? ' · ' + bpm + ' bpm' : ' · sin BPM cargado'}` : '—',
         }));
       });

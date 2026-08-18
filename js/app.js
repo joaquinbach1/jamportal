@@ -4,6 +4,7 @@
 
 import { store, alHaberCambiosAjenos, alFallarNube } from './store.js';
 import { h, clear, $, $$, toast } from './ui.js';
+import { iniciarTema, botonTema } from './tema.js';
 
 import { vistaJams }    from './views/jams.js';
 import { vistaNueva }   from './views/nueva.js';
@@ -81,6 +82,9 @@ alHaberCambiosAjenos(() => {
 
 alFallarNube(msg => setTimeout(() =>
   toast('No pude entrar a la base compartida, sigo con los datos de este navegador. ' + msg, 'err'), 800));
+
+iniciarTema();
+$('#temaSlot').appendChild(botonTema(h));
 
 (async function main() {
   try {

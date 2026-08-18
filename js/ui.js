@@ -141,7 +141,10 @@ export function franjaDot(franja) {
   return h('span.dot.' + (franja || 'none'), { title: franja ? franja.toUpperCase() : 'sin tempo' });
 }
 
-const AV_COLORS = ['#ffc94d', '#ff5c8a', '#5aa9ff', '#47d18a', '#c79bff', '#ffab6b', '#6fd99a', '#ff8f8f'];
+/* Los avatares se pintan con la paleta de acentos: en claro se oscurecen
+   desde el CSS para que el texto blanco encima siga leyéndose. */
+const AV_COLORS = ['var(--av-1)', 'var(--av-2)', 'var(--av-3)', 'var(--av-4)',
+                   'var(--av-5)', 'var(--av-6)', 'var(--av-7)', 'var(--av-8)'];
 export function avatar(nombre) {
   const iniciales = (nombre || '?').split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
   let hash = 0;

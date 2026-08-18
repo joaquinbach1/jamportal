@@ -83,7 +83,7 @@ function barraFranjas(jam) {
   const total = Object.values(cuenta).reduce((a, b) => a + b, 0) || 1;
   return h('div.jc-bar', {},
     ['low', 'mid', 'high', 'none'].map(k => cuenta[k]
-      ? h('div', { style: { flex: cuenta[k], background: k === 'none' ? '#2c2c38' : `var(--${k})` }, title: `${k}: ${cuenta[k]}` })
+      ? h('div', { style: { flex: cuenta[k], background: k === 'none' ? 'var(--rayado)' : `var(--${k})` }, title: `${k}: ${cuenta[k]}` })
       : null));
 }
 

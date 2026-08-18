@@ -6,6 +6,16 @@
 <title>JAM PORTAL</title>
 <meta name="description" content="Armá listas de temas para tus jams: base de canciones, cantantes y setlists.">
 <link rel="stylesheet" href="css/styles.css">
+<script>
+  /* antes de que se dibuje nada, para que no parpadee en oscuro */
+  (function () {
+    var t = localStorage.getItem('jamportal.tema');
+    if (t !== 'claro' && t !== 'oscuro') {
+      t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'claro' : 'oscuro';
+    }
+    document.documentElement.dataset.tema = t;
+  })();
+</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
 </head>
 <body>
@@ -26,7 +36,10 @@
       <a href="#/data"    data-route="data">Datos</a>
     </nav>
     <div class="sidebar-foot">
-      <div id="storageBadge" class="badge-store">local</div>
+      <div class="pie-sidebar">
+        <div id="storageBadge" class="badge-store">local</div>
+        <span id="temaSlot"></span>
+      </div>
     </div>
   </aside>
 
