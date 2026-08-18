@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JAM PORTAL</title>
+<meta name="description" content="Armá listas de temas para tus jams: base de canciones, cantantes y setlists.">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎤</text></svg>">
+</head>
+<body>
+
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">JAM</span>
+      <span class="brand-sub">PORTAL</span>
+    </div>
+    <nav id="nav">
+      <a href="#/jams"    data-route="jams">Jams</a>
+      <a href="#/nueva"   data-route="nueva">Nueva Jam</a>
+      <a href="#/songs"   data-route="songs">Canciones DB</a>
+      <a href="#/ideas"   data-route="ideas">Canciones Ideas</a>
+      <a href="#/singers" data-route="singers">Cantantes</a>
+      <a href="#/stats"   data-route="stats">Stats</a>
+      <a href="#/data"    data-route="data">Datos</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div id="storageBadge" class="badge-store">local</div>
+    </div>
+  </aside>
+
+  <main id="view" class="view"></main>
+</div>
+
+<div id="toasts" class="toasts"></div>
+<div id="modalRoot"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
