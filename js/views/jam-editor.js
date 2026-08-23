@@ -164,7 +164,33 @@ export function vistaEditor(jamId) {
   /* ---------- cerrar / reabrir con código ---------- */
 
   /** Cerrarla: queda lista para el vivo y nadie la toca sin el código. */
+  /** Cierra sin preguntar nada: ya sabemos con qué código. */
+  function cerrarCon(cod) {
+    jam.cerrada = true;
+    jam.codigo = cod;
+    store.commit();
+    desbloqueadas.delete(jam.id);
+    refrescar();
+    toast('Jam cerrada — lista para el vivo', 'ok');
+  }
+
   function dialogoCerrar() {
+    /* Si ya la habías cerrado antes, lo más común es volver a cerrarla
+       con el mismo código: no te lo hacemos escribir de nuevo. */
+    if (jam.codigo) {
+      const m = modal({
+        title: 'Cerrar la jam',
+        body: [h('div.method-hint', {},
+          'Ya tiene un código de antes. Podés cerrarla con ese mismo, o poner uno nuevo.')],
+        footer: [
+          h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
+          h('button.btn.sm', { onclick: () => { m.close(); jam.codigo = ''; dialogoCerrar(); } }, 'Con otro código'),
+          h('button.btn.primary', { onclick: () => { m.close(); cerrarCon(jam.codigo); } }, '🔒 Con el mismo'),
+        ],
+      });
+      return;
+    }
+
     const fCod = input({ placeholder: 'Ej: 1234', maxLength: 20 });
     const fCod2 = input({ placeholder: 'Repetilo', maxLength: 20 });
     const m = modal({
@@ -185,12 +211,8 @@ export function vistaEditor(jamId) {
             const cod = fCod.value.trim();
             if (cod.length < 3) { toast('Poné un código de al menos 3 caracteres', 'err'); fCod.focus(); return; }
             if (cod !== fCod2.value.trim()) { toast('Los dos códigos no coinciden', 'err'); fCod2.focus(); return; }
-            jam.cerrada = true;
-            jam.codigo = cod;
-            store.commit();
             m.close();
-            refrescar();
-            toast('Jam cerrada — lista para el vivo', 'ok');
+            cerrarCon(cod);
           },
         }, '🔒 Cerrar jam'),
       ],
@@ -1241,13 +1263,11 @@ export function vistaEditor(jamId) {
     btnCifras,
     btnTempos,
     h('button.btn.sm', { onclick: () => copiar(comoTexto()) }, '📋 Copiar lista'),
-    jam.historica ? null
-      : jam.cerrada
-        ? null   // ya está cerrada: se vuelve a cerrar desde el panel de la derecha
-        : h('button.btn.sm', {
-            title: 'Congelar la lista para pasarla en vivo',
-            onclick: dialogoCerrar,
-          }, '🔒 Cerrar jam'),
+    (jam.historica || bloqueada()) ? null
+      : h('button.btn.sm', {
+          title: 'Congelar la lista para pasarla en vivo',
+          onclick: dialogoCerrar,
+        }, '🔒 Cerrar jam'),
     h('button.btn.sm', { onclick: () => { const j = store.duplicateJam(jam.id); if (j) { toast('Jam duplicada', 'ok'); location.hash = '#/jams/' + j.id; } } }, '⧉ Duplicar'),
     h('button.btn.sm.danger', { onclick: () => borrarJam(jam) }, 'Borrar'),
   );
