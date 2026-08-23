@@ -500,6 +500,7 @@ export const store = {
       ...structuredClone(j),
       nombre: j.nombre + ' (copia)',
       historica: false, fecha: '',
+      cerrada: false, codigo: '',   // la copia nace abierta: para eso se duplica
     });
   },
 

@@ -93,13 +93,15 @@ function tarjeta(jam, onCambio) {
     onclick: () => location.hash = '#/jams/' + jam.id,
   },
     h('div.jc-tools', {},
-      // las históricas están cerradas: se abren desde adentro, a propósito
+      // las cerradas se abren desde adentro, a propósito
       jam.historica
         ? h('span.jc-tag', { title: 'Cerrada: es el registro de lo que se tocó' }, '🔒 histórica')
-        : h('button.icon-btn', {
-            title: 'Editar nombre y fecha',
-            onclick: e => { e.stopPropagation(); dialogoDatosJam(jam, onCambio); },
-          }, '✎')),
+        : jam.cerrada
+          ? h('span.jc-tag', { title: 'Congelada para el vivo: se abre con el código' }, '🔒 cerrada')
+          : h('button.icon-btn', {
+              title: 'Editar nombre y fecha',
+              onclick: e => { e.stopPropagation(); dialogoDatosJam(jam, onCambio); },
+            }, '✎')),
     h('h3', {}, jam.nombre || 'Jam sin nombre'),
     h('div.jc-date', {}, jam.fecha ? fechaLinda(jam.fecha) + (jam.hora ? ' · ' + jam.hora : '') : (jam.historica ? 'Sin fecha registrada' : 'Sin fecha')),
     h('div.jc-meta', {},
