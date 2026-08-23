@@ -18,6 +18,7 @@ import { chipTempo } from '../tempo.js';
 import { dialogoCancion } from './song-form.js';
 import { seccionEnsayos } from './ensayos.js';
 import { borrarJam } from './jams.js';
+import { setlistATexto, textoASetlist } from '../setlist-texto.js';
 import { refrescar } from '../app.js';
 import { estadoInicial, filtrosMagicList, generarPropuesta, propuestaAItems } from '../magiclist.js';
 
@@ -66,6 +67,25 @@ export function botonCifra(song, alGuardar) {
 
 /* payload del arrastre en curso (dataTransfer no se puede leer en dragover) */
 let arrastre = null;
+
+/**
+ * Crea una canción en Canciones DB a partir de lo poco que sabemos:
+ * primero busca en internet para llenarle banda, género y demás, y si
+ * no encuentra nada guarda lo que el usuario escribió.
+ */
+async function crearSongDesde({ titulo, artista }) {
+  let datos = { titulo, artista, origen: 'manual' };
+  try {
+    const res = await buscarEnWeb([titulo, artista].filter(Boolean).join(' '));
+    if (res.length) datos = webAResultado(res[0]);
+  } catch { /* seguimos con lo que escribió el usuario */ }
+  return store.addSong(datos);
+}
+
+/* Cómo de apretada querés la lista. Se guarda porque es una preferencia
+   tuya, no de cada jam: si te gusta compacta, la querés compacta siempre. */
+const CLAVE_DENSIDAD = 'jamportal.densidad';
+const compacta = () => localStorage.getItem(CLAVE_DENSIDAD) === 'compacta';
 
 /* Jams históricas que abriste a mano en esta sesión. Vive fuera de la vista
    porque la vista se redibuja sola (cambios de la nube, refrescar) y si no,
@@ -160,6 +180,134 @@ export function vistaEditor(jamId) {
      para no romperlas sin querer. El candado se puede abrir a propósito, y
      queda abierto aunque la vista se vuelva a dibujar (hasta recargar). */
   const bloqueada = () => (jam.historica || jam.cerrada) && !desbloqueadas.has(jam.id);
+
+  /* ---------- densidad de la lista ---------- */
+
+  /** Un renglón por tema, para ver la jam entera sin scrollear. */
+  function aplicarDensidad() {
+    setlistCont.classList.toggle('compacta', compacta());
+    const card = setlistCont.closest('.card');
+    if (card) card.classList.toggle('compacta', compacta());
+    /* en el body porque también se achica lo que está arriba de la tarjeta */
+    document.body.classList.toggle('lista-compacta', compacta());
+  }
+
+  const btnDensidad = h('button.btn.xs', {
+    onclick: () => {
+      localStorage.setItem(CLAVE_DENSIDAD, compacta() ? 'comoda' : 'compacta');
+      aplicarDensidad();
+      pintarDensidad();
+    },
+  });
+
+  function pintarDensidad() {
+    btnDensidad.textContent = compacta() ? '▤ Vista cómoda' : '▤ Vista compacta';
+    btnDensidad.title = compacta()
+      ? 'Volver a la lista con los datos desplegados'
+      : 'Un renglón por tema: entra toda la jam en una pantalla';
+  }
+  pintarDensidad();
+
+  /* ---------- editar la lista como texto ---------- */
+
+  /**
+   * Toda la lista en un cuadro de texto, como en un doc: se ve entera,
+   * se reordena cortando y pegando renglones, se agrega escribiendo.
+   * Al guardar se vuelve a armar la lista y cada línea se busca en
+   * Canciones DB, así los temas conservan tempo, cifra y categoría.
+   */
+  function dialogoTexto() {
+    const ta = h('textarea', {
+      value: setlistATexto(jam, store),
+      spellcheck: false,
+      style: {
+        minHeight: '48vh', width: '100%', lineHeight: '1.75',
+        fontFamily: 'var(--mono)', fontSize: '12.5px', whiteSpace: 'pre',
+        overflowWrap: 'normal', overflowX: 'auto',
+      },
+    });
+
+    const resumen = h('div.method-hint', { style: { marginTop: '10px' } });
+    const btnCrear = h('button.btn.sm');
+    const btnGuardar = h('button.btn.primary');
+    let analisis = { items: [], lineas: [] };
+
+    const faltantes = () => analisis.lineas.filter(l => l.tipo === 'tema' && !l.match && l.titulo);
+
+    function analizar() {
+      analisis = textoASetlist(ta.value, store);
+      const cuenta = { song: 0, medley: 0, break: 0, bloque: 0 };
+      for (const it of analisis.items) cuenta[it.tipo === 'song' ? 'song' : it.tipo]++;
+      const enMedleys = analisis.items
+        .filter(it => it.tipo === 'medley')
+        .reduce((a, m) => a + m.songs.length, 0);
+
+      const falt = faltantes();
+      const partes = [
+        `${cuenta.song + enMedleys} temas`,
+        cuenta.medley ? `${cuenta.medley} medley${cuenta.medley > 1 ? 's' : ''}` : '',
+        cuenta.break ? `${cuenta.break} break${cuenta.break > 1 ? 's' : ''}` : '',
+        cuenta.bloque ? `${cuenta.bloque} bloque${cuenta.bloque > 1 ? 's' : ''}` : '',
+      ].filter(Boolean);
+
+      clear(resumen);
+      poner(resumen,
+        h('b', {}, partes.join(' · ')),
+        falt.length
+          ? h('div', { style: { marginTop: '6px' } },
+              `${falt.length} ${falt.length === 1 ? 'línea que no está' : 'líneas que no están'} en Canciones DB: `,
+              h('span.dim', {}, falt.slice(0, 5).map(l => l.titulo).join(' · ') + (falt.length > 5 ? ' …' : '')))
+          : h('div', { style: { marginTop: '6px' } }, 'Todas las líneas se reconocieron.'));
+
+      btnCrear.style.display = falt.length ? '' : 'none';
+      btnCrear.textContent = `🌐 Crear ${falt.length === 1 ? 'el que falta' : `los ${falt.length} que faltan`}`;
+      btnGuardar.textContent = !falt.length ? 'Guardar la lista'
+        : falt.length === 1 ? 'Guardar sin esa línea'
+        : `Guardar sin esas ${falt.length}`;
+    }
+
+    ta.addEventListener('input', debounce(analizar, 250));
+    analizar();
+
+    btnCrear.onclick = async () => {
+      const falt = faltantes();
+      btnCrear.disabled = true;
+      btnCrear.textContent = `Buscando ${falt.length} en internet…`;
+      try { for (const l of falt) await crearSongDesde(l); }
+      finally { btnCrear.disabled = false; }
+      analizar();
+      toast(`${falt.length} agregados a Canciones DB`, 'ok');
+    };
+
+    btnGuardar.onclick = () => {
+      if (!analisis.items.length) { toast('La lista quedaría vacía', 'err'); return; }
+      jam.items = analisis.items;
+      guardar();
+      m.close();
+      pintarTodo(); pintarSide(); pintarInsertBar();
+      toast('Lista actualizada', 'ok');
+    };
+
+    const m = modal({
+      title: 'Editar la lista como texto',
+      wide: true,
+      body: [
+        h('div.method-hint', { style: { marginBottom: '10px' } },
+          'Un tema por renglón: ', h('code', {}, 'Tema — Artista  [Cantante]'), '. ',
+          h('code', {}, '▸ TÍTULO'), ' es un bloque, ', h('code', {}, "—— BREAK (15') ——"), ' un corte, ',
+          'y ', h('code', {}, '(medley)'), ' abre un medley con lo que venga abajo con ', h('code', {}, '·'),
+          ' hasta el renglón vacío. Los números son adorno: se recalculan solos.'),
+        ta,
+        resumen,
+      ],
+      footer: [
+        h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
+        btnCrear,
+        btnGuardar,
+      ],
+    });
+    return m;
+  }
 
   /* ---------- cerrar / reabrir con código ---------- */
 
@@ -627,6 +775,7 @@ export function vistaEditor(jamId) {
   function pintarTodo() {
     const y = window.scrollY;
     pintarSetlist(); pintarStats(); pintarConvocados();
+    aplicarDensidad();
     if (window.scrollY !== y) window.scrollTo(0, y);
   }
 
@@ -971,17 +1120,15 @@ export function vistaEditor(jamId) {
     }
 
     async function crearDesdeLinea(l, silencioso = false) {
-      const q = [l.titulo, l.artista].filter(Boolean).join(' ');
+      if (silencioso) {
+        l.match = await crearSongDesde(l);
+        return l.match;
+      }
       let datos = { titulo: l.titulo, artista: l.artista, origen: 'manual' };
       try {
-        const res = await buscarEnWeb(q);
+        const res = await buscarEnWeb([l.titulo, l.artista].filter(Boolean).join(' '));
         if (res.length) datos = webAResultado(res[0]);
       } catch { /* seguimos con lo que escribió el usuario */ }
-      if (silencioso) {
-        const s = store.addSong(datos);
-        l.match = s;
-        return s;
-      }
       dialogoCancion(datos, s => { if (s) { l.match = s; analizar(); } });
     }
 
@@ -1292,6 +1439,10 @@ export function vistaEditor(jamId) {
   pintarSide();
   pintarInsertBar();
 
+  /* la tarjeta recién existe cuando esto se monta, así que la densidad
+     se aplica un tick después */
+  setTimeout(aplicarDensidad, 0);
+
   return frag(
     h('div.page-head', {},
       h('div', {},
@@ -1314,7 +1465,12 @@ export function vistaEditor(jamId) {
         metaCard,
         h('div.card', { style: { marginTop: '16px' } },
           h('div.card-head', {}, h('h3', {}, 'Lista de temas'),
-            h('span.dim', { style: { fontSize: '11.5px' } }, 'arrastrá ⠿ para reordenar')),
+            bloqueada() ? null : h('button.btn.xs', {
+              onclick: dialogoTexto,
+              title: 'Ver y editar toda la lista junta, como en un doc',
+            }, '📝 Editar como texto'),
+            btnDensidad,
+            h('span.dim', { style: { fontSize: '11.5px', marginLeft: 'auto' } }, 'arrastrá ⠿ para reordenar')),
           pieImpresion,
           statsCont,
           energyCont,

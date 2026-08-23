@@ -641,6 +641,77 @@ table.tbl tr.elegida td:first-child { box-shadow: inset 2px 0 0 var(--acc); }
 .med-song .sl-actions { opacity: .5; }
 .med-song:hover .sl-actions { opacity: 1; }
 
+/* ============================================================
+   Setlist compacto
+   ------------------------------------------------------------
+   Misma lista, un renglón por tema: entra la jam entera en una
+   pantalla. Todo lo que estaba abajo del título pasa al costado
+   y lo que no llega se corta con puntos suspensivos.
+   ============================================================ */
+/* la cabecera de la página y la tarjeta de datos también ceden altura:
+   cada píxel de acá es un tema más que ves sin scrollear */
+body.lista-compacta .page-head { margin-bottom: 12px; }
+body.lista-compacta .page-head h1 { font-size: 22px; }
+body.lista-compacta .page-head .sub { font-size: 12.5px; margin-top: 3px; }
+body.lista-compacta .editor-grid .card { padding: 11px 14px; }
+body.lista-compacta .editor-grid .card + .card { margin-top: 10px; }
+
+/* arriba de la lista también se achica: el resumen y la barra de energía
+   son de un vistazo, y de a un renglón lo que querés es la lista */
+.card.compacta > .chips { display: none; }
+.card.compacta > .energy { height: 22px; margin-bottom: 2px; }
+.card.compacta > .card-head { margin-bottom: 6px; }
+
+.setlist.compacta .sl-item {
+  padding: 0 8px 0 4px;
+  gap: 7px;
+  border-radius: 5px;
+  line-height: 1.4;
+  min-height: 23px;
+}
+.setlist.compacta .sl-main {
+  display: flex; align-items: baseline; gap: 9px;
+  min-width: 0; overflow: hidden;
+}
+/* el título se queda con el espacio que sobra: es lo que uno lee.
+   Los metadatos ocupan lo suyo y el artista es el que cede primero. */
+.setlist.compacta .sl-title {
+  font-size: 12.5px;
+  flex: 1 1 auto; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.setlist.compacta .sl-sub {
+  margin-top: 0; font-size: 11px; gap: 7px;
+  flex: 0 1 auto; min-width: 0;
+  flex-wrap: nowrap; overflow: hidden;
+  margin-left: auto;                 /* los datos, pegados a la derecha */
+}
+.setlist.compacta .sl-sub > span { flex: none; }
+/* el artista es lo primero que cede espacio */
+.setlist.compacta .sl-sub > span:nth-child(2) {
+  flex: 0 1 auto; min-width: 0; max-width: 160px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* de a un renglón no entra todo: esto se ve en la vista cómoda.
+   La categoría se va y quedan el punto de franja y el bpm, que es lo
+   que mirás cuando estás acomodando la energía de la lista. */
+.setlist.compacta .tempo-buscar,
+.setlist.compacta .cat-pill,
+.setlist.compacta .sl-sub > .dim { display: none; }
+.setlist.compacta .chip { padding: 1px 6px; font-size: 10.5px; }
+
+/* la franja de drop se cobra 5px por tema; acá se paga caro.
+   Queda de 1px y al arrastrar se agranda igual (.over manda). */
+.setlist.compacta .drop-line { height: 1px; margin: 0; }
+.setlist.compacta .drop-line.over { height: 5px; margin: 3px 0; }
+.setlist.compacta .sl-bloque { margin: 6px 0 0; padding: 0 6px 2px; }
+.setlist.compacta .sl-bloque input { font-size: 11px; }
+.setlist.compacta .sl-break { padding: 0 8px; min-height: 20px; }
+.setlist.compacta .sl-medley { padding: 4px 8px; }
+.setlist.compacta .med-songs { margin: 4px 0 0 26px; gap: 2px; }
+.setlist.compacta .med-song { padding: 1px 8px; font-size: 12px; }
+.setlist.compacta .energy { height: 28px; }
+
 /* --- inserción --- */
 .insert-bar {
   display: flex; gap: 6px; align-items: center;
