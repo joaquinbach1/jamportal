@@ -648,6 +648,29 @@ table.tbl tr.elegida td:first-child { box-shadow: inset 2px 0 0 var(--acc); }
    pantalla. Todo lo que estaba abajo del título pasa al costado
    y lo que no llega se corta con puntos suspensivos.
    ============================================================ */
+/* ============================================================
+   Lista a pantalla completa
+   ------------------------------------------------------------
+   La tarjeta de la lista se despega y tapa todo — cabecera,
+   botones, panel y menú — para el rato en que estás acomodando
+   temas. Se sale con el botón o con Esc.
+   ============================================================ */
+body.lista-full { overflow: hidden; }
+body.lista-full .card.full {
+  position: fixed; inset: 0; z-index: 40;
+  margin: 0; border: none; border-radius: 0;
+  padding: 10px 22px 28px;
+  background: var(--bg);
+  overflow-y: auto;
+}
+/* la cabecera queda a mano aunque scrollees: ahí está el botón de salir */
+body.lista-full .card.full > .card-head {
+  position: sticky; top: 0; z-index: 3;
+  margin: 0 -22px 8px; padding: 6px 22px 8px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line-soft);
+}
+
 /* la cabecera de la página y la tarjeta de datos también ceden altura:
    cada píxel de acá es un tema más que ves sin scrollear */
 body.lista-compacta .page-head { margin-bottom: 12px; }

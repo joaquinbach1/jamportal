@@ -83,9 +83,20 @@ async function crearSongDesde({ titulo, artista }) {
 }
 
 /* Cómo de apretada querés la lista. Se guarda porque es una preferencia
-   tuya, no de cada jam: si te gusta compacta, la querés compacta siempre. */
+   tuya, no de cada jam: si te gusta cómoda, la querés cómoda siempre.
+   Arranca compacta: ver la jam entera de una es lo que uno quiere casi
+   siempre, y los datos desplegados son la excepción. */
 const CLAVE_DENSIDAD = 'jamportal.densidad';
-const compacta = () => localStorage.getItem(CLAVE_DENSIDAD) === 'compacta';
+const compacta = () => localStorage.getItem(CLAVE_DENSIDAD) !== 'comoda';
+
+/* Pantalla completa de la lista. No se guarda: es para el rato en que
+   estás acomodando temas, no una preferencia. Vive fuera de la vista
+   para que un redibujado no te saque, y se apaga al irte de la jam. */
+let pantallaCompleta = false;
+window.addEventListener('hashchange', () => {
+  pantallaCompleta = false;
+  document.body.classList.remove('lista-full');
+});
 
 /* Jams históricas que abriste a mano en esta sesión. Vive fuera de la vista
    porque la vista se redibuja sola (cambios de la nube, refrescar) y si no,
@@ -190,7 +201,28 @@ export function vistaEditor(jamId) {
     if (card) card.classList.toggle('compacta', compacta());
     /* en el body porque también se achica lo que está arriba de la tarjeta */
     document.body.classList.toggle('lista-compacta', compacta());
+    aplicarPantalla();
   }
+
+  /** La lista sola, tapando todo lo demás. */
+  function aplicarPantalla() {
+    document.body.classList.toggle('lista-full', pantallaCompleta);
+    const card = setlistCont.closest('.card');
+    if (card) card.classList.toggle('full', pantallaCompleta);
+    btnPantalla.textContent = pantallaCompleta ? '⤡ Salir' : '⛶ Agrandar';
+    btnPantalla.title = pantallaCompleta
+      ? 'Volver al editor completo (Esc)'
+      : 'La lista sola, ocupando toda la pantalla';
+  }
+
+  const alEscapar = e => {
+    if (e.key === 'Escape' && pantallaCompleta) { pantallaCompleta = false; aplicarPantalla(); }
+  };
+  document.addEventListener('keydown', alEscapar);
+
+  const btnPantalla = h('button.btn.xs', {
+    onclick: () => { pantallaCompleta = !pantallaCompleta; aplicarPantalla(); window.scrollTo(0, 0); },
+  });
 
   const btnDensidad = h('button.btn.xs', {
     onclick: () => {
@@ -1470,6 +1502,7 @@ export function vistaEditor(jamId) {
               title: 'Ver y editar toda la lista junta, como en un doc',
             }, '📝 Editar como texto'),
             btnDensidad,
+            btnPantalla,
             h('span.dim', { style: { fontSize: '11.5px', marginLeft: 'auto' } }, 'arrastrá ⠿ para reordenar')),
           pieImpresion,
           statsCont,
