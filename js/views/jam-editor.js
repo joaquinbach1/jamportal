@@ -67,6 +67,11 @@ export function botonCifra(song, alGuardar) {
 /* payload del arrastre en curso (dataTransfer no se puede leer en dragover) */
 let arrastre = null;
 
+/* Jams históricas que abriste a mano en esta sesión. Vive fuera de la vista
+   porque la vista se redibuja sola (cambios de la nube, refrescar) y si no,
+   el candado se volvía a cerrar solo. */
+const desbloqueadas = new Set();
+
 /**
  * Hace que la fila se arrastre SOLO desde su manija.
  *
@@ -152,9 +157,9 @@ export function vistaEditor(jamId) {
   const guardar = debounce(() => store.commit(), 250);
 
   /* Las jams históricas son el registro de lo que ya pasó: se abren cerradas
-     para no romperlas sin querer. El candado se puede abrir a propósito. */
-  let desbloqueada = false;
-  const bloqueada = () => jam.historica && !desbloqueada;
+     para no romperlas sin querer. El candado se puede abrir a propósito, y
+     queda abierto aunque la vista se vuelva a dibujar (hasta recargar). */
+  const bloqueada = () => jam.historica && !desbloqueadas.has(jam.id);
 
   /* ---------- contenedores ---------- */
   const setlistCont = h('div.setlist');
@@ -571,12 +576,25 @@ export function vistaEditor(jamId) {
           onclick: async () => {
             if (await confirmar('Vas a poder editar esta jam histórica. Es el registro de lo que se tocó esa noche: si la cambiás, cambian también los contadores y las estadísticas.',
               { titulo: 'Desbloquear jam histórica', okText: 'Desbloquear' })) {
-              desbloqueada = true; pintarTodo(); pintarSide(); pintarInsertBar(); refrescar();
+              desbloqueadas.add(jam.id);
+              refrescar();                       // se redibuja entera, ya sin candado
               toast('Jam desbloqueada', '');
             }
           } }, '🔓 Desbloquear igual'));
       return;
     }
+    /* histórica abierta a mano: dejamos a mano también el volver a cerrarla */
+    if (jam.historica) {
+      sidePanel.append(h('div.method-hint', { style: { marginBottom: '10px' } },
+        'Estás editando una jam histórica. ',
+        h('a', { href: '#', onclick: e => {
+          e.preventDefault();
+          desbloqueadas.delete(jam.id);
+          refrescar();
+          toast('Jam cerrada de nuevo');
+        } }, 'Volver a cerrarla')));
+    }
+
     sidePanel.append(
       h('div.tabs', {},
         h('button' + (tab === 'pegar' ? '.on' : ''), { onclick: () => { tab = 'pegar'; pintarSide(); } }, '1 · Pegar / arrastrar'),
@@ -1171,9 +1189,11 @@ export function vistaEditor(jamId) {
         h('div.titulo-jam', {},
           h('a.btn.sm.ghost', { href: '#/jams', title: 'Volver a la lista de jams' }, '← Volver'),
           tituloEnc),
-        h('p.sub', {}, jam.historica
+        h('p.sub', {}, bloqueada()
           ? 'Jam histórica: es el registro de lo que se tocó esa noche, así que está cerrada. Duplicala para usarla de base.'
-          : 'Armá la lista con cualquiera de los tres métodos del panel derecho.')),
+          : jam.historica
+            ? '🔓 Jam histórica desbloqueada: lo que cambies acá cambia el registro y las estadísticas.'
+            : 'Armá la lista con cualquiera de los tres métodos del panel derecho.')),
       acciones),
 
     h('div.editor-grid', {},
