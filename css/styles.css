@@ -671,6 +671,19 @@ body.lista-full .card.full > .card-head {
   border-bottom: 1px solid var(--line-soft);
 }
 
+/* A pantalla completa la fila es tan ancha que los datos pegados a la
+   derecha quedaban a media cuadra del título. El título pasa a ser una
+   columna de ancho fijo y los datos arrancan siempre ahí: alineados
+   entre sí, pero al lado de lo que estás leyendo. */
+body.lista-full .setlist.compacta .sl-title {
+  flex: 0 0 auto;
+  width: min(46%, 460px);
+}
+body.lista-full .setlist.compacta .sl-sub {
+  margin-left: 0; margin-right: auto;
+  max-width: none;
+}
+
 /* la cabecera de la página y la tarjeta de datos también ceden altura:
    cada píxel de acá es un tema más que ves sin scrollear */
 body.lista-compacta .page-head { margin-bottom: 12px; }
