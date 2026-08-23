@@ -304,7 +304,9 @@ export function vistaEditor(jamId) {
           : h('div', { style: { marginTop: '6px' } }, 'Todas las líneas se reconocieron.'));
 
       btnCrear.style.display = falt.length ? '' : 'none';
-      btnCrear.textContent = `🌐 Crear ${falt.length === 1 ? 'el que falta' : `los ${falt.length} que faltan`}`;
+      btnCrear.textContent = falt.length === 1
+        ? '🌐 Buscar en internet'
+        : `🌐 Buscar los ${falt.length} en internet`;
       btnGuardar.textContent = !falt.length ? 'Guardar la lista'
         : falt.length === 1 ? 'Guardar sin esa línea'
         : `Guardar sin esas ${falt.length}`;
@@ -313,14 +315,38 @@ export function vistaEditor(jamId) {
     ta.addEventListener('input', debounce(analizar, 250));
     analizar();
 
+    /* Busca los que no reconoció, los agrega a Canciones DB y —lo que
+       importa acá— reescribe el renglón con lo que encontró, para que
+       veas la banda antes de guardar. Respeta la numeración, la viñeta
+       del medley y los cantantes que hayas puesto vos. */
     btnCrear.onclick = async () => {
       const falt = faltantes();
       btnCrear.disabled = true;
       btnCrear.textContent = `Buscando ${falt.length} en internet…`;
-      try { for (const l of falt) await crearSongDesde(l); }
-      finally { btnCrear.disabled = false; }
+
+      const renglones = ta.value.split('\n');
+      let encontrados = 0;
+      try {
+        for (const l of falt) {
+          const s = await crearSongDesde(l);
+          if (!s) continue;
+          if (s.artista) encontrados++;
+          const orig = renglones[l.nro] ?? '';
+          const sangria = orig.match(/^(\s*(?:[·•*]\s*|\d+\s*[.)\-–]\s*)*)/)[1];
+          const cant = orig.match(/\[([^\]]*)\]\s*$/);
+          renglones[l.nro] = sangria
+            + [s.titulo, s.artista].filter(Boolean).join(' — ')
+            + (cant ? `  [${cant[1]}]` : '');
+        }
+      } finally {
+        btnCrear.disabled = false;
+      }
+
+      ta.value = renglones.join('\n');
       analizar();
-      toast(`${falt.length} agregados a Canciones DB`, 'ok');
+      toast(encontrados
+        ? `${encontrados} de ${falt.length} completados con la banda`
+        : `${falt.length} agregados a Canciones DB (sin datos de internet)`, 'ok');
     };
 
     btnGuardar.onclick = () => {

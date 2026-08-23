@@ -100,7 +100,9 @@ export function textoASetlist(txt, store) {
   const lineas = [];
   let medley = null;                       // medley abierto, si venimos de uno
 
-  for (const bruta of (txt || '').split('\n')) {
+  const crudas = (txt || '').split('\n');
+  for (let nro = 0; nro < crudas.length; nro++) {
+    const bruta = crudas[nro];
     const l = bruta.trim();
     if (!l) { medley = null; continue; }    // un renglón vacío cierra el medley
 
@@ -125,7 +127,7 @@ export function textoASetlist(txt, store) {
     if (vineta && medley) {
       const t = partirTema(vineta[1]);
       const s = matchear(store, t);
-      lineas.push({ ...t, tipo: 'tema', match: s, bruta: l });
+      lineas.push({ ...t, tipo: 'tema', match: s, bruta: l, nro });
       if (s) medley.songs.push({ songId: s.id, cantantes: t.cantantes });
       continue;
     }
@@ -142,7 +144,7 @@ export function textoASetlist(txt, store) {
     medley = null;
     const t = partirTema(cuerpo);
     const s = matchear(store, t);
-    lineas.push({ ...t, tipo: 'tema', match: s, bruta: l });
+    lineas.push({ ...t, tipo: 'tema', match: s, bruta: l, nro });
     if (s) items.push({ tipo: 'song', songId: s.id, cantantes: t.cantantes, notas: '' });
   }
 
