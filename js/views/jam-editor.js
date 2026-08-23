@@ -87,7 +87,10 @@ async function crearSongDesde({ titulo, artista }) {
    Arranca compacta: ver la jam entera de una es lo que uno quiere casi
    siempre, y los datos desplegados son la excepción. */
 const CLAVE_DENSIDAD = 'jamportal.densidad';
-const compacta = () => localStorage.getItem(CLAVE_DENSIDAD) !== 'comoda';
+/* A pantalla completa siempre va compacta: si te tomás toda la pantalla
+   es para ver la lista entera, no para ver ocho temas más grandes.
+   Tu preferencia queda intacta y vuelve al salir. */
+const compacta = () => pantallaCompleta || localStorage.getItem(CLAVE_DENSIDAD) !== 'comoda';
 
 /* Pantalla completa de la lista. No se guarda: es para el rato en que
    estás acomodando temas, no una preferencia. Vive fuera de la vista
@@ -209,6 +212,7 @@ export function vistaEditor(jamId) {
     document.body.classList.toggle('lista-full', pantallaCompleta);
     const card = setlistCont.closest('.card');
     if (card) card.classList.toggle('full', pantallaCompleta);
+    btnDensidad.style.display = pantallaCompleta ? 'none' : '';
     btnPantalla.textContent = pantallaCompleta ? '⤡ Salir' : '⛶ Agrandar';
     btnPantalla.title = pantallaCompleta
       ? 'Volver al editor completo (Esc)'
@@ -216,12 +220,20 @@ export function vistaEditor(jamId) {
   }
 
   const alEscapar = e => {
-    if (e.key === 'Escape' && pantallaCompleta) { pantallaCompleta = false; aplicarPantalla(); }
+    if (e.key !== 'Escape' || !pantallaCompleta) return;
+    pantallaCompleta = false;
+    aplicarDensidad();
+    pintarDensidad();
   };
   document.addEventListener('keydown', alEscapar);
 
   const btnPantalla = h('button.btn.xs', {
-    onclick: () => { pantallaCompleta = !pantallaCompleta; aplicarPantalla(); window.scrollTo(0, 0); },
+    onclick: () => {
+      pantallaCompleta = !pantallaCompleta;
+      aplicarDensidad();          // reaplica todo: la densidad depende del modo
+      pintarDensidad();
+      window.scrollTo(0, 0);
+    },
   });
 
   const btnDensidad = h('button.btn.xs', {
@@ -1497,12 +1509,12 @@ export function vistaEditor(jamId) {
         metaCard,
         h('div.card', { style: { marginTop: '16px' } },
           h('div.card-head', {}, h('h3', {}, 'Lista de temas'),
+            btnPantalla,
             bloqueada() ? null : h('button.btn.xs', {
               onclick: dialogoTexto,
               title: 'Ver y editar toda la lista junta, como en un doc',
             }, '📝 Editar como texto'),
             btnDensidad,
-            btnPantalla,
             h('span.dim', { style: { fontSize: '11.5px', marginLeft: 'auto' } }, 'arrastrá ⠿ para reordenar')),
           pieImpresion,
           statsCont,
