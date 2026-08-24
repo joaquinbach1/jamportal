@@ -10,6 +10,7 @@ import { vistaJams }    from './views/jams.js';
 import { vistaNueva }   from './views/nueva.js';
 import { vistaEditor }  from './views/jam-editor.js';
 import { vistaLive }    from './views/live.js';
+import { vistaLyrics }  from './views/lyrics.js';
 import { vistaSongs }   from './views/songs.js';
 import { vistaIdeas }   from './views/ideas.js';
 import { vistaSingers } from './views/singers.js';
@@ -22,6 +23,7 @@ const view = $('#view');
 
 const RUTAS = [
   [/^\/live\/(.+)$/,  (m) => vistaLive(m[1]),   'jams'],
+  [/^\/lyrics\/(.+)$/, (m) => vistaLyrics(m[1]), 'jams'],
   [/^\/jams\/(.+)$/, (m) => vistaEditor(m[1]), 'jams'],
   [/^\/jams$/,       () => vistaJams(),        'jams'],
   [/^\/nueva$/,      () => vistaNueva(),       'jams'],  // sin ítem propio: se llega desde Jams

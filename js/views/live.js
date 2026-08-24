@@ -13,7 +13,7 @@ import { h, clear, frag, toast, fechaLinda, descargarBlob } from '../ui.js';
 import { setlistDocx } from '../docx.js';
 
 /** Aplana el setlist a filas dibujables, numerando solo los temas. */
-function filas(jam) {
+export function filas(jam) {
   const out = [];
   let n = 0;
   (jam.items || []).forEach((it, i) => {

@@ -748,6 +748,79 @@ body.lista-compacta .editor-grid .card + .card { margin-top: 10px; }
 .setlist.compacta .med-song { padding: 1px 8px; font-size: 12px; }
 .setlist.compacta .energy { height: 28px; }
 
+/* ============================================================
+   Letras — el setlist a la izquierda, la letra a la derecha
+   ============================================================ */
+.ly-grid {
+  display: grid; grid-template-columns: minmax(240px, 320px) 1fr;
+  gap: 18px; align-items: start;
+}
+.ly-lista {
+  display: flex; flex-direction: column; gap: 2px;
+  max-height: calc(100vh - 190px); overflow-y: auto;
+  padding-right: 4px;
+}
+.ly-item {
+  display: flex; align-items: baseline; gap: 8px;
+  width: 100%; text-align: left;
+  background: none; border: 1px solid transparent; border-radius: var(--r-s);
+  padding: 6px 9px; cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+.ly-item:hover { background: var(--panel); border-color: var(--line-soft); }
+.ly-item.on { background: var(--acc-tinte); border-color: var(--acc-linea); }
+.ly-item.dentro { padding-left: 22px; }
+.ly-n { font-family: var(--mono); font-size: 11px; color: var(--txt-3); flex: none; min-width: 16px; }
+.ly-t {
+  font-size: 13.5px; font-weight: 550;
+  flex: 1 1 auto; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ly-item.on .ly-t { color: var(--acc); }
+.ly-a {
+  font-size: 11px; color: var(--txt-3); flex: 0 1 auto; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%;
+}
+.ly-bloque {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.4px;
+  color: var(--acc); margin: 12px 0 3px; padding: 0 9px;
+}
+.ly-lista > .ly-bloque:first-child { margin-top: 0; }
+.ly-break {
+  font-size: 10.5px; font-weight: 650; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--txt-3); padding: 4px 9px; margin: 4px 0;
+  border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line);
+}
+.ly-medley {
+  font-size: 11.5px; font-weight: 650; color: var(--acc-2);
+  padding: 5px 9px 1px;
+}
+
+.ly-panel {
+  background: var(--panel); border: 1px solid var(--line-soft);
+  border-radius: var(--r); padding: 20px 24px;
+  min-height: 320px;
+}
+.ly-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+  padding-bottom: 12px; margin-bottom: 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.ly-head h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+.ly-artista { color: var(--txt-2); font-size: 13px; margin-top: 3px; }
+.ly-tam { display: flex; gap: 6px; flex: none; }
+.ly-texto {
+  white-space: pre-wrap; line-height: 1.75;
+  color: var(--txt); max-width: 62ch;
+}
+.ly-texto.sin { color: var(--txt-2); white-space: normal; }
+
+@media (max-width: 900px) {
+  .ly-grid { grid-template-columns: 1fr; }
+  .ly-lista { max-height: 240px; }
+}
+
 /* --- inserción --- */
 .insert-bar {
   display: flex; gap: 6px; align-items: center;
