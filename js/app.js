@@ -147,16 +147,21 @@ $('#temaSlot').appendChild(botonTema(h));
       h('code.mono', {}, e.message)));
     return;
   }
-  /* Logueado pero sin ver nada = el mail no está en `miembro`. Es el
-     único caso en que la app anda y la base está vacía a la vez. */
-  if (store.enLaNube && !store.songs.length) {
-    view.appendChild(h('div.empty', {},
-      h('b', {}, 'Tu mail no está en la lista'),
-      h('p', {}, `Entraste como ${store.email || 'ese mail'}, pero no figura entre los `
-        + 'miembros de la banda, así que la base no te muestra nada. '
-        + 'Pedile a alguien que te agregue.'),
-      h('button.btn.sm', { style: { marginTop: '12px' },
-        onclick: () => { store.cerrarSesion(); location.reload(); } }, 'Salir')));
+  /* Entraste bien, pero tu mail no está habilitado. No es un error de
+     conexión: la base contesta perfecto, simplemente no te muestra nada. */
+  if (store.sinPermiso) {
+    document.body.classList.add('en-login');
+    view.appendChild(h('div.empty', { style: { maxWidth: '460px', margin: '14vh auto 0' } },
+      h('b', {}, 'Falta que te habiliten'),
+      h('p', {}, 'Tu cuenta está creada y entraste bien, pero ',
+        h('code.mono', {}, store.email || 'tu mail'),
+        ' todavía no está en la lista de la banda, así que la base no te '
+        + 'muestra nada. Pedile a alguien que te agregue y volvé a entrar.'),
+      h('div', { style: { display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '14px' } },
+        h('button.btn.sm', { onclick: () => location.reload() }, '↻ Reintentar'),
+        h('button.btn.sm.ghost', {
+          onclick: () => { store.cerrarSesion(); location.reload(); },
+        }, 'Salir'))));
     return;
   }
 

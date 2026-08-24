@@ -82,7 +82,23 @@ export class PostgresDriver {
   /* ---------- lectura ---------- */
   async read() {
     const estado = await this.rpc('app_estado');
-    if (!estado || !Array.isArray(estado.songs) || !estado.songs.length) return null;
+    if (!estado || !Array.isArray(estado.songs) || !estado.songs.length) {
+      // Que no venga nada puede ser dos cosas muy distintas: que la base
+      // esté recién creada, o que estés logueado pero fuera de `miembro`
+      // y el RLS te esconda todo. Confundirlas es peligroso — la app cree
+      // que le toca sembrar la base y trata de sobrescribir el repertorio
+      // de todos, que es lo que hacía antes de esta comprobación.
+      //
+      // revision_actual() las separa: un miembro siempre lee un número;
+      // alguien fuera de la lista lee null, porque el RLS le tapa la fila.
+      const n = await this.rpc('revision_actual');
+      if (n === null) {
+        const e = new Error('Tu mail no está habilitado en esta base.');
+        e.sinPermiso = true;
+        throw e;
+      }
+      return null;   // la base está vacía de verdad: sembrarla es correcto
+    }
 
     // Guardamos lo leído para poder comparar en la próxima escritura.
     this.ultimo.clear();

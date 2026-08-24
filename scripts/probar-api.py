@@ -180,6 +180,19 @@ def main():
         check(st == 200 and not estado2.get('songs'),
               'fuera de la lista de miembros no se ve nada',
               f"HTTP {st}, {len(estado2.get('songs') or [])} temas")
+
+        # Que app_estado() venga vacío no alcanza para saber qué pasa: puede
+        # ser una base recién creada o alguien fuera de la lista. La app
+        # necesita distinguirlas, porque si cree que la base está vacía
+        # intenta sembrarla y pisa el repertorio de todos.
+        st, rev = pedir('/rest/v1/rpc/revision_actual', {}, jwt)
+        check(rev is None, 'un no-miembro lee revision null (así se distingue '
+                           'de una base vacía)', f'devolvió {rev}')
+
+        st, err = pedir('/rest/v1/rpc/guardar_catalogo',
+                        {'c': {'version': 3, 'songs': [], 'categorias': ['X'],
+                               'cantantes': [], 'musicos': [], 'porConfirmar': []}}, jwt)
+        check(st == 403, 'un no-miembro no puede sembrar la base', f'HTTP {st}')
     finally:
         borrar_usuario()
 
