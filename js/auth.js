@@ -1,9 +1,13 @@
 /* ============================================================
-   auth.js — entrar con magic link
+   auth.js — entrar
    ------------------------------------------------------------
-   Supabase manda un mail con un link; al volver, el token viene
-   en el hash de la URL. No hay contraseña que recordar ni que
-   rotar, que para una banda de cinco es lo que menos molesta.
+   Dos caminos. El principal es con contraseña: no depende de que
+   lleguen mails, que con el SMTP incluido de Supabase son dos por
+   hora y se agotan enseguida.
+
+   El otro es el magic link, que queda como salida de emergencia
+   para quien se olvidó la clave. Sirve solo si el Email provider
+   está prendido y hay cupo.
 
    Habla con la API de auth por fetch, sin SDK, igual que el
    driver. Guarda la sesión en localStorage y renueva el token
@@ -27,6 +31,65 @@ export class Auth {
 
   get email() { return this.sesion ? this.sesion.email : null; }
   get haySesion() { return !!(this.sesion && this.sesion.refresh_token); }
+
+  /**
+   * Entra con mail y contraseña. Es el camino de todos los días:
+   * no manda ningún mail.
+   */
+  async entrarConClave(email, clave) {
+    const res = await fetch(`${this.url}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { apikey: this.key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: (email || '').trim(), password: clave }),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      // Supabase no distingue mail inexistente de clave equivocada, a
+      // propósito: decirlo permitiría averiguar quién tiene cuenta.
+      if (d.error_code === 'invalid_credentials') {
+        throw new Error('Mail o contraseña incorrectos.');
+      }
+      if (d.error_code === 'email_provider_disabled') {
+        throw new Error('El login por mail está apagado en Supabase. '
+          + 'Hay que prender Authentication → Providers → Email.');
+      }
+      throw new Error(d.msg || d.error_description || `Auth ${res.status}`);
+    }
+    guardar(this.sesion = {
+      access_token: d.access_token,
+      refresh_token: d.refresh_token,
+      expira: Date.now() + (d.expires_in || 3600) * 1000,
+      email: (d.user && d.user.email) || emailDelJwt(d.access_token),
+    });
+    return this.sesion;
+  }
+
+  /** Cambia la contraseña de quien está adentro. */
+  async cambiarClave(nueva) {
+    if ((nueva || '').length < 8) {
+      throw new Error('La contraseña tiene que tener al menos 8 caracteres.');
+    }
+    const token = await this.token();
+    const res = await fetch(`${this.url}/auth/v1/user`, {
+      method: 'PUT',
+      headers: {
+        apikey: this.key,
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ password: nueva }),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      if (d.error_code === 'same_password') {
+        throw new Error('Esa ya es tu contraseña. Poné una distinta.');
+      }
+      if (d.error_code === 'weak_password') {
+        throw new Error('Esa contraseña es muy fácil. Probá una más larga.');
+      }
+      throw new Error(d.msg || `No se pudo cambiar: ${res.status}`);
+    }
+  }
 
   /**
    * Manda el mail con el link de entrada.
