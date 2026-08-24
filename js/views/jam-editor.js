@@ -15,6 +15,7 @@ import {
 import { buscarEnWeb, webAResultado, buscarBpm, temasDeArtista } from '../lookup.js';
 import { buscarCifra, urlBusqueda } from '../cifra.js';
 import { chipTempo } from '../tempo.js';
+import { chipPatch } from '../patch.js';
 import { dialogoCancion } from './song-form.js';
 import { seccionEnsayos } from './ensayos.js';
 import { borrarJam } from './jams.js';
@@ -626,7 +627,9 @@ export function vistaEditor(jamId) {
             : ((s.jams || []).length
                 ? h('span.dim', { title: (s.jams || []).join('\n') }, `tocada ${s.jams.length}×`)
                 : h('span.dim', {}, 'nunca tocada')),
-          (s.patches || []).length ? h('span.chip', { title: 'Patch de teclado' }, '🎹 ' + s.patches.join(' ')) : null,
+          bloqueada()
+            ? ((s.patches || []).length ? h('span.chip', { title: 'Patch de teclado' }, '🎹 ' + s.patches.join(' ')) : null)
+            : chipPatch(s, () => pintarTodo()),
           s.cifraUrl ? h('a.print-link', { href: s.cifraUrl, target: '_blank', rel: 'noopener' }, '🎸 cifra') : null,
           bloqueada()
             ? (it.cantantes || []).map(n => h('span.chip.sel', {}, n))
@@ -734,6 +737,7 @@ export function vistaEditor(jamId) {
             s ? (bloqueada()
               ? (s.bpm ? h('span.mono.dim', { style: { fontSize: '11px' } }, s.bpm) : null)
               : chipTempo(s, () => pintarTodo())) : null,
+            s && !bloqueada() ? chipPatch(s, () => pintarTodo()) : null,
             s && s.cifraUrl ? h('a.print-link', { href: s.cifraUrl, target: '_blank', rel: 'noopener' }, '🎸 cifra') : null,
             bloqueada()
               ? (ms.cantantes || []).map(n => h('span.chip.sel', {}, n))

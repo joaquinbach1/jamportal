@@ -379,6 +379,27 @@ label.field > span {
 .tempo-buscar { font-size: 11px; opacity: 0; }
 .tempo:hover .tempo-buscar, .tempo-val.vacio + .tempo-buscar { opacity: .75; }
 .tempo-buscar:hover { opacity: 1; }
+/* patch de teclados: mismo trato que el tempo, editable en la fila */
+.patch { display: inline-flex; align-items: center; }
+.patch-val {
+  background: none; border: 1px solid transparent; border-radius: 5px;
+  color: var(--txt-2); cursor: pointer;
+  font-size: 11.5px; padding: 1px 5px; line-height: 1.5;
+  transition: border-color .12s, background .12s, color .12s, opacity .12s;
+}
+.patch-val:hover { border-color: var(--line); background: var(--bg-2); color: var(--txt); }
+.patch-val.vacio { opacity: 0; }
+.sl-item:hover .patch-val.vacio, .med-song:hover .patch-val.vacio { opacity: .45; }
+.patch-val.vacio:hover { opacity: 1; }
+.patch-input {
+  width: 96px; padding: 1px 5px; font-size: 11.5px;
+  background: var(--bg-2); border: 1px solid var(--foco); border-radius: 5px;
+  color: var(--txt);
+}
+
+/* en compacta no entra: el patch se carga y se mira en la vista cómoda */
+.setlist.compacta .patch { display: none; }
+
 .tempo-input {
   width: 66px; padding: 2px 6px; font-size: 12px;
   font-family: var(--mono); text-align: center;
