@@ -31,7 +31,7 @@ BASE = 'jamportal_test'
 # los permisos acá; en Supabase ese archivo no se corre.
 ARCHIVOS = ['00-local.sql', '01-esquema.sql', '02-vistas.sql', '03-app-estado.sql',
             '04-escritura.sql', '05-permisos.sql', '06-concurrencia.sql',
-            '10-datos.sql', '11-miembros.sql']
+            '10-datos.sql']
 
 fallas = []
 
@@ -247,7 +247,11 @@ def main():
         print(f'      {m}')
 
     print('\n── 7. permisos ─────────────────────────────────────────')
-    miembro = 'matiasw@gmail.com'
+    # La lista de miembros no está en el repo (son mails de personas),
+    # así que la prueba se da de alta uno propio y lo saca al final.
+    miembro = 'prueba@jamportal.test'
+    psql(['-c', f"insert into miembro (email) values ({sql_lit(miembro)}) "
+                f"on conflict do nothing"])
     casos = [
         ('un miembro lee el repertorio',
          ('authenticated', miembro, 'select count(*) from song'), '551'),

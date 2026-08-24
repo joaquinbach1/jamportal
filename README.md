@@ -454,8 +454,18 @@ Tres cosas que no se pueden hacer por SQL:
    una banda entrando el mismo día, conviene configurar un SMTP propio en
    *Project Settings → Auth → SMTP*.
 
-Quién entra se maneja por SQL, en `db/11-miembros.sql`. Cualquiera puede pedir un
-link, pero si su mail no está en `miembro` la base no le devuelve ni una fila.
+Quién entra se maneja en la tabla `miembro`, directo en la base:
+
+```sql
+insert into miembro (email) values ('quien@sea.com') on conflict do nothing;
+delete from miembro where email = 'quien@sea.com';
+```
+
+La lista **no** se versiona: son mails de personas y este repo es público.
+`db/11-miembros.sql` es solo la plantilla con los comandos.
+
+Cualquiera puede pedir un magic link, pero si su mail no está en `miembro` la base
+no le devuelve ni una fila. Sacar a alguien de la lista lo deja afuera en el acto.
 
 ### La clave en el código
 

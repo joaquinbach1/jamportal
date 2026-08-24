@@ -1,13 +1,25 @@
 -- ============================================================
 -- JAM PORTAL — quién puede entrar
 -- ------------------------------------------------------------
--- La lista de la banda. Entrar es con magic link: Supabase manda
--- un mail con un link y listo, no hay contraseña.
+-- Esto es una PLANTILLA. La lista de verdad vive solo en la base,
+-- no acá: son mails de personas y este repo es público.
 --
--- Para sumar a alguien, agregá su mail acá y corré el archivo de
--- nuevo — es idempotente.
+-- Para sumar a alguien, desde el SQL Editor de Supabase (o por
+-- psql), con su mail de verdad:
+--
+--     insert into miembro (email) values ('quien@sea.com')
+--     on conflict (email) do nothing;
+--
+-- Para sacar a alguien:
+--
+--     delete from miembro where email = 'quien@sea.com';
+--
+-- Sacarlo de la lista lo deja afuera en el acto: la sesión le
+-- sigue existiendo pero la base deja de devolverle filas.
+--
+-- Para ver quiénes están:
+--
+--     select email, alta::date from miembro order by alta;
 -- ============================================================
 
-insert into miembro (email) values
-  ('matiasw@gmail.com')
-on conflict (email) do nothing;
+-- Sin filas a propósito. Cargalos a mano con el insert de arriba.
