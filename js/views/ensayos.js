@@ -85,25 +85,28 @@ export function planillaEnsayo(jam, ensayo) {
   L.push('─'.repeat(Math.max(cuando.length, 28)));
   L.push('');
 
-  // agrupados por horario de citación, en orden
-  const porHora = new Map();
-  for (const c of ensayo.convocados || []) {
-    const hora = c.hora || ensayo.hora || '--:--';
-    if (!porHora.has(hora)) porHora.set(hora, []);
-    porHora.get(hora).push(c);
-  }
-  const horas = [...porHora.keys()].sort();
+  /* Cada uno con su hora al lado: el productor lee una línea y sabe a
+     quién llamar y para cuándo, sin tener que mirar el título de arriba.
+     Van ordenados por horario, que es el orden en que llegan. */
+  const gente = [...(ensayo.convocados || [])]
+    .map(c => ({ c, hora: c.hora || ensayo.hora || '' }))
+    .sort((a, b) => (a.hora || '99:99').localeCompare(b.hora || '99:99'));
 
-  if (!horas.length) L.push('(sin convocados)');
-  for (const hora of horas) {
-    L.push(`${hora}`);
-    for (const c of porHora.get(hora)) {
-      const { telefono } = contactoDe(c.nombre);
-      const detalle = [c.instrumento, telefono].filter(Boolean).join(' · ');
-      L.push(`   ${c.nombre}${detalle ? `  (${detalle})` : ''}${c.aviso ? '  ✓ avisado' : ''}`);
-    }
-    L.push('');
+  if (!gente.length) L.push('(sin convocados)');
+
+  const anchoNombre = Math.max(0, ...gente.map(({ c }) => c.nombre.length));
+  for (const { c, hora } of gente) {
+    const { telefono } = contactoDe(c.nombre);
+    const detalle = [c.instrumento, telefono].filter(Boolean).join(' · ');
+    const propia = !!c.hora;
+    L.push(
+      `${(hora || '--:--').padEnd(6)}${c.nombre.padEnd(anchoNombre + 2)}`
+      + `${detalle ? `(${detalle})` : ''}`
+      + `${propia ? '' : '  ← hora del ensayo'}`
+      + `${c.aviso ? '  ✓ avisado' : ''}`,
+    );
   }
+  L.push('');
 
   const total = (ensayo.convocados || []).length;
   const avisados = (ensayo.convocados || []).filter(c => c.aviso).length;
