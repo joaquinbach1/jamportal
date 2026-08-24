@@ -148,16 +148,28 @@ function elegirPara(casillero, pool, usados, gen, artistas) {
     return true;
   };
   // 1) cat + franja · 2) solo cat · 3) solo franja · 4) lo que haya
-  return pool.find(s => sirve(s, true, true))
+  const elegida = pool.find(s => sirve(s, true, true))
       || pool.find(s => sirve(s, true, false))
       || pool.find(s => sirve(s, false, true))
-      || pool.find(s => sirve(s, false, false))
-      || pool.find(s => !usados.has(s.id));       // último recurso: repetir artista
+      || pool.find(s => sirve(s, false, false));
+  if (elegida) return elegida;
+
+  /* Aflojar los filtros de mezcla es aceptable; repetir artista no, si
+     pediste que no se repita. Antes esta última pasada lo ignoraba y la
+     lista salía con el mismo artista tres veces —sobre todo con los temas
+     de internet, que vienen de un puñado de bandas. Mejor traer menos. */
+  if (gen.evitarRepetirArtista) return null;
+  return pool.find(s => !usados.has(s.id));
 }
 
-function seleccionar(pool, gen) {
+function seleccionar(pool, gen, yaUsados = null, yaArtistas = null) {
   const casilleros = armarCasilleros(gen);
-  const usados = new Set(), artistas = new Set(), elegidas = [];
+  /* En el mix esto se llama dos veces —tocados y estrenos—: si cada tanda
+     lleva su propia cuenta de artistas, el mismo entra una vez por cada
+     una. Por eso los conjuntos se pueden pasar de afuera. */
+  const usados = yaUsados || new Set();
+  const artistas = yaArtistas || new Set();
+  const elegidas = [];
 
   for (const c of casilleros) {
     const s = elegirPara(c, pool, usados, gen, artistas);
@@ -230,7 +242,13 @@ async function poolNuevos(gen, excluir, btn) {
 
   const enBase = new Set(store.songs.map(s => norm(s.titulo) + '|' + norm(s.artista)));
   const delaWeb = [];
-  const aConsultar = bandas.slice(0, Math.min(9, bandas.length));
+  /* Cada banda consultada es un artista distinto disponible. Si pediste
+     15 temas sin repetir artista, con 9 bandas no alcanza ni queriendo:
+     miramos unas cuantas más. */
+  const cuantasBandas = gen.evitarRepetirArtista
+    ? Math.min(bandas.length, Math.max(9, (gen.cantidad || 0) + 4))
+    : Math.min(9, bandas.length);
+  const aConsultar = bandas.slice(0, cuantasBandas);
   const textoOriginal = btn ? btn.textContent : '';
 
   for (let i = 0; i < aConsultar.length; i += 3) {      // de a tres en paralelo
@@ -245,7 +263,7 @@ async function poolNuevos(gen, excluir, btn) {
         if (!r.titulo || enBase.has(clave)) continue;
         enBase.add(clave);
         delaWeb.push({
-          id: 'web-' + norm(r.titulo).replace(/ /g, '-'),
+          id: 'web-' + norm(banda).replace(/ /g, '-') + '--' + norm(r.titulo).replace(/ /g, '-'),
           titulo: r.titulo, artista: banda, categoria,
           franja: null, bpm: null, jams: [], cantantes: [],
           esWeb: true,
@@ -255,6 +273,9 @@ async function poolNuevos(gen, excluir, btn) {
     });
   }
   if (btn) btn.textContent = textoOriginal;
+  /* Vienen apilados banda por banda, y como se elige el primero que sirve,
+     sin mezclar salían diez temas seguidos del mismo artista. */
+  delaWeb.sort(() => Math.random() - 0.5);
   return { pool: [...delaWeb, ...deLaBase], deInternet: delaWeb.length };
 }
 
@@ -267,10 +288,19 @@ async function poolNuevos(gen, excluir, btn) {
 export async function generarPropuesta(gen, excluir = new Set(), btn = null) {
   const ordenar = temas => ordenarPorMomento(temas, gen.momentos);
 
+  /* Si salieron menos de los pedidos por no repetir artista, hay que
+     decirlo: si no, parece que el generador se quedó corto porque sí. */
+  const avisarSiFaltan = res => {
+    if (gen.evitarRepetirArtista && res.length && res.length < gen.cantidad) {
+      toast(`Salieron ${res.length} de ${gen.cantidad}: no hay más artistas distintos para completar`);
+    }
+    return res;
+  };
+
   if (gen.historial === 'tocados') {
     const res = ordenar(seleccionar(poolTocados(excluir), gen));
     if (!res.length) toast('No hay temas tocados para esa mezcla', 'err');
-    return res;
+    return avisarSiFaltan(res);
   }
 
   if (gen.historial === 'nuevos') {
@@ -278,21 +308,23 @@ export async function generarPropuesta(gen, excluir = new Set(), btn = null) {
     const res = ordenar(seleccionar(pool, gen));
     if (!res.length) toast('No encontré temas nuevos con esos filtros', 'err');
     else if (deInternet) toast('Los temas de internet no traen BPM: se reparten como franja media');
-    return res;
+    return avisarSiFaltan(res);
   }
 
   /* mix: el % elegido va a estrenos y el resto sale del repertorio tocado */
   const nNuevos = Math.round(((gen.mix.nuevos || 0) / 100) * gen.cantidad);
   const nTocados = gen.cantidad - nNuevos;
 
+  const usados = new Set(), artistas = new Set();
+
   const conocidos = nTocados
-    ? seleccionar(poolTocados(excluir), { ...gen, cantidad: nTocados })
+    ? seleccionar(poolTocados(excluir), { ...gen, cantidad: nTocados }, usados, artistas)
     : [];
 
   let estrenos = [];
   if (nNuevos) {
     const { pool } = await poolNuevos(gen, excluir, btn);
-    estrenos = seleccionar(pool, { ...gen, cantidad: nNuevos });
+    estrenos = seleccionar(pool, { ...gen, cantidad: nNuevos }, usados, artistas);
   }
 
   const res = ordenar([...conocidos, ...estrenos]);
