@@ -9,22 +9,19 @@ sin dependencias. Se sube a Vercel como está.
 
 ## Online
 
-**<https://jamportal-gules.vercel.app>** — la versión con base de datos.
+**<https://jamportal.vercel.app>** — el de siempre. Se despliega solo con cada
+push a `main`, así que no hay que correr nada a mano.
 
-<https://jamportal.vercel.app> es el deploy viejo, el que guardaba todo en el
-navegador. Sigue en pie hasta que se decida mover el dominio.
+<https://jamportal-gules.vercel.app> es un espejo del mismo código, en otra
+cuenta de Vercel. Sirve para probar sin tocar el que usa la banda; hay que
+desplegarlo a mano con `vercel deploy --prod`.
 
 Entrar es con el mail: llega un link y listo, no hay contraseña. Solo entran los
 que están en la tabla `miembro` — ver *Quién puede entrar*, más abajo.
 
-Para publicar cambios:
-
-```bash
-vercel deploy --prod
-```
-
-Si cambia la URL, hay que agregarla a **Authentication → URL Configuration →
-Redirect URLs** en Supabase, o el link del mail no vuelve a la app.
+Si aparece una URL nueva, hay que agregarla a **Authentication → URL
+Configuration → Redirect URLs** en Supabase, o el link del mail no vuelve a la
+app. Hoy están permitidas `localhost:8090` y las dos de arriba.
 
 ## Correrlo local
 
@@ -458,9 +455,11 @@ Tres cosas que no se pueden hacer por SQL:
 2. **Authentication → Providers → Email tiene que estar prendido**, aunque se
    entre con contraseña: el `grant_type=password` de Supabase también lo exige.
    Apagarlo devuelve `email_provider_disabled` y no entra nadie.
-3. **El SMTP incluido manda 2 mails por hora.** Con contraseña no se manda
-   ninguno, así que eso solo afecta al link de emergencia. Si lo quieren usable,
-   hay que poner un SMTP propio en *Project Settings → Auth → SMTP*.
+3. **El correo sale por Resend**, no por el SMTP incluido de Supabase (que
+   manda 2 mails por hora). Está configurado en *Project Settings → Auth → SMTP*
+   contra `smtp.resend.com:587`, con remitente `jam@emails.portalbosque.org`, y
+   el límite subido a 50/hora. Con contraseña igual no se manda ningún mail: eso
+   solo importa para el link de emergencia.
 
 Los passkeys no sirven como única puerta: Supabase exige estar logueado para
 registrar uno, así que hace falta otra forma de entrar primero.
