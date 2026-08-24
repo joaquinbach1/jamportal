@@ -54,6 +54,7 @@ js/tempo.js           el BPM de un tema: chip editable, sugerencia, franja
 js/app.js             router por hash
 js/views/login.js     la puerta: solo aparece contra la base compartida
 js/views/usuario.js   el chip con tu mail y el menú para salir
+js/views/miembros.js  administrar quién entra (solo para admins)
 js/views/             una vista por pantalla
 scripts/convert-seed.py       regenera data/seed.json desde el .json original
 scripts/migrar-a-sql.py       convierte el seed en db/10-datos.sql
@@ -409,6 +410,7 @@ db/04-escritura.sql    las funciones de guardado
 db/05-permisos.sql     magic link + lista de miembros (RLS)
 db/06-concurrencia.sql control de versión por jam + realtime
 db/07-contrasena.sql   alta de miembros con contraseña
+db/08-admin.sql        administrar la lista desde la app
 db/10-datos.sql        el repertorio y las jams históricas, generado
 ```
 
@@ -469,12 +471,11 @@ Son **dos cosas separadas**, y hacen falta las dos:
 
 1. **Tener cuenta.** Cada uno se la crea desde la pantalla de entrada, con
    *¿Primera vez? Creá tu cuenta*. Elige su contraseña y confirma por mail.
-2. **Estar en `miembro`.** Eso lo hace alguien con acceso a la base:
+2. **Estar en `miembro`.** Eso lo hace un admin desde **Datos → Miembros**:
+   escribe el mail, y listo. También puede sacar gente y hacer admin a otro.
 
-   ```sql
-   insert into miembro (email) values ('quien@sea.com') on conflict do nothing;
-   delete from miembro where email = 'quien@sea.com';   -- baja
-   ```
+   Se puede habilitar un mail **antes** de que esa persona se registre; la
+   lista marca cuáles ya entraron y cuáles están «sin registrarse».
 
 Tener cuenta sin estar en `miembro` da una app vacía con un cartel que lo
 explica. Estar en `miembro` sin cuenta no sirve hasta que se registren.
@@ -484,6 +485,20 @@ cuenta sola: manda un mail y hasta que no se abra ese link, no entra. Sin esa
 confirmación, cualquiera que supiera que `joaco@ejemplo.com` está en `miembro`
 podría adelantarse y quedarse con esa cuenta. Por eso **`mailer_autoconfirm`
 tiene que quedar apagado**.
+
+**Los admins** son los que pueden manejar esa lista. Se marcan con la columna
+`miembro.admin`; el primero hay que ponerlo por SQL, después se hacen entre
+ellos desde la app:
+
+```sql
+update miembro set admin = true where email = 'quien@sea.com';
+```
+
+Las funciones (`agregar_miembro`, `sacar_miembro`, `set_admin`,
+`listar_miembros`) son `security definer` y **comprueban por su cuenta quién las
+llama**: el permiso lo decide la base, no la pantalla. Un miembro común que las
+invoque a mano recibe 403. Dos guardas más: nadie se puede sacar a sí mismo, y
+no se puede dejar la lista sin ningún admin — volver de eso requeriría psql.
 
 Para dar de alta a alguien sin que pase por el registro —o si se olvidó la
 contraseña y no le llegan los mails— están las funciones de `db/07-contrasena.sql`:

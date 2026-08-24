@@ -32,6 +32,10 @@ CLAVE = 'descartable-1234'
 fallas = []
 
 
+def sql_lit(t):
+    return "'" + str(t).replace("'", "''") + "'"
+
+
 def psql(sql):
     r = subprocess.run(['psql', CONN, '-tAX', '-v', 'ON_ERROR_STOP=1', '-c', sql],
                        capture_output=True, text=True)
@@ -193,6 +197,38 @@ def main():
                         {'c': {'version': 3, 'songs': [], 'categorias': ['X'],
                                'cantantes': [], 'musicos': [], 'porConfirmar': []}}, jwt)
         check(st == 403, 'un no-miembro no puede sembrar la base', f'HTTP {st}')
+
+        print('\n── administrar la lista ────────────────────────────────')
+        psql(f"insert into miembro (email, admin) values ({sql_lit(MAIL)}, false) "
+             f"on conflict (email) do update set admin = false")
+        st, _ = pedir('/rest/v1/rpc/listar_miembros', {}, jwt)
+        check(st == 403, 'un miembro común no ve la lista', f'HTTP {st}')
+        st, _ = pedir('/rest/v1/rpc/agregar_miembro', {'p_email': 'colado@ejemplo.com'}, jwt)
+        check(st == 403, 'un miembro común no puede agregar', f'HTTP {st}')
+
+        psql(f"update miembro set admin = true where email = {sql_lit(MAIL)}")
+        st, filas = pedir('/rest/v1/rpc/listar_miembros', {}, jwt)
+        check(st == 200 and isinstance(filas, list) and filas,
+              'un admin sí ve la lista', f'HTTP {st}, {len(filas or [])} filas')
+
+        st, _ = pedir('/rest/v1/rpc/agregar_miembro',
+                      {'p_email': 'prueba-alta@ejemplo.com'}, jwt)
+        check(st == 200, 'un admin agrega', f'HTTP {st}')
+        st, filas = pedir('/rest/v1/rpc/listar_miembros', {}, jwt)
+        nuevo = next((f for f in filas if f['email'] == 'prueba-alta@ejemplo.com'), None)
+        check(nuevo is not None and not nuevo['tiene_cuenta'],
+              'aparece marcado como "sin registrarse"')
+
+        st, _ = pedir('/rest/v1/rpc/sacar_miembro',
+                      {'p_email': 'prueba-alta@ejemplo.com'}, jwt)
+        check(st == 200, 'un admin saca', f'HTTP {st}')
+
+        st, e2 = pedir('/rest/v1/rpc/sacar_miembro', {'p_email': MAIL}, jwt)
+        check(st == 400, 'un admin no se puede sacar a sí mismo', f'HTTP {st}')
+        st, e3 = pedir('/rest/v1/rpc/agregar_miembro', {'p_email': 'no-es-mail'}, jwt)
+        check(st == 400, 'un mail inválido se rechaza', f'HTTP {st}')
+
+        psql("delete from miembro where email = 'prueba-alta@ejemplo.com'")
     finally:
         borrar_usuario()
 

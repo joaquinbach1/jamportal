@@ -1401,3 +1401,40 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
 }
 .badge-store .vivo { color: var(--txt-3); cursor: help; }
 .badge-store .vivo.on { color: var(--ok); }
+
+/* ============================================================
+   Lista de miembros (views/miembros.js) — solo para admins
+   ============================================================ */
+.miembros { display: grid; gap: 1px; background: var(--line-soft);
+  border: 1px solid var(--line-soft); border-radius: var(--r); overflow: hidden; margin: 12px 0; }
+.miembro {
+  display: flex; align-items: center; gap: 11px;
+  padding: 11px 13px; background: var(--panel);
+}
+.miembro .avatar { width: 30px; height: 30px; font-size: 11px; flex: none; }
+.miembro-mail {
+  font-size: 14px; color: var(--txt); display: flex; align-items: center; gap: 7px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.miembro-vos {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--acc); border: 1px solid var(--acc-linea); background: var(--acc-tinte);
+  border-radius: 20px; padding: 1px 6px; flex: none;
+}
+.miembro-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  margin-top: 3px; font-size: 12px; color: var(--txt-3); }
+.miembro-tag {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+  border-radius: 20px; padding: 1px 7px; border: 1px solid;
+}
+.miembro-tag.admin  { color: var(--ok);  border-color: var(--ok-linea);  background: var(--ok-fondo); }
+.miembro-tag.espera { color: var(--warn); border-color: var(--acc-linea); background: var(--acc-tinte); }
+.miembro-acciones { margin-left: auto; display: flex; gap: 5px; flex: none; }
+.btn.danger:hover, .btn.ghost.danger:hover { color: var(--err); border-color: var(--err-linea); }
+.miembros-alta { display: flex; gap: 8px; }
+.miembros-alta input { flex: 1; min-width: 0; }
+
+@media (max-width: 640px) {
+  .miembro { flex-wrap: wrap; }
+  .miembro-acciones { margin-left: 0; width: 100%; }
+}
