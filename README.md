@@ -9,17 +9,22 @@ sin dependencias. Se sube a Vercel como está.
 
 ## Online
 
-**<https://jamportal.vercel.app>** — publicado en Vercel, entra cualquiera con el link.
+**<https://jamportal-gules.vercel.app>** — la versión con base de datos.
 
-Para que todos vean y editen **lo mismo** falta un paso de 5 minutos: crear la base
-compartida. Está explicado adentro de la app, en **Datos → Base compartida**.
-Sin ese paso la app anda igual, pero cada navegador guarda lo suyo.
+<https://jamportal.vercel.app> es el deploy viejo, el que guardaba todo en el
+navegador. Sigue en pie hasta que se decida mover el dominio.
+
+Entrar es con el mail: llega un link y listo, no hay contraseña. Solo entran los
+que están en la tabla `miembro` — ver *Quién puede entrar*, más abajo.
 
 Para publicar cambios:
 
 ```bash
-npx vercel deploy --prod
+vercel deploy --prod
 ```
+
+Si cambia la URL, hay que agregarla a **Authentication → URL Configuration →
+Redirect URLs** en Supabase, o el link del mail no vuelve a la app.
 
 ## Correrlo local
 
