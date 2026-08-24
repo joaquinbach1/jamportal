@@ -49,6 +49,9 @@ export class Auth {
       if (d.error_code === 'invalid_credentials') {
         throw new Error('Mail o contraseña incorrectos.');
       }
+      if (d.error_code === 'email_not_confirmed') {
+        throw new Error('Todavía no confirmaste tu mail. Abrí el link que te mandamos.');
+      }
       if (d.error_code === 'email_provider_disabled') {
         throw new Error('El login por mail está apagado en Supabase. '
           + 'Hay que prender Authentication → Providers → Email.');
@@ -62,6 +65,43 @@ export class Auth {
       email: (d.user && d.user.email) || emailDelJwt(d.access_token),
     });
     return this.sesion;
+  }
+
+  /**
+   * Crea una cuenta. NO devuelve sesión: Supabase manda un mail de
+   * confirmación y hasta que no se abra ese link, la cuenta no entra.
+   *
+   * Eso es lo que hace seguro dejar el registro abierto. Si las cuentas
+   * quedaran confirmadas solas, cualquiera que supiera qué mail está en
+   * `miembro` podría adelantarse y quedarse con esa cuenta.
+   *
+   * Ojo con la respuesta: si el mail ya existe, Supabase devuelve 200 con
+   * un usuario inventado en vez de decir "ya está registrado", para que
+   * nadie pueda averiguar quién tiene cuenta. Por eso el mensaje que
+   * mostramos no puede afirmar que la cuenta se creó.
+   */
+  async registrarse(email, clave) {
+    const volverA = location.origin + location.pathname;
+    const res = await fetch(
+      `${this.url}/auth/v1/signup?redirect_to=${encodeURIComponent(volverA)}`, {
+      method: 'POST',
+      headers: { apikey: this.key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: (email || '').trim(), password: clave }),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (d.error_code === 'signup_disabled') {
+        throw new Error('El registro está cerrado. Pedile a alguien de la banda que te dé de alta.');
+      }
+      if (d.error_code === 'weak_password' || /password/i.test(d.msg || '')) {
+        throw new Error('Esa contraseña es muy corta. Poné al menos 8 caracteres.');
+      }
+      if (/rate|limit/i.test(d.msg || d.error_code || '')) {
+        throw new Error('Demasiados intentos seguidos. Esperá un minuto.');
+      }
+      throw new Error(d.msg || d.error_description || `Auth ${res.status}`);
+    }
+    return { confirmar: !d.access_token };
   }
 
   /** Cambia la contraseña de quien está adentro. */

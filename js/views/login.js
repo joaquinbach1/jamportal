@@ -9,11 +9,14 @@
    como salida para quien se la olvidó: depende de que lleguen
    mails, que con el SMTP incluido de Supabase son dos por hora.
 
-   Las altas las hace quien tiene acceso a la base (ver
-   db/07-contrasena.sql). No hay registro abierto a propósito:
-   con las cuentas autoconfirmadas, cualquiera que supiera qué
-   mail está en `miembro` podría adelantarse y quedarse con esa
-   cuenta.
+   Se puede crear cuenta desde acá. Lo que la hace segura es que
+   Supabase no la confirma sola: manda un mail y hasta que no se
+   abra ese link, la cuenta no entra. Sin eso, cualquiera que
+   supiera qué mail está en `miembro` podría adelantarse y
+   quedarse con esa cuenta.
+
+   Crear cuenta no da acceso: además hay que estar en `miembro`,
+   y eso lo hace alguien de la banda.
    ============================================================ */
 
 import { store } from '../store.js';
@@ -36,6 +39,9 @@ export async function vistaLogin(donde, alEntrar) {
   });
   const boton = h('button.btn.primary', {}, 'Entrar');
   const aviso = h('div.login-aviso');
+  const sub = h('p.login-sub', {}, 'Entrá con tu mail y tu contraseña.');
+  let modo = 'entrar';   // 'entrar' | 'registro'
+  const cambiarModo = h('button.btn.xs.ghost');
 
   function decir(txt, tipo = '') {
     clear(aviso);
@@ -84,20 +90,66 @@ export async function vistaLogin(donde, alEntrar) {
     }
   }
 
-  boton.addEventListener('click', entrar);
-  for (const campo of [email, clave]) {
-    campo.addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+  async function registrar() {
+    const dir = email.value.trim();
+    if (!dir || !dir.includes('@')) { decir('Escribí tu mail.', 'err'); email.focus(); return; }
+    if (clave.value.length < 8) {
+      decir('La contraseña tiene que tener al menos 8 caracteres.', 'err');
+      clave.focus(); return;
+    }
+
+    boton.disabled = true;
+    const antes = boton.textContent;
+    boton.textContent = 'Creando…';
+    try {
+      await auth.registrarse(dir, clave.value);
+      // No podemos afirmar que se creó: si el mail ya existía, Supabase
+      // devuelve lo mismo para no delatar quién tiene cuenta.
+      decir(`Si ese mail no tenía cuenta, te llegó un link a ${dir} para `
+        + 'confirmarla. Abrilo desde este navegador. Después pedile a alguien '
+        + 'de la banda que te habilite, si todavía no lo hizo.', 'ok');
+      boton.textContent = 'Revisá tu mail ✓';
+    } catch (e) {
+      decir(e.message, 'err');
+      boton.disabled = false;
+      boton.textContent = antes;
+    }
   }
+
+  function ponerModo(m) {
+    modo = m;
+    const registro = m === 'registro';
+    boton.textContent = registro ? 'Crear cuenta' : 'Entrar';
+    boton.disabled = false;
+    clave.autocomplete = registro ? 'new-password' : 'current-password';
+    clave.placeholder = registro ? 'contraseña nueva (mínimo 8)' : 'contraseña';
+    clear(sub);
+    sub.append(registro
+      ? 'Elegí tu contraseña. Te vamos a mandar un mail para confirmar.'
+      : 'Entrá con tu mail y tu contraseña.');
+    clear(cambiarModo);
+    cambiarModo.append(registro ? '← Ya tengo cuenta' : '¿Primera vez? Creá tu cuenta');
+    decir('');
+  }
+
+  const enviar = () => (modo === 'registro' ? registrar() : entrar());
+  boton.addEventListener('click', enviar);
+  cambiarModo.addEventListener('click', () => ponerModo(modo === 'registro' ? 'entrar' : 'registro'));
+  for (const campo of [email, clave]) {
+    campo.addEventListener('keydown', e => { if (e.key === 'Enter') enviar(); });
+  }
+  ponerModo('entrar');
 
   clear(donde);
   donde.appendChild(h('div.login', {},
     h('div.login-caja', {},
       h('div.login-logo', {}, '🎸'),
       h('h1', {}, 'JAM PORTAL'),
-      h('p.login-sub', {}, 'Entrá con tu mail y tu contraseña.'),
+      sub,
       h('div.login-campos', {}, email, clave, boton),
       aviso,
       h('div.login-pie', {},
+        cambiarModo,
         h('button.btn.xs.ghost', { onclick: pedirLink },
           '¿Te olvidaste? Pedí un link por mail'),
         h('span.dim', {}, cfg.url ? cfg.url.replace(/^https?:\/\//, '') : ''),

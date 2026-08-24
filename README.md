@@ -464,22 +464,35 @@ Tres cosas que no se pueden hacer por SQL:
 Los passkeys no sirven como única puerta: Supabase exige estar logueado para
 registrar uno, así que hace falta otra forma de entrar primero.
 
-Las altas las hace quien tiene acceso a la base, de una sola vez:
+Son **dos cosas separadas**, y hacen falta las dos:
+
+1. **Tener cuenta.** Cada uno se la crea desde la pantalla de entrada, con
+   *¿Primera vez? Creá tu cuenta*. Elige su contraseña y confirma por mail.
+2. **Estar en `miembro`.** Eso lo hace alguien con acceso a la base:
+
+   ```sql
+   insert into miembro (email) values ('quien@sea.com') on conflict do nothing;
+   delete from miembro where email = 'quien@sea.com';   -- baja
+   ```
+
+Tener cuenta sin estar en `miembro` da una app vacía con un cartel que lo
+explica. Estar en `miembro` sin cuenta no sirve hasta que se registren.
+
+**Lo que hace seguro dejar el registro abierto** es que Supabase no confirma la
+cuenta sola: manda un mail y hasta que no se abra ese link, no entra. Sin esa
+confirmación, cualquiera que supiera que `joaco@ejemplo.com` está en `miembro`
+podría adelantarse y quedarse con esa cuenta. Por eso **`mailer_autoconfirm`
+tiene que quedar apagado**.
+
+Para dar de alta a alguien sin que pase por el registro —o si se olvidó la
+contraseña y no le llegan los mails— están las funciones de `db/07-contrasena.sql`:
 
 ```sql
-select crear_miembro('quien@sea.com', 'una-clave-larga');  -- alta
+select crear_miembro('quien@sea.com', 'una-clave-larga');  -- cuenta + miembro
 select poner_clave('quien@sea.com', 'otra-clave');         -- resetear
-delete from miembro where email = 'quien@sea.com';         -- baja
 ```
 
-`crear_miembro` crea la cuenta ya confirmada, le pone la clave y la suma a
-`miembro`. Después cada uno se la cambia desde **Datos → Cambiar contraseña**.
-
-**Por qué no hay registro abierto en la app.** Si cualquiera pudiera registrarse
-con el mail que quisiera y quedar confirmado, bastaría con saber que
-`joaco@ejemplo.com` está en `miembro` para crearse una cuenta con ese mail y
-entrar. Con magic link eso no puede pasar porque hace falta la casilla; con
-contraseña autoconfirmada, sí. Por eso las altas pasan por la base.
+Cada uno se la cambia después desde **Datos → Cambiar contraseña**.
 
 La lista **no** se versiona: son mails de personas y este repo es público.
 `db/11-miembros.sql` es solo la plantilla con los comandos.
@@ -494,9 +507,11 @@ no le devuelve ni una fila. Sacar a alguien de la lista lo deja afuera en el act
 proyecto y nada más. Comprobado contra este proyecto — con esa clave y sin
 sesión, la base contesta `permission denied` a todo, tablas y funciones.
 
-Lo único que sí habilita es pedir un magic link. Conviene apagar
-*Authentication → Sign Ups* en el panel: las altas pasan por `crear_miembro`, así
-que el registro abierto no hace falta para nada.
+Lo que sí habilita es crear una cuenta y pedir magic links. Crear una cuenta no
+da acceso a nada —para eso hay que estar en `miembro`— pero sí ensucia la lista
+de usuarios y consume cupo de mails. Si eso empieza a molestar, apagar
+*Authentication → Sign Ups* cierra el registro y las altas vuelven a pasar solo
+por `crear_miembro()`.
 
 Quien quiera apuntar a otro proyecto lo hace desde Datos → Base compartida, y eso
 pisa lo de `config.js`. El botón "trabajar solo en este navegador" deja una marca
