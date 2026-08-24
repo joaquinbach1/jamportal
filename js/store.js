@@ -38,6 +38,7 @@ class LocalDriver {
 let driver = new LocalDriver(KEY);
 let sondeo = null;
 let auth = null;      // la sesión, solo cuando trabajamos contra la nube
+let sinPermiso = false;  // entraste bien, pero tu mail no está en `miembro`
 
 let state = {
   version: 1,
@@ -190,6 +191,8 @@ export const store = {
 
   /** La sesión, si estamos contra la nube. */
   get auth() { return auth; },
+  /** Entraste bien, pero tu mail no está habilitado en esta base. */
+  get sinPermiso() { return sinPermiso; },
   get email() { return auth && auth.email; },
 
   /**
@@ -338,6 +341,13 @@ export const store = {
         arrancarSondeo();
         return state;
       } catch (e) {
+        if (e.sinPermiso) {
+          // Acá no hay a qué caer. Los datos de este navegador no son los
+          // de la banda, y sembrarlos pisaría la base compartida. Dejamos
+          // el estado vacío y que la app explique qué pasa.
+          sinPermiso = true;
+          return state;
+        }
         console.error('No se pudo usar la base compartida, sigo local:', e.message);
         driver = new LocalDriver(KEY);
         avisarCaida(e.message);
