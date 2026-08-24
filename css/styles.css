@@ -804,6 +804,10 @@ body.lista-compacta .editor-grid .card + .card { margin-top: 10px; }
   padding: 7px 12px 2px;
 }
 
+/* el link compartido no tiene app alrededor: solo las letras */
+body.modo-compartido .sidebar { display: none; }
+body.modo-compartido .view { padding: 22px 20px 70px; max-width: 1100px; margin: 0 auto; }
+
 /* la letra tapando todo: para leerla de lejos, arriba del escenario */
 body.letra-abierta { overflow: hidden; }
 .ly-full {

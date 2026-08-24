@@ -10,7 +10,8 @@ import { vistaJams }    from './views/jams.js';
 import { vistaNueva }   from './views/nueva.js';
 import { vistaEditor }  from './views/jam-editor.js';
 import { vistaLive }    from './views/live.js';
-import { vistaLyrics }  from './views/lyrics.js';
+import { vistaLyrics, vistaLetrasCompartidas } from './views/lyrics.js';
+import { desempaquetar } from './compartir.js';
 import { vistaSongs }   from './views/songs.js';
 import { vistaIdeas }   from './views/ideas.js';
 import { vistaSingers } from './views/singers.js';
@@ -41,10 +42,26 @@ export function ir(hash) { location.hash = hash; }
 /** Vuelve a dibujar la vista actual (lo usan las vistas después de mutar datos). */
 export function refrescar() { render(true); }
 
+/** El link de letras compartido: no pasa por las rutas normales. */
+async function pintarCompartido(paquete) {
+  document.body.classList.add('modo-compartido');
+  const datos = await desempaquetar(paquete);
+  clear(view);
+  view.appendChild(vistaLetrasCompartidas(datos));
+  if (datos && datos.n) document.title = datos.n + ' — Letras';
+  window.scrollTo({ top: 0 });
+}
+
 function render(forzar = false) {
   const ruta = (location.hash || '#/jams').slice(1);
   if (!forzar && ruta === rutaActual) return;
   rutaActual = ruta;
+
+  /* Puede llegar acá navegando dentro de la app (el hash cambia y la
+     página no recarga), así que se atiende también desde el router. */
+  const compartido = ruta.match(/^\/l\/(.+)$/);
+  if (compartido) { pintarCompartido(compartido[1]); return; }
+  document.body.classList.remove('modo-compartido');
 
   const match = RUTAS.map(([re, fn, nav]) => {
     const m = ruta.match(re);
@@ -126,6 +143,19 @@ iniciarTema();
 $('#temaSlot').appendChild(botonTema(h));
 
 (async function main() {
+  /* ============================================================
+     El link de letras compartido va antes que todo: se lleva la
+     lista y las letras adentro del hash, así que no necesita
+     cuenta, ni base, ni internet. Si entrás por ahí, la app no
+     carga nada más.
+     ============================================================ */
+  const compartido = location.hash.match(/^#\/l\/(.+)$/);
+  if (compartido) {
+    rutaActual = location.hash.slice(1);
+    await pintarCompartido(compartido[1]);
+    return;
+  }
+
   /* La puerta va antes que todo: si la app está contra la base compartida
      y no hay sesión, no tiene sentido cargar nada — el RLS no va a
      devolver ni una fila. En modo local esto no se ejecuta nunca. */

@@ -2,18 +2,19 @@
    views/lyrics.js — las letras de la jam, en orden
    ------------------------------------------------------------
    La lista completa del setlist. Tocás un tema y la letra se abre
-   ocupando toda la pantalla, para leerla de lejos; se cierra con
-   la cruz de arriba o con Esc, y con ← → pasás al tema de al lado
-   sin volver a la lista.
+   ocupando toda la pantalla; se cierra con la cruz o con Esc, y
+   con ← → pasás de tema sin volver a la lista.
 
-   Las letras se traen en el momento y quedan en memoria; la que
-   sigue se va cargando sola mientras leés la actual.
+   La misma pantalla sirve para dos cosas: la de adentro de la app,
+   que busca las letras en internet, y la del link compartido, que
+   ya las trae puestas y anda sin conexión.
    ============================================================ */
 
 import { store } from '../store.js';
-import { h, clear, frag, poner, modal, field, input, toast } from '../ui.js';
+import { h, clear, frag, poner, modal, field, input, toast, copiar } from '../ui.js';
 import { buscarLetra, urlBusquedaLetra, precargar, letraDesdeUrl, guardarEnCache } from '../letras.js';
-import { filas } from './live.js';
+import { filas as filasDelSetlist } from './live.js';
+import { empaquetar, linkDeLetras, sePuedeComprimir } from '../compartir.js';
 
 const CLAVE_TAM = 'jamportal.letras.tam';
 const tamGuardado = () => {
@@ -21,32 +22,27 @@ const tamGuardado = () => {
   return Number.isFinite(n) ? Math.min(3.2, Math.max(1, n)) : 1.5;
 };
 
-export function vistaLyrics(jamId) {
-  const jam = store.jam(jamId);
-  if (!jam) {
-    return h('div.empty', {}, h('b', {}, 'Esa jam no existe'),
-      h('a.btn.sm', { href: '#/jams', style: { marginTop: '12px' } }, 'Volver'));
-  }
-
-  const todas = filas(jam);
-  const cantables = [];
-  for (const f of todas) {
-    if (f.tipo === 'song' && f.song) cantables.push({ song: f.song, n: String(f.n) });
-    if (f.tipo === 'medley') for (const ms of f.songs) if (ms.song) cantables.push({ song: ms.song, n: '·' });
-  }
+/* ============================================================
+   La pantalla, sin saber de dónde salen las letras
+   ------------------------------------------------------------
+   filas: [{ tipo:'bloque'|'break'|'medley'|'song', label, n,
+             titulo, artista, dentro, song? }]
+   traer: (fila) => Promise<{ ok, texto }>
+   ============================================================ */
+export function pantallaLetras({ titulo, sub, filas, volverA, traer, extras = [], alFaltar = null }) {
+  const cantables = filas.filter(f => f.tipo === 'song');
 
   let tam = tamGuardado();
-  let abierta = -1;                       // índice del tema abierto, o -1
+  let abierta = -1;
 
   const listaCont = h('div.ly-lista');
   const pantalla = h('div.ly-full', { style: { display: 'none' } });
 
-  /* ============ la letra, a pantalla completa ============ */
-
   async function abrir(i) {
     if (i < 0 || i >= cantables.length) return;
     abierta = i;
-    const { song } = cantables[i];
+    const fila = cantables[i];
+    const proxima = cantables[i + 1];
 
     clear(pantalla);
     pantalla.style.display = '';
@@ -54,33 +50,27 @@ export function vistaLyrics(jamId) {
 
     const texto = h('div.ly-texto', { style: { fontSize: tam + 'rem' } }, 'Buscando la letra…');
 
-    const proxima = cantables[i + 1];
-
     poner(pantalla,
       h('div.ly-barra', {},
-        /* izquierda: volver al anterior y el tamaño de la letra */
         h('div.ly-izq', {},
           h('button.icon-btn', { title: 'Tema anterior (←)', disabled: i === 0, onclick: () => abrir(i - 1) }, '‹'),
           h('span.ly-cuenta', {}, `${i + 1}/${cantables.length}`),
           h('button.btn.xs', { title: 'Más chica', onclick: () => cambiarTam(-0.15) }, 'A−'),
           h('button.btn.xs', { title: 'Más grande', onclick: () => cambiarTam(+0.15) }, 'A+')),
 
-        /* centro: el tema que estás cantando */
         h('div.ly-quien', {},
-          h('h2', {}, song.titulo),
-          h('div.ly-artista', {}, song.artista || '')),
+          h('h2', {}, fila.titulo),
+          h('div.ly-artista', {}, fila.artista || '')),
 
-        /* derecha: el que sigue, apagado, y la flecha para pasar */
         h('div.ly-der', {},
           proxima
             ? h('button.ly-proxima', { title: 'Pasar al que sigue (→)', onclick: () => abrir(i + 1) },
                 h('span.ly-prox-rotulo', {}, 'sigue'),
-                h('span.ly-prox-t', {}, proxima.song.titulo),
-                h('span.ly-prox-a', {}, proxima.song.artista || ''))
+                h('span.ly-prox-t', {}, proxima.titulo),
+                h('span.ly-prox-a', {}, proxima.artista || ''))
             : h('span.ly-prox-fin', {}, 'último tema'),
           h('button.icon-btn.ly-flecha', {
-            title: 'Pasar al que sigue (→)', disabled: !proxima,
-            onclick: () => abrir(i + 1),
+            title: 'Pasar al que sigue (→)', disabled: !proxima, onclick: () => abrir(i + 1),
           }, '›'),
           h('button.ly-cerrar', { title: 'Cerrar (Esc)', onclick: cerrar }, '✕'))),
 
@@ -88,8 +78,8 @@ export function vistaLyrics(jamId) {
 
     pantalla.querySelector('.ly-scroll').scrollTop = 0;
 
-    const res = await buscarLetra(song);
-    if (abierta !== i) return;            // cambiaste de tema mientras buscaba
+    const res = await traer(fila);
+    if (abierta !== i) return;
 
     clear(texto);
     if (res.ok) {
@@ -98,90 +88,12 @@ export function vistaLyrics(jamId) {
       texto.classList.add('sin');
       poner(texto,
         h('div', {}, 'No encontré la letra de este tema.'),
-        h('div.dim', { style: { fontSize: '14px', marginTop: '8px' } },
-          'Las bases que uso flojean con cumbia y tropical. Buscala y pegá la dirección: queda guardada para siempre.'),
-        h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '16px' } },
-          h('a.btn.sm', { href: urlBusquedaLetra(song), target: '_blank', rel: 'noopener' }, '🔎 Buscarla en internet'),
-          h('button.btn.sm.primary', { onclick: () => dialogoUrl(song, i) }, '🔗 Pegar URL de la letra')),
-        song.letraUrl
-          ? h('div', { style: { marginTop: '14px' } },
-              h('a.btn.xs', { href: song.letraUrl, target: '_blank', rel: 'noopener' }, '↗ Abrir la que guardaste'),
-              h('button.btn.xs.ghost', {
-                style: { marginLeft: '6px' },
-                onclick: () => { store.updateSong(song.id, { letraUrl: '' }); song.letraUrl = ''; abrir(i); },
-              }, 'Olvidarla'))
-          : null);
+        alFaltar ? alFaltar(fila, i) : h('div.dim', { style: { fontSize: '14px', marginTop: '8px' } },
+          'No vino en el link.'));
     }
 
     const prox = cantables[i + 1];
-    if (prox) precargar(prox.song);
-  }
-
-  /** Pegar a mano la dirección de la letra. Se guarda con el tema. */
-  function dialogoUrl(song, i) {
-    const campo = input({ placeholder: 'https://…', value: song.letraUrl || '' });
-    const aviso = h('div.dim', { style: { fontSize: '12.5px', marginTop: '8px' } });
-
-    const usar = async e => {
-      const btn = e.currentTarget;
-      const url = campo.value.trim();
-      if (!url) { toast('Pegá la dirección', 'err'); campo.focus(); return; }
-
-      btn.disabled = true; const t = btn.textContent; btn.textContent = 'Leyendo…';
-      const res = await letraDesdeUrl(url);
-      btn.disabled = false; btn.textContent = t;
-
-      /* La guardamos igual, se haya podido leer o no: si el sitio no
-         deja, al menos queda el link a un clic. */
-      store.updateSong(song.id, { letraUrl: url });
-      song.letraUrl = url;
-
-      if (res.ok) {
-        guardarEnCache(song, res.texto);
-        m.close();
-        toast('Letra guardada', 'ok');
-        abrir(i);
-      } else {
-        clear(aviso);
-        poner(aviso,
-          h('div', {}, res.motivo),
-          h('div', { style: { marginTop: '6px' } },
-            'Guardé el link igual: te queda un botón para abrirlo. ',
-            'Si querés verla acá adentro, copiá el texto de la letra y pegalo abajo.'));
-        pegarTexto.style.display = '';
-      }
-    };
-
-    /* Plan B para los sitios que no se dejan leer: el texto, a mano. */
-    const areaTexto = h('textarea', { placeholder: 'Pegá acá el texto de la letra…', style: { minHeight: '160px' } });
-    const pegarTexto = h('div', { style: { display: 'none', marginTop: '12px' } },
-      field('O pegá la letra tal cual', areaTexto));
-
-    const m = modal({
-      title: 'Letra de « ' + song.titulo + ' »',
-      body: [
-        h('div.method-hint', {},
-          'Buscala en internet y pegá acá la dirección de la página. ',
-          'Queda guardada con el tema, así no la buscás de nuevo.'),
-        h('div', { style: { marginTop: '12px' } }, field('Dirección', campo)),
-        aviso,
-        pegarTexto,
-      ],
-      footer: [
-        h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
-        h('button.btn.sm', {
-          onclick: () => {
-            const txt = areaTexto.value.trim();
-            if (txt.length < 40) { toast('Falta el texto de la letra', 'err'); return; }
-            guardarEnCache(song, txt);
-            store.updateSong(song.id, { letra: txt });
-            m.close(); toast('Letra guardada', 'ok'); abrir(i);
-          },
-        }, 'Usar el texto pegado'),
-        h('button.btn.primary', { onclick: usar }, 'Usar esta URL'),
-      ],
-    });
-    setTimeout(() => campo.focus(), 60);
+    if (prox && prox.song) precargar(prox.song);
   }
 
   function cerrar() {
@@ -198,39 +110,24 @@ export function vistaLyrics(jamId) {
     if (t) t.style.fontSize = tam + 'rem';
   }
 
-  /* ============ la lista ============ */
-
-  function pintarLista() {
-    clear(listaCont);
-    let i = 0;
-    for (const f of todas) {
-      if (f.tipo === 'bloque') { listaCont.appendChild(h('div.ly-bloque', {}, (f.label || '').toUpperCase())); continue; }
-      if (f.tipo === 'break') { listaCont.appendChild(h('div.ly-break', {}, f.label || 'BREAK')); continue; }
-      if (f.tipo === 'medley') {
-        listaCont.appendChild(h('div.ly-medley', {}, `${f.n} · ${f.titulo || 'Medley'}`));
-        for (const ms of f.songs) if (ms.song) listaCont.appendChild(item(ms.song, i++, true, '·'));
-        continue;
-      }
-      if (f.tipo === 'song' && f.song) listaCont.appendChild(item(f.song, i++, false, String(f.n)));
-    }
-    if (!cantables.length) listaCont.appendChild(h('div.empty', {}, 'Esta jam no tiene temas todavía'));
-  }
-
-  function item(song, i, enMedley, n) {
-    return h('button.ly-item' + (enMedley ? '.dentro' : ''), {
-      onclick: () => abrir(i),
-      title: 'Ver la letra',
+  let iCantable = 0;
+  for (const f of filas) {
+    if (f.tipo === 'bloque') { listaCont.appendChild(h('div.ly-bloque', {}, (f.label || '').toUpperCase())); continue; }
+    if (f.tipo === 'break') { listaCont.appendChild(h('div.ly-break', {}, f.label || 'BREAK')); continue; }
+    if (f.tipo === 'medley') { listaCont.appendChild(h('div.ly-medley', {}, f.label || 'Medley')); continue; }
+    const i = iCantable++;
+    listaCont.appendChild(h('button.ly-item' + (f.dentro ? '.dentro' : ''), {
+      onclick: () => abrir(i), title: 'Ver la letra',
     },
-      h('span.ly-n', {}, n),
-      h('span.ly-t', {}, song.titulo),
-      h('span.ly-a', {}, song.artista || ''));
+      h('span.ly-n', {}, f.dentro ? '·' : String(f.n)),
+      h('span.ly-t', {}, f.titulo),
+      h('span.ly-a', {}, f.artista || '')));
   }
-
-  /* ============ teclado ============ */
+  if (!cantables.length) listaCont.appendChild(h('div.empty', {}, 'Esta jam no tiene temas todavía'));
 
   const alTeclado = e => {
     if (abierta < 0) {
-      if (e.key === 'Escape') location.hash = '#/jams/' + jamId;
+      if (e.key === 'Escape' && volverA) location.hash = volverA;
       return;
     }
     if (e.key === 'Escape') { e.preventDefault(); cerrar(); }
@@ -244,16 +141,226 @@ export function vistaLyrics(jamId) {
     document.body.classList.remove('letra-abierta');
   });
 
-  pintarLista();
-
   return frag(
     h('div.page-head', {},
       h('div', {},
         h('div.titulo-jam', {},
-          h('a.btn.sm.ghost', { href: '#/jams/' + jamId, title: 'Volver a la jam' }, '← Volver'),
-          h('h1', {}, 'Letras')),
-        h('p.sub', {}, `${jam.nombre || 'Jam'} · ${cantables.length} temas · tocá uno para ver la letra`))),
+          volverA ? h('a.btn.sm.ghost', { href: volverA, title: 'Volver a la jam' }, '← Volver') : null,
+          h('h1', {}, titulo)),
+        h('p.sub', {}, sub)),
+      extras.length ? h('div.page-actions', {}, extras) : null),
     listaCont,
     pantalla,
   );
+}
+
+/* ============================================================
+   1) La de adentro de la app
+   ============================================================ */
+export function vistaLyrics(jamId) {
+  const jam = store.jam(jamId);
+  if (!jam) {
+    return h('div.empty', {}, h('b', {}, 'Esa jam no existe'),
+      h('a.btn.sm', { href: '#/jams', style: { marginTop: '12px' } }, 'Volver'));
+  }
+
+  const filas = [];
+  for (const f of filasDelSetlist(jam)) {
+    if (f.tipo === 'bloque') { filas.push({ tipo: 'bloque', label: f.label }); continue; }
+    if (f.tipo === 'break') { filas.push({ tipo: 'break', label: f.label }); continue; }
+    if (f.tipo === 'medley') {
+      filas.push({ tipo: 'medley', label: `${f.n} · ${f.titulo || 'Medley'}` });
+      for (const ms of f.songs) if (ms.song) filas.push({ tipo: 'song', song: ms.song, titulo: ms.song.titulo, artista: ms.song.artista, dentro: true });
+      continue;
+    }
+    if (f.tipo === 'song' && f.song) filas.push({ tipo: 'song', song: f.song, titulo: f.song.titulo, artista: f.song.artista, n: f.n });
+  }
+
+  const cantidad = filas.filter(f => f.tipo === 'song').length;
+  const vista = pantallaLetras({
+    titulo: 'Letras',
+    sub: `${jam.nombre || 'Jam'} · ${cantidad} temas · tocá uno para ver la letra`,
+    filas,
+    volverA: '#/jams/' + jamId,
+    traer: f => buscarLetra(f.song),
+    extras: [botonCompartir(jam, filas)],
+    alFaltar: (f, i) => bloqueFaltante(f.song, () => reabrir(i)),
+  });
+
+  /* el diálogo de pegar URL necesita poder volver a abrir la letra */
+  let reabrirFn = null;
+  const reabrir = i => reabrirFn && reabrirFn(i);
+  queueMicrotask(() => {
+    const btns = [...document.querySelectorAll('.ly-item')];
+    reabrirFn = i => btns[i] && btns[i].click();
+  });
+
+  return vista;
+}
+
+/** Lo que se ofrece cuando ninguna base tiene la letra. */
+function bloqueFaltante(song, reabrir) {
+  return frag(
+    h('div.dim', { style: { fontSize: '14px', marginTop: '8px' } },
+      'Las bases que uso flojean con cumbia y tropical. Buscala y pegá la dirección: queda guardada para siempre.'),
+    h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '16px' } },
+      h('a.btn.sm', { href: urlBusquedaLetra(song), target: '_blank', rel: 'noopener' }, '🔎 Buscarla en internet'),
+      h('button.btn.sm.primary', { onclick: () => dialogoUrl(song, reabrir) }, '🔗 Pegar URL de la letra')),
+    song.letraUrl
+      ? h('div', { style: { marginTop: '14px' } },
+          h('a.btn.xs', { href: song.letraUrl, target: '_blank', rel: 'noopener' }, '↗ Abrir la que guardaste'))
+      : null);
+}
+
+function dialogoUrl(song, reabrir) {
+  const campo = input({ placeholder: 'https://…', value: song.letraUrl || '' });
+  const aviso = h('div.dim', { style: { fontSize: '12.5px', marginTop: '8px' } });
+  const areaTexto = h('textarea', { placeholder: 'Pegá acá el texto de la letra…', style: { minHeight: '160px' } });
+  const pegarTexto = h('div', { style: { display: 'none', marginTop: '12px' } },
+    field('O pegá la letra tal cual', areaTexto));
+
+  const usar = async e => {
+    const btn = e.currentTarget;
+    const url = campo.value.trim();
+    if (!url) { toast('Pegá la dirección', 'err'); campo.focus(); return; }
+
+    btn.disabled = true; const t = btn.textContent; btn.textContent = 'Leyendo…';
+    const res = await letraDesdeUrl(url);
+    btn.disabled = false; btn.textContent = t;
+
+    store.updateSong(song.id, { letraUrl: url });
+    song.letraUrl = url;
+
+    if (res.ok) {
+      guardarEnCache(song, res.texto);
+      m.close(); toast('Letra guardada', 'ok'); reabrir();
+    } else {
+      clear(aviso);
+      poner(aviso,
+        h('div', {}, res.motivo),
+        h('div', { style: { marginTop: '6px' } },
+          'Guardé el link igual: te queda un botón para abrirlo. ',
+          'Si querés verla acá adentro, copiá el texto de la letra y pegalo abajo.'));
+      pegarTexto.style.display = '';
+    }
+  };
+
+  const m = modal({
+    title: 'Letra de « ' + song.titulo + ' »',
+    body: [
+      h('div.method-hint', {},
+        'Buscala en internet y pegá acá la dirección de la página. ',
+        'Queda guardada con el tema, así no la buscás de nuevo.'),
+      h('div', { style: { marginTop: '12px' } }, field('Dirección', campo)),
+      aviso,
+      pegarTexto,
+    ],
+    footer: [
+      h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
+      h('button.btn.sm', {
+        onclick: () => {
+          const txt = areaTexto.value.trim();
+          if (txt.length < 40) { toast('Falta el texto de la letra', 'err'); return; }
+          guardarEnCache(song, txt);
+          store.updateSong(song.id, { letra: txt });
+          m.close(); toast('Letra guardada', 'ok'); reabrir();
+        },
+      }, 'Usar el texto pegado'),
+      h('button.btn.primary', { onclick: usar }, 'Usar esta URL'),
+    ],
+  });
+  setTimeout(() => campo.focus(), 60);
+}
+
+/* ---------- armar el link para compartir ---------- */
+
+function botonCompartir(jam, filas) {
+  const btn = h('button.btn.sm', {
+    title: 'Un link con la lista y las letras adentro: se abre sin cuenta y sin internet',
+    onclick: async () => {
+      if (!sePuedeComprimir()) { toast('Este navegador no puede armar el link', 'err'); return; }
+      const original = btn.textContent;
+      btn.disabled = true;
+
+      const temas = filas.filter(f => f.tipo === 'song');
+      let listas = 0;
+      const letras = new Map();
+      for (const f of temas) {
+        btn.textContent = `Juntando letras ${++listas}/${temas.length}…`;
+        const r = await buscarLetra(f.song);
+        if (r.ok) letras.set(f.song.id, r.texto);
+      }
+
+      const datos = {
+        v: 1,
+        n: jam.nombre || 'Jam',
+        f: jam.fecha || '',
+        i: filas.map(f => f.tipo === 'song'
+          ? { k: 's', t: f.titulo, a: f.artista || '', y: letras.get(f.song.id) || '', d: f.dentro ? 1 : 0, n: f.n }
+          : { k: f.tipo === 'bloque' ? 'b' : f.tipo === 'break' ? 'r' : 'm', l: f.label || '' }),
+      };
+
+      const paquete = await empaquetar(datos);
+      const link = linkDeLetras(paquete);
+      btn.disabled = false;
+      btn.textContent = original;
+
+      const conLetra = letras.size;
+      dialogoLink(link, temas.length, conLetra);
+    },
+  }, '🔗 Compartir');
+  return btn;
+}
+
+function dialogoLink(link, total, conLetra) {
+  const campo = input({ value: link, readonly: true, style: { fontFamily: 'var(--mono)', fontSize: '11.5px' } });
+  const kb = Math.round(new Blob([link]).size / 1024);
+
+  const m = modal({
+    title: 'Link de las letras',
+    body: [
+      h('div.method-hint', {},
+        'Este link se lleva la lista y las letras adentro. ',
+        h('b', {}, 'Se abre sin cuenta y sin internet'), ': en el iPad, abrilo en Safari una vez ',
+        'y después "Compartir → Agregar a inicio" para tenerlo como una app.'),
+      h('div', { style: { marginTop: '12px' } }, field('Link', campo)),
+      h('div.dim', { style: { fontSize: '12px', marginTop: '8px' } },
+        `${conLetra} de ${total} temas con letra · ${kb} KB`),
+      conLetra < total
+        ? h('div.dim', { style: { fontSize: '12px', marginTop: '4px' } },
+            'Los que no tienen letra van igual, con su título: podés cargarlas antes y volver a compartir.')
+        : null,
+    ],
+    footer: [
+      h('button.btn.ghost', { onclick: () => m.close() }, 'Cerrar'),
+      h('button.btn.primary', {
+        onclick: () => { copiar(link); toast('Link copiado', 'ok'); m.close(); },
+      }, '📋 Copiar el link'),
+    ],
+  });
+  setTimeout(() => { campo.focus(); campo.select(); }, 60);
+}
+
+/* ============================================================
+   2) La del link compartido: sin app, sin cuenta, sin internet
+   ============================================================ */
+export function vistaLetrasCompartidas(datos) {
+  if (!datos || !Array.isArray(datos.i)) {
+    return h('div.empty', {}, h('b', {}, 'Este link no se entiende'),
+      h('div', {}, 'Puede haber quedado cortado al copiarlo. Pedí que te lo manden de nuevo.'));
+  }
+
+  const filas = datos.i.map(x => x.k === 's'
+    ? { tipo: 'song', titulo: x.t, artista: x.a, dentro: !!x.d, n: x.n, letra: x.y }
+    : { tipo: x.k === 'b' ? 'bloque' : x.k === 'r' ? 'break' : 'medley', label: x.l });
+
+  const cantidad = filas.filter(f => f.tipo === 'song').length;
+
+  return pantallaLetras({
+    titulo: datos.n || 'Letras',
+    sub: `${cantidad} temas · tocá uno para ver la letra`,
+    filas,
+    volverA: null,
+    traer: async f => (f.letra ? { ok: true, texto: f.letra } : { ok: false }),
+  });
 }
