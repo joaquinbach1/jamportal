@@ -397,8 +397,10 @@ label.field > span {
   color: var(--txt);
 }
 
-/* en compacta no entra: el patch se carga y se mira en la vista cómoda */
-.setlist.compacta .patch { display: none; }
+/* en compacta el patch cargado se ve igual —es dato de escenario—, pero
+   el chip vacío no: si no, cada renglón sin patch mostraría un teclado */
+.setlist.compacta .patch-val.vacio { display: none; }
+.setlist.compacta .patch-val { font-size: 11px; padding: 0 4px; }
 
 .tempo-input {
   width: 66px; padding: 2px 6px; font-size: 12px;
