@@ -5,9 +5,18 @@
 import { store, norm } from '../store.js';
 import { h, frag, clear, modal, field, input, avatar, toast, confirmar, catPill, franjaDot, debounce } from '../ui.js';
 
+/**
+ * Los temas de una persona: los que canta y los que toca de invitada.
+ *
+ * Antes esto solo miraba `cantantes`, y para los músicos se leía el
+ * contador guardado en la persona — que nadie recalculaba nunca y estaba
+ * mal en 35 de 101. La base lo expone bien en persona_stats; acá se
+ * recalcula igual para que la pantalla no espere a releer.
+ */
 function temasDe(nombre) {
   const n = norm(nombre);
-  return store.songs.filter(s => (s.cantantes || []).some(c => norm(c) === n));
+  const esta = lista => (lista || []).some(x => norm(x).includes(n));
+  return store.songs.filter(s => esta(s.cantantes) || esta(s.invitados));
 }
 
 function jamsDe(nombre) {
@@ -103,8 +112,8 @@ export function vistaSingers() {
   const gridMus = h('div.singer-grid');
 
   function tarjeta(p) {
-    const temas = p.rol === 'instrumento' ? p.temas : temasDe(p.nombre).length;
-    const jams = p.rol === 'instrumento' ? p.jams : jamsDe(p.nombre).length;
+    const temas = temasDe(p.nombre).length;
+    const jams = jamsDe(p.nombre).length;
     return h('div.singer-card' + (p.activo === false ? '.off' : ''), { onclick: () => ficha(p, pintar) },
       avatar(p.nombre),
       h('div', { style: { minWidth: 0 } },

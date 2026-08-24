@@ -4,7 +4,7 @@
 
 import { store, norm } from '../store.js';
 import { h, frag, clear, field, toast, confirmar, descargar, copiar } from '../ui.js';
-import { SQL_INICIAL } from '../drivers/supabase.js';
+import { PASOS_SQL } from '../drivers/postgres.js';
 import { refrescar } from '../app.js';
 
 /* ---------- parser CSV / TSV ---------- */
@@ -94,9 +94,18 @@ function tarjetaNube() {
 
     btn.disabled = true; const t = btn.textContent; btn.textContent = 'Conectando…';
     try {
-      await store.conectarNube({ url, key }, { subirLocal });
-      toast(`Conectado: ${store.repertorio.length} temas en la base compartida`, 'ok');
-      refrescar();
+      if (store.auth && store.auth.haySesion) {
+        await store.conectarNube({ url, key }, { subirLocal });
+        toast(`Conectado: ${store.repertorio.length} temas en la base compartida`, 'ok');
+        refrescar();
+        return;
+      }
+      // Todavía no hay sesión: guardamos a dónde apuntar y recargamos.
+      // La pantalla de entrada se ocupa del resto.
+      store.guardarConfigNube({ url, key });
+      toast('Ahora entrá con tu mail', 'ok');
+      setTimeout(() => location.reload(), 600);
+      return;
     } catch (e) {
       toast('No se pudo conectar: ' + e.message, 'err');
       console.error(e);
@@ -107,11 +116,17 @@ function tarjetaNube() {
   const pasos = h('ol.pasos', {},
     h('li', {}, 'Creá un proyecto gratis en ',
       h('a', { href: 'https://supabase.com', target: '_blank', rel: 'noopener' }, 'supabase.com'), '.'),
-    h('li', {}, 'En ', h('b', {}, 'SQL Editor'), ', pegá y corré esto:',
-      h('pre.sql', {}, SQL_INICIAL),
-      h('button.btn.xs', { onclick: () => copiar(SQL_INICIAL) }, '📋 Copiar el SQL')),
+    h('li', {}, 'En ', h('b', {}, 'SQL Editor'), ', pegá y corré los archivos de ',
+      h('code.mono', {}, 'db/'), ' en este orden:',
+      h('ol.pasos-sql', {}, ...PASOS_SQL.map(p =>
+        h('li', {}, h('code.mono', {}, p.archivo), ' — ', h('span.dim', {}, p.que)))),
+      h('div.method-hint', {}, 'El último trae el repertorio y las 26 jams históricas. ',
+        'Si ya tenías datos en la app, generá el tuyo con ',
+        h('code.mono', {}, 'python3 scripts/migrar-a-sql.py respaldo.json'),
+        ' a partir de un export de Datos → Respaldo.')),
     h('li', {}, 'En ', h('b', {}, 'Project Settings → API'), ' copiá la ',
-      h('b', {}, 'Project URL'), ' y la clave ', h('b', {}, 'anon public'), ', y pegalas acá abajo.'),
+      h('b', {}, 'Project URL'), ' y la clave publicable (', h('code.mono', {}, 'sb_publishable_…'),
+      ' o la ', h('b', {}, 'anon'), ' vieja), y pegalas acá abajo.'),
     h('li', {}, 'Listo. Pasale el link de la app a los demás: entran y editan lo mismo.'),
   );
 
@@ -119,6 +134,19 @@ function tarjetaNube() {
     estado.append(
       h('div.nube-ok', {}, '● Conectada — todo lo que edites se guarda en la base compartida ',
         h('span.dim', {}, `· ${cfg.url.replace(/^https?:\/\//, '')}`)),
+      store.email
+        ? h('div.nube-sesion', {},
+            h('span', {}, 'Entraste como ', h('b', {}, store.email)),
+            h('button.btn.xs.ghost', {
+              onclick: async () => {
+                if (await confirmar('Cerrás la sesión en este navegador. Para volver a entrar te mandamos otro link por mail.',
+                  { titulo: 'Salir', okText: 'Salir' })) {
+                  store.cerrarSesion();
+                  location.reload();
+                }
+              },
+            }, 'Salir'))
+        : null,
       h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' } },
         h('button.btn', {
           onclick: async e => {

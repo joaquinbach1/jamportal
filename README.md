@@ -38,6 +38,11 @@ css/styles.css        todo el estilo, incluida la hoja de impresión
 data/seed.json        el repertorio convertido (temas, cantantes, jams históricas)
 data/descartados.json el banco de repertorio que nunca se tocó, archivado
 js/store.js           capa de datos — lo único que toca el almacenamiento
+js/config.js          a qué proyecto de Supabase apunta la app
+js/auth.js            entrar con magic link (sin SDK)
+js/realtime.js        websocket con Supabase Realtime (protocolo Phoenix a mano)
+js/drivers/postgres.js  driver de la base compartida (REST de Supabase, sin SDK)
+db/                   el esquema SQL: tablas, vistas y funciones
 js/ui.js              helpers de DOM, modales, toasts, autocomplete
 js/lookup.js          búsqueda de temas en internet (iTunes / MusicBrainz)
 js/cifra.js           links a las cifras (acordes) de Cifra Club
@@ -45,8 +50,13 @@ js/magiclist.js       el generador de listas, compartido por el editor y "Nueva 
 js/docx.js            escritor de .docx (ZIP + OOXML) sin librerías
 js/tempo.js           el BPM de un tema: chip editable, sugerencia, franja
 js/app.js             router por hash
+js/views/login.js     la puerta: solo aparece contra la base compartida
 js/views/             una vista por pantalla
-scripts/convert-seed.py   regenera data/seed.json desde el .json original
+scripts/convert-seed.py       regenera data/seed.json desde el .json original
+scripts/migrar-a-sql.py       convierte el seed en db/10-datos.sql
+scripts/verificar-migracion.py  prueba la migración entera contra un Postgres local
+scripts/probar-store.mjs      ejercita js/store.js en Node, sin navegador
+scripts/probar-api.py         prueba la base por HTTP, como la usa el navegador
 ```
 
 ## Los tres métodos para armar el setlist
@@ -344,19 +354,33 @@ usa un driver con dos métodos, `read()` y `write(state)`. Hay dos:
 
 - **`LocalDriver`** — `localStorage`. Es el de arranque: no hay que configurar nada
   pero los datos son de ese navegador.
-- **`SupabaseDriver`** (`js/drivers/supabase.js`) — una base compartida, para que
-  entren varios y editen lo mismo. Habla con la API REST de Supabase por `fetch`,
-  sin SDK, así el sitio sigue sin dependencias.
+- **`PostgresDriver`** (`js/drivers/postgres.js`) — una base compartida en
+  Postgres, para que entren varios y editen lo mismo. Habla con la API REST de
+  Supabase por `fetch`, sin SDK, así el sitio sigue sin dependencias.
 
-En **Datos → Base compartida** están los cuatro pasos y el SQL para copiar. Una vez
-conectada, todo lo que edites se guarda ahí y cualquiera con el link ve lo mismo.
+En **Datos → Base compartida** están los pasos. Una vez conectada, todo lo que
+edites se guarda ahí y cualquiera con el link ve lo mismo.
 
-**Cómo evita que se pisen.** No guarda un documento gigante: parte el estado en
-`catalogo` (temas, personas, categorías) y **una fila por jam**. Así dos personas
-editando jams distintas no se tocan, y cada guardado escribe solo lo que cambió.
-Cada 8 segundos compara las fechas de las filas —una consulta muy barata— y si
-alguien tocó algo, refresca la vista con un aviso. Si estás escribiendo en un campo
-o con un diálogo abierto, espera a que termines.
+**Cómo evita que se pisen.** No manda un documento gigante: parte el estado en
+`catalogo` (temas, personas, categorías) y **una jam por vez**. Así dos personas
+editando jams distintas no se tocan, y cada guardado manda solo lo que cambió.
+
+Para enterarse de lo que hacen los demás hay un websocket contra Supabase
+Realtime que escucha una sola tabla: `revision`, que es una fila con un contador.
+Por el socket **no viaja ni un dato del repertorio** — el aviso dice "algo
+cambió" y la app vuelve a leer por la vía de siempre, que ya pasa por los
+permisos. El aviso llega en unos 100 ms. Si el socket no levanta o se cae, el
+sondeo de siempre sigue ahí como red (cada 8 s sin realtime, cada 60 s con él).
+
+Si estás escribiendo en un campo o con un diálogo abierto, la vista no se
+refresca hasta que termines.
+
+**Y cuando igual chocan.** Realtime achica la ventana, no la cierra: si dos
+guardan la misma jam en el mismo segundo, alguien tiene que perder. Por eso cada
+jam tiene un número de `version` que sube en cada guardado. Quien escribe manda
+el que leyó, y si no coincide **la base rechaza la escritura** (HTTP 409) en vez
+de aceptarla y borrar lo del otro en silencio. La app pregunta qué versión queda:
+traer la del otro, o pisarla.
 
 Si la base no responde al arrancar, la app sigue andando con los datos del
 navegador y te lo dice, en vez de quedarse en blanco.
@@ -364,6 +388,138 @@ navegador y te lo dice, en vez de quedarse en blanco.
 En **Datos** también están el respaldo completo en JSON (exportar e importar), la
 exportación de DBSongs a CSV y el importador de temas por CSV o pegado desde Excel
 / Google Sheets.
+
+## La base
+
+Del lado del navegador el estado sigue siendo un objeto grande. Del lado de la
+base son doce tablas, y la traducción la hace Postgres: `app_estado()` devuelve el
+estado con la forma que espera `store.js`, y `guardar_catalogo` / `guardar_jam`
+reciben esa misma forma y la desarman en filas. Por eso el paso a SQL no obligó a
+tocar ninguna pantalla.
+
+```
+db/01-esquema.sql      tablas, tipos e índices
+db/02-vistas.sql       lo derivado: historial, músicos de cada jam, contadores
+db/03-app-estado.sql   la función que le arma el estado a la app
+db/04-escritura.sql    las funciones de guardado
+db/05-permisos.sql     magic link + lista de miembros (RLS)
+db/06-concurrencia.sql control de versión por jam + realtime
+db/10-datos.sql        el repertorio y las jams históricas, generado
+```
+
+**La regla que ordena el esquema: nada que se pueda calcular se guarda.** El
+historial de cada tema (`song.jams[]`), los músicos de cada jam y los contadores
+de cada persona eran campos guardados que había que mantener a mano, y los tres
+se habían desincronizado: los contadores de jams estaban mal en 35 de 101
+personas, y la lista de músicos estaba incompleta en 17 de 26 jams. Ahora son
+vistas. La franja de tempo es una columna generada desde el BPM.
+
+El setlist es una sola tabla que se referencia a sí misma: los temas de un medley
+son filas hijas con `parent_id` apuntando al medley, así el orden y los cantantes
+se resuelven igual en los dos niveles.
+
+### Sembrarla
+
+```bash
+python3 scripts/migrar-a-sql.py          # o: ... respaldo.json, desde un export
+```
+
+Genera `db/10-datos.sql`. El script es estricto: si un nombre no resuelve a una
+persona o un `songId` no existe, aborta en vez de dejar la base a medias.
+
+Después, contra el proyecto de Supabase — **por el puerto 5432, no el 6543**: el
+pooler en modo transacción no aguanta bien DDL ni `create extension`.
+
+```bash
+export PGPASSWORD='...'
+CONN="postgresql://postgres.<ref>@aws-0-<region>.pooler.supabase.com:5432/postgres"
+for f in 01-esquema 02-vistas 03-app-estado 04-escritura 05-permisos 10-datos 11-miembros; do
+  psql "$CONN" -v ON_ERROR_STOP=1 -f "db/$f.sql" || break
+done
+```
+
+`db/00-local.sql` **no** se corre en Supabase: es un andamio que imita el esquema
+`auth` para poder probar los permisos en un Postgres de escritorio.
+
+### Lo que hay que tocar en el panel de Supabase
+
+Tres cosas que no se pueden hacer por SQL:
+
+1. **Authentication → URL Configuration**: agregar a *Redirect URLs* las
+   direcciones desde las que se entra — `http://localhost:8090` para desarrollo y
+   la de producción. Si no están, el link del mail te manda a la Site URL.
+2. **Authentication → Providers**: dejar Email prendido. No hace falta
+   contraseña; se usa solo el magic link.
+3. **Ojo con el SMTP que viene incluido**: manda muy pocos mails por hora. Para
+   una banda entrando el mismo día, conviene configurar un SMTP propio en
+   *Project Settings → Auth → SMTP*.
+
+Quién entra se maneja por SQL, en `db/11-miembros.sql`. Cualquiera puede pedir un
+link, pero si su mail no está en `miembro` la base no le devuelve ni una fila.
+
+### La clave en el código
+
+`js/config.js` trae la URL del proyecto y la clave publicable
+(`sb_publishable_…`). Está pensada para vivir en el navegador: identifica al
+proyecto y nada más. Comprobado contra este proyecto — con esa clave y sin
+sesión, la base contesta `permission denied` a todo, tablas y funciones.
+
+Lo único que sí habilita es pedir un magic link, y el SMTP incluido manda pocos
+mails por hora. Por eso conviene, una vez que la banda entró al menos una vez,
+apagar *Authentication → Sign Ups* en el panel: desde ahí solo pueden entrar los
+que ya tienen cuenta.
+
+Quien quiera apuntar a otro proyecto lo hace desde Datos → Base compartida, y eso
+pisa lo de `config.js`. El botón "trabajar solo en este navegador" deja una marca
+explícita, así que la config de fábrica no vuelve a aplicarse sola.
+
+### Quién puede entrar
+
+Antes la política era `for all using (true)` con la clave anónima en el
+navegador: cualquiera con la URL podía leer y borrar todo. Ahora la clave
+anónima identifica al proyecto y el JWT del usuario identifica a la persona, y
+las policies miran el segundo.
+
+| Quién sos | Qué ves |
+|---|---|
+| Sin sesión (solo la clave anónima) | `permission denied` en todo |
+| Logueado pero fuera de `miembro` | cero filas, y no podés escribir |
+| Logueado y en `miembro` | todo |
+
+El código de cada jam se guarda con `crypt()`, nunca en claro.
+
+### Probarla
+
+```bash
+createdb jamportal_test
+python3 scripts/verificar-migracion.py
+```
+
+Levanta el esquema de cero en un Postgres local y corre 34 comprobaciones en seis
+bloques: que `app_estado()` devuelve lo mismo que `data/seed.json` (los 645 ítems
+de setlist tienen que salir idénticos), que leer → escribir → leer no pierde ni
+inventa nada, que no quedan referencias rotas, y que los permisos hacen lo que
+dicen. Sale con código 1 si algo no cierra.
+
+Y la que prueba lo que ese script no puede ver, contra el proyecto de verdad:
+
+```bash
+export JAMPORTAL_CONN='postgresql://postgres.<ref>@...:5432/postgres'
+export JAMPORTAL_URL='https://<ref>.supabase.co'
+export JAMPORTAL_KEY='sb_publishable_...'
+python3 scripts/probar-api.py
+```
+
+Crea un usuario descartable directo en la base (no manda mails, para no gastar el
+cupo), prueba leer, escribir, el conflicto de versión y los permisos, y lo borra.
+
+**Una advertencia sobre el alcance del verificador local:** prueba por SQL, y hay cosas
+que solo se rompen por HTTP. Supabase carga `supautils` en la conexión de
+PostgREST, que rechaza los `DELETE` sin `WHERE` — por `psql` pasan igual, así que
+un round-trip por SQL les da el visto bueno y después la app falla en producción
+con `DELETE requires a WHERE clause`. Por eso el bloque 5 es un lint sobre los
+`.sql` en vez de una consulta, y por eso conviene probar el camino de escritura
+también contra la API real antes de cantar victoria.
 
 ## Regenerar el repertorio base
 
