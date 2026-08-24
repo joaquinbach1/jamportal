@@ -1477,10 +1477,10 @@ export function vistaEditor(jamId) {
       onclick: () => { prepararImpresion(); location.hash = '#/live/' + jam.id; },
       title: 'La lista en pantalla grande para seguirla durante la jam',
     }, '▶ LIVE VIEW'),
-    h('button.btn.sm', {
+    h('button.btn.letras', {
       onclick: () => { location.hash = '#/lyrics/' + jam.id; },
       title: 'Las letras de todos los temas, en orden',
-    }, '📖 Lyrics'),
+    }, '📖 LYRICS VIEW'),
     btnCifras,
     btnTempos,
     h('button.btn.sm', { onclick: () => copiar(comoTexto()) }, '📋 Copiar lista'),

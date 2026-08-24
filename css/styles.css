@@ -36,6 +36,8 @@
   --scroll: #2c2c38;          --scroll-hover: #3a3a48;
   --hover: #24242f;           --linea-fuerte: #35354a;
   --acc-hover: #ffd76e;       --acc-tinte: #17140b;
+  --acc-2-ink: #2a0713;       --acc-2-hover: #ff7da3;
+  --acc-2-sombra: rgba(255, 92, 138, .24);
   --acc-tinte-2: #1e1a0f;     --acc-linea: #3d3520;
   --foco: #4a4a63;            --foco-fondo: #12121a;
   --err-linea: #40252b;       --err-fondo: #2a1618;
@@ -91,6 +93,8 @@
   --scroll: #cfcfc7;          --scroll-hover: #b8b8ae;
   --hover: #e8e8e3;           --linea-fuerte: #c2c2b8;
   --acc-hover: #8d6408;       --acc-tinte: #fdf5e0;
+  --acc-2-ink: #fff5f8;       --acc-2-hover: #a4144c;
+  --acc-2-sombra: rgba(194, 24, 91, .20);
   --acc-tinte-2: #f8ecd0;     --acc-linea: #e4d3a0;
   --foco: #a8760a;            --foco-fondo: #ffffff;
   --err-linea: #f0c8c8;       --err-fondo: #fdeeee;
@@ -259,6 +263,15 @@ h2.sec {
   box-shadow: 0 2px 14px rgba(255,201,77,.22);
 }
 .btn.vivo:hover { background: var(--acc-hover); border-color: var(--acc-hover); }
+
+/* Lyrics view: mismo peso que LIVE VIEW, otro color, para no confundirlos */
+.btn.letras {
+  background: var(--acc-2); color: var(--acc-2-ink); border-color: var(--acc-2);
+  font-weight: 750; font-size: 14.5px; letter-spacing: .3px;
+  padding: 10px 20px;
+  box-shadow: 0 2px 14px var(--acc-2-sombra);
+}
+.btn.letras:hover { background: var(--acc-2-hover); border-color: var(--acc-2-hover); }
 
 .icon-btn {
   background: none; border: none; cursor: pointer;
@@ -751,14 +764,9 @@ body.lista-compacta .editor-grid .card + .card { margin-top: 10px; }
 /* ============================================================
    Letras — el setlist a la izquierda, la letra a la derecha
    ============================================================ */
-.ly-grid {
-  display: grid; grid-template-columns: minmax(240px, 320px) 1fr;
-  gap: 18px; align-items: start;
-}
 .ly-lista {
   display: flex; flex-direction: column; gap: 2px;
-  max-height: calc(100vh - 190px); overflow-y: auto;
-  padding-right: 4px;
+  max-width: 900px;
 }
 .ly-item {
   display: flex; align-items: baseline; gap: 8px;
@@ -796,29 +804,48 @@ body.lista-compacta .editor-grid .card + .card { margin-top: 10px; }
   padding: 5px 9px 1px;
 }
 
-.ly-panel {
-  background: var(--panel); border: 1px solid var(--line-soft);
-  border-radius: var(--r); padding: 20px 24px;
-  min-height: 320px;
+/* la letra tapando todo: para leerla de lejos, arriba del escenario */
+body.letra-abierta { overflow: hidden; }
+.ly-full {
+  position: fixed; inset: 0; z-index: 120;
+  background: var(--bg);
+  display: flex; flex-direction: column;
 }
-.ly-head {
+.ly-barra {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 16px; flex-wrap: wrap;
-  padding-bottom: 12px; margin-bottom: 16px;
+  padding: 14px 22px 12px;
   border-bottom: 1px solid var(--line-soft);
+  background: var(--panel);
 }
-.ly-head h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
-.ly-artista { color: var(--txt-2); font-size: 13px; margin-top: 3px; }
-.ly-tam { display: flex; gap: 6px; flex: none; }
+.ly-quien { min-width: 0; }
+.ly-barra h2 {
+  margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ly-artista { color: var(--txt-2); font-size: 13.5px; margin-top: 2px; }
+.ly-controles { display: flex; align-items: center; gap: 8px; flex: none; }
+.ly-controles .icon-btn { font-size: 20px; line-height: 1; padding: 2px 8px; }
+.ly-controles .icon-btn:disabled { opacity: .3; cursor: default; }
+.ly-cerrar {
+  background: none; border: 1px solid var(--line); border-radius: 6px;
+  color: var(--txt-2); cursor: pointer;
+  width: 32px; height: 32px; flex: none;
+  font-size: 15px; line-height: 1;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.ly-cerrar:hover { background: var(--panel-2); color: var(--txt); border-color: var(--linea-fuerte); }
+.ly-scroll { flex: 1; overflow-y: auto; padding: 26px 22px 60px; }
 .ly-texto {
-  white-space: pre-wrap; line-height: 1.75;
-  color: var(--txt); max-width: 62ch;
+  white-space: pre-wrap; line-height: 1.7;
+  color: var(--txt); max-width: 46ch; margin: 0 auto;
 }
-.ly-texto.sin { color: var(--txt-2); white-space: normal; }
+.ly-texto.sin { color: var(--txt-2); white-space: normal; max-width: 52ch; }
 
-@media (max-width: 900px) {
-  .ly-grid { grid-template-columns: 1fr; }
-  .ly-lista { max-height: 240px; }
+@media (max-width: 700px) {
+  .ly-barra { padding: 10px 14px; }
+  .ly-barra h2 { font-size: 18px; }
+  .ly-scroll { padding: 18px 14px 50px; }
 }
 
 /* --- inserción --- */
