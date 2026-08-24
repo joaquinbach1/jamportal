@@ -16,6 +16,7 @@ import { vistaSingers } from './views/singers.js';
 import { vistaStats }   from './views/stats.js';
 import { vistaData }    from './views/data.js';
 import { vistaLogin, hayQueEntrar } from './views/login.js';
+import { montarUsuario } from './views/usuario.js';
 
 const view = $('#view');
 
@@ -159,10 +160,23 @@ $('#temaSlot').appendChild(botonTema(h));
     return;
   }
 
+  montarUsuario($('#usuarioSlot'));
+
   function pintarBadge() {
-    $('#storageBadge').textContent = `${store.driverName} · ${store.repertorio.length} temas`
-      + (store.ideas.length ? ` · ${store.ideas.length} ideas` : '')
-      + (store.enLaNube ? (realtimeConectado() ? ' · ● en vivo' : ' · ○ sondeando') : '');
+    // El punto va como título y no como texto: escrito entero no entra en
+    // el ancho del sidebar y parte el badge en dos renglones.
+    const vivo = realtimeConectado();
+    $('#storageBadge').innerHTML = '';
+    $('#storageBadge').append(
+      `${store.driverName} · ${store.repertorio.length} temas`
+      + (store.ideas.length ? ` · ${store.ideas.length} ideas` : ''),
+      store.enLaNube
+        ? h('span.vivo' + (vivo ? '.on' : ''), {
+            title: vivo
+              ? 'En vivo: los cambios de los demás llegan al instante'
+              : 'Sin conexión en vivo: se consulta cada 8 segundos',
+          }, vivo ? ' ●' : ' ○')
+        : '');
   }
   pintarBadge();
   if (store.enLaNube) setInterval(pintarBadge, 4000);

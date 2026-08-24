@@ -53,6 +53,7 @@ js/docx.js            escritor de .docx (ZIP + OOXML) sin librerías
 js/tempo.js           el BPM de un tema: chip editable, sugerencia, franja
 js/app.js             router por hash
 js/views/login.js     la puerta: solo aparece contra la base compartida
+js/views/usuario.js   el chip con tu mail y el menú para salir
 js/views/             una vista por pantalla
 scripts/convert-seed.py       regenera data/seed.json desde el .json original
 scripts/migrar-a-sql.py       convierte el seed en db/10-datos.sql
@@ -492,7 +493,7 @@ select crear_miembro('quien@sea.com', 'una-clave-larga');  -- cuenta + miembro
 select poner_clave('quien@sea.com', 'otra-clave');         -- resetear
 ```
 
-Cada uno se la cambia después desde **Datos → Cambiar contraseña**.
+Cada uno se la cambia después desde el menú de su mail, abajo a la izquierda.
 
 La lista **no** se versiona: son mails de personas y este repo es público.
 `db/11-miembros.sql` es solo la plantilla con los comandos.
