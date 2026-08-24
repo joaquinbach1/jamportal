@@ -125,9 +125,9 @@ export function nombreEnsayo(e, i) {
 /* ============================================================
    Diálogo: convocar músicos a un ensayo
    ------------------------------------------------------------
-   Si la jam tiene más de un ensayo, arriba quedan todos para
-   moverse entre ellos sin cerrar, ver cuántos van en cada uno y
-   copiar la convocatoria de otro.
+   El ensayo ya viene elegido: se abre desde el botón Convocatoria
+   de ese ensayo. Acá solo se dice quién viene y a qué hora, y —si
+   hay otros ensayos con gente— se puede traer su lista de una.
    ============================================================ */
 export function dialogoConvocatoria(jam, ensayoInicial, alGuardar) {
   const ensayos = () => (jam.ensayos || []);
@@ -135,7 +135,6 @@ export function dialogoConvocatoria(jam, ensayoInicial, alGuardar) {
   if (!Array.isArray(ensayo.convocados)) ensayo.convocados = [];
 
   const lista = h('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px' } });
-  const selector = h('div');
   const encabezado = h('div');
   const copiarCont = h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' } });
   const accionesPie = h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' } });
@@ -155,29 +154,15 @@ export function dialogoConvocatoria(jam, ensayoInicial, alGuardar) {
   }
 
   function pintarSelector() {
-    clear(selector); clear(encabezado);
+    clear(encabezado);
     const todos = ensayos();
-    if (todos.length > 1) {
-      selector.append(
-        h('h2.sec', { style: { marginBottom: '8px' } }, `A qué ensayo convocás (${todos.length})`),
-        h('div.seg', {}, todos.map((e, i) => {
-          const cuantos = (e.convocados || []).length;
-          return h('button' + (e === ensayo ? '.on' : ''), {
-            onclick: () => {
-              ensayo = e;
-              if (!Array.isArray(ensayo.convocados)) ensayo.convocados = [];
-              pintarSelector(); pintar(); refrescarSelect();
-            },
-          }, nombreEnsayo(e, i) + (cuantos ? `  (${cuantos})` : ''));
-        })));
-    }
 
     const cuando = [
       ensayo.fecha ? fechaLinda(ensayo.fecha) : 'sin fecha',
       ensayo.hora ? (ensayo.horaFin ? `${ensayo.hora} a ${ensayo.horaFin}` : `desde ${ensayo.hora}`) : null,
       ensayo.lugar,
     ].filter(Boolean).join('  ·  ');
-    encabezado.append(h('div.dim', { style: { fontSize: '12px', marginTop: todos.length > 1 ? '8px' : '0' } }, cuando));
+    encabezado.append(h('div.dim', { style: { fontSize: '12px' } }, cuando));
 
     // los otros ensayos que ya tienen gente, para traerse su lista
     clear(copiarCont);
@@ -340,14 +325,13 @@ export function dialogoConvocatoria(jam, ensayoInicial, alGuardar) {
   }
 
   const m = modal({
-    title: (jam.ensayos || []).length > 1 ? 'Convocatoria a los ensayos' : 'Convocar al ensayo',
+    title: 'Convocar al ensayo del ' + nombreEnsayo(ensayo, ensayos().indexOf(ensayo)),
     wide: true,
     body: [
       h('div.method-hint', {},
         'Cada uno puede venir a distinta hora: poné el horario de citación al lado del nombre. ',
         '💬 abre WhatsApp y ✉️ el mail, con el mensaje ya escrito. El botón queda marcado cuando ya avisaste.'),
 
-      selector,
       encabezado,
 
       h('div.row', { style: { marginTop: '4px' } },
