@@ -6,6 +6,7 @@ import { store, norm } from '../store.js';
 import { h, frag, clear, field, toast, confirmar, descargar, copiar } from '../ui.js';
 import { PASOS_SQL } from '../drivers/postgres.js';
 import { dialogoClave } from './usuario.js';
+import { tarjetaMiembros } from './miembros.js';
 import { refrescar } from '../app.js';
 
 /* ---------- parser CSV / TSV ---------- */
@@ -294,6 +295,8 @@ export function vistaData() {
         fileJSON)),
 
     tarjetaNube(),
+
+    tarjetaMiembros(),
 
     h('div.card', {},
       h('div.card-head', {}, h('h3', {}, 'Actualizar el repertorio')),

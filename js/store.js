@@ -193,6 +193,10 @@ export const store = {
   get auth() { return auth; },
   /** Entraste bien, pero tu mail no está habilitado en esta base. */
   get sinPermiso() { return sinPermiso; },
+  /** ¿Podés manejar la lista de miembros? Lo dice la base, no el cliente. */
+  get esAdmin() { return !!state.esAdmin; },
+  /** El driver, para las operaciones que no pasan por el estado. */
+  get driver() { return driver; },
   get email() { return auth && auth.email; },
 
   /**

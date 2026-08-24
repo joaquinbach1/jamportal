@@ -38,6 +38,10 @@ select jsonb_build_object(
 
   'version', 3,
 
+  -- Si quien pregunta puede manejar la lista de miembros. Va acá y no en
+  -- una llamada aparte para que la app lo sepa al arrancar, sin pedirlo.
+  'esAdmin', soy_admin(),
+
   'categorias', (select coalesce(jsonb_agg(nombre order by orden), '[]'::jsonb)
                    from categoria),
 

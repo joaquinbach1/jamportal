@@ -167,6 +167,14 @@ export class PostgresDriver {
     return typeof n === 'number' && n !== this.revision;
   }
 
+  /* ---------- administrar la lista ----------
+     La base decide si quien llama puede: estas funciones comprueban por
+     su cuenta y devuelven 403 si no. El cliente no gana nada mintiendo. */
+  listarMiembros()             { return this.rpc('listar_miembros'); }
+  agregarMiembro(email, admin) { return this.rpc('agregar_miembro', { p_email: email, p_admin: !!admin }); }
+  sacarMiembro(email)          { return this.rpc('sacar_miembro', { p_email: email }); }
+  setAdmin(email, admin)       { return this.rpc('set_admin', { p_email: email, p_admin: !!admin }); }
+
   /** Cierra una jam guardando el hash del código, nunca el código. */
   async cerrarJam(jamId, codigo) {
     this.revision = await this.rpc('cerrar_jam', { jid: jamId, codigo });
