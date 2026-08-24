@@ -54,18 +54,36 @@ export function vistaLyrics(jamId) {
 
     const texto = h('div.ly-texto', { style: { fontSize: tam + 'rem' } }, 'Buscando la letra…');
 
+    const proxima = cantables[i + 1];
+
     poner(pantalla,
       h('div.ly-barra', {},
+        /* izquierda: volver al anterior y el tamaño de la letra */
+        h('div.ly-izq', {},
+          h('button.icon-btn', { title: 'Tema anterior (←)', disabled: i === 0, onclick: () => abrir(i - 1) }, '‹'),
+          h('span.ly-cuenta', {}, `${i + 1}/${cantables.length}`),
+          h('button.btn.xs', { title: 'Más chica', onclick: () => cambiarTam(-0.15) }, 'A−'),
+          h('button.btn.xs', { title: 'Más grande', onclick: () => cambiarTam(+0.15) }, 'A+')),
+
+        /* centro: el tema que estás cantando */
         h('div.ly-quien', {},
           h('h2', {}, song.titulo),
           h('div.ly-artista', {}, song.artista || '')),
-        h('div.ly-controles', {},
-          h('button.icon-btn', { title: 'Tema anterior (←)', disabled: i === 0, onclick: () => abrir(i - 1) }, '‹'),
-          h('span.dim', { style: { fontSize: '12px', fontFamily: 'var(--mono)' } }, `${i + 1}/${cantables.length}`),
-          h('button.icon-btn', { title: 'Tema siguiente (→)', disabled: i === cantables.length - 1, onclick: () => abrir(i + 1) }, '›'),
-          h('button.btn.xs', { title: 'Más chica', onclick: () => cambiarTam(-0.15) }, 'A−'),
-          h('button.btn.xs', { title: 'Más grande', onclick: () => cambiarTam(+0.15) }, 'A+'),
+
+        /* derecha: el que sigue, apagado, y la flecha para pasar */
+        h('div.ly-der', {},
+          proxima
+            ? h('button.ly-proxima', { title: 'Pasar al que sigue (→)', onclick: () => abrir(i + 1) },
+                h('span.ly-prox-rotulo', {}, 'sigue'),
+                h('span.ly-prox-t', {}, proxima.song.titulo),
+                h('span.ly-prox-a', {}, proxima.song.artista || ''))
+            : h('span.ly-prox-fin', {}, 'último tema'),
+          h('button.icon-btn.ly-flecha', {
+            title: 'Pasar al que sigue (→)', disabled: !proxima,
+            onclick: () => abrir(i + 1),
+          }, '›'),
           h('button.ly-cerrar', { title: 'Cerrar (Esc)', onclick: cerrar }, '✕'))),
+
       h('div.ly-scroll', {}, texto));
 
     pantalla.querySelector('.ly-scroll').scrollTop = 0;
