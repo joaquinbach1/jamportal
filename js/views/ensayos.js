@@ -129,10 +129,31 @@ export function nombreEnsayo(e, i) {
    de ese ensayo. Acá solo se dice quién viene y a qué hora, y —si
    hay otros ensayos con gente— se puede traer su lista de una.
    ============================================================ */
-export function dialogoConvocatoria(jam, ensayoInicial, alGuardar) {
-  const ensayos = () => (jam.ensayos || []);
+export function dialogoConvocatoria(jamInicial, ensayoInicial, alGuardar) {
+  /* Cuando llega una sincronización, el estado se reemplaza entero por
+     objetos nuevos traídos de la base, y los que teníamos agarrados acá
+     quedan huérfanos: seguías editando una copia muerta y lo que ponías
+     se perdía sin avisar — la hora de citación, por ejemplo, se veía en
+     el campo pero no llegaba al mensaje. Por eso los volvemos a buscar
+     antes de leer o escribir cualquier cosa. */
+  const jamId = jamInicial.id;
+  const posEnsayo = (jamInicial.ensayos || []).indexOf(ensayoInicial);
+
+  let jam = jamInicial;
   let ensayo = ensayoInicial;
-  if (!Array.isArray(ensayo.convocados)) ensayo.convocados = [];
+
+  function alDia() {
+    const j = store.jam(jamId);
+    if (j) {
+      jam = j;
+      const e = (j.ensayos || [])[posEnsayo];
+      if (e) ensayo = e;
+    }
+    if (!Array.isArray(ensayo.convocados)) ensayo.convocados = [];
+  }
+  alDia();
+
+  const ensayos = () => (jam.ensayos || []);
 
   const lista = h('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px' } });
   const encabezado = h('div');
@@ -154,6 +175,7 @@ export function dialogoConvocatoria(jam, ensayoInicial, alGuardar) {
   }
 
   function pintarSelector() {
+    alDia();
     clear(encabezado);
     const todos = ensayos();
 
@@ -186,6 +208,7 @@ export function dialogoConvocatoria(jam, ensayoInicial, alGuardar) {
    * dice a quién le toca.
    */
   function pintarPie() {
+    alDia();
     clear(accionesPie);
     // se recalcula en cada pintada Y en cada clic, para no usar una lista vieja
     const pendientes = () => ensayo.convocados.filter(c => !c.aviso);
@@ -221,6 +244,7 @@ export function dialogoConvocatoria(jam, ensayoInicial, alGuardar) {
   }
 
   function pintar() {
+    alDia();
     clear(lista);
     pintarPie();
     if (!ensayo.convocados.length) {
@@ -228,6 +252,10 @@ export function dialogoConvocatoria(jam, ensayoInicial, alGuardar) {
     }
 
     ensayo.convocados.forEach((c, i) => {
+      /* El de esta fila, buscado de nuevo: si entró una sincronización
+         entre que se dibujó y que la tocaste, `c` ya no es el que está
+         en la base. */
+      const vivo = () => { alDia(); return ensayo.convocados[i] || c; };
       const { telefono, email, persona } = contactoDe(c.nombre);
       const fila = h('div.conv-row', {},
         avatar(c.nombre),
@@ -248,28 +276,36 @@ export function dialogoConvocatoria(jam, ensayoInicial, alGuardar) {
         h('input', {
           type: 'time', value: c.hora || ensayo.hora || '', title: 'A qué hora tiene que estar',
           style: { width: '104px', flex: 'none' },
-          oninput: e => { c.hora = e.target.value; store.commit(); },
+          oninput: e => { vivo().hora = e.target.value; store.commit(); },
         }),
 
         input({
           value: c.instrumento || '', placeholder: 'qué toca',
           style: { width: '110px', flex: 'none', fontSize: '12.5px' },
-          oninput: e => { c.instrumento = e.target.value; store.commit(); },
+          oninput: e => { vivo().instrumento = e.target.value; store.commit(); },
         }),
 
         h('div', { style: { display: 'flex', gap: '2px', flex: 'none' } },
           h('button.icon-btn' + (c.aviso === 'wsp' ? '.avisado' : ''), {
             title: telefono ? `WhatsApp a ${telefono}` : 'WhatsApp (sin teléfono cargado: elegís el contacto)',
-            onclick: () => { abrirWhatsApp(jam, ensayo, c); c.aviso = 'wsp'; store.commit(); pintar(); pintarSelector(); },
+            onclick: () => {
+              const q = vivo();
+              abrirWhatsApp(jam, ensayo, q); q.aviso = 'wsp';
+              store.commit(); pintar(); pintarSelector();
+            },
           }, '💬'),
           h('button.icon-btn' + (c.aviso === 'mail' ? '.avisado' : ''), {
             title: email ? `Mail a ${email}` : 'Sin mail cargado — abrí la ficha para agregarlo',
             disabled: !email,
-            onclick: () => { abrirMail(jam, ensayo, c); c.aviso = 'mail'; store.commit(); pintar(); pintarSelector(); },
+            onclick: () => {
+              const q = vivo();
+              abrirMail(jam, ensayo, q); q.aviso = 'mail';
+              store.commit(); pintar(); pintarSelector();
+            },
           }, '✉️'),
           h('button.icon-btn.danger', {
             title: 'Sacar del ensayo',
-            onclick: () => { ensayo.convocados.splice(i, 1); store.commit(); pintar(); alGuardar && alGuardar(); },
+            onclick: () => { alDia(); ensayo.convocados.splice(i, 1); store.commit(); pintar(); alGuardar && alGuardar(); },
           }, '✕')),
       );
       lista.appendChild(fila);
