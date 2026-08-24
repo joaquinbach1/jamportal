@@ -857,6 +857,12 @@ body.lista-compacta .editor-grid .card + .card { margin-top: 10px; }
 .pasos li { margin-bottom: 8px; }
 .pasos b { color: var(--txt); }
 .pasos a { color: var(--acc); text-decoration: underline; }
+
+/* Los archivos SQL que hay que correr, adentro de un paso. Van con
+   números romanos para no competir con la numeración del paso padre. */
+.pasos-sql { margin: 8px 0 4px; padding-left: 22px; list-style: lower-roman; }
+.pasos-sql li { margin-bottom: 3px; font-size: 12.5px; }
+.pasos-sql code.mono { font-size: 11.5px; color: var(--txt); }
 pre.sql {
   background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--r-s);
   padding: 11px 13px; margin: 8px 0;
@@ -1297,3 +1303,43 @@ body.en-vivo { background: var(--live-fondo); }
   .chip, .cat-pill { border: 1px solid #ccc; color: #555 !important; background: #fff !important; }
   a[href]::after { content: none !important; }
 }
+
+/* ============================================================
+   La puerta (views/login.js)
+   Solo aparece contra la base compartida y sin sesión.
+   ============================================================ */
+body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { display: none; }
+
+.login { min-height: 78vh; display: grid; place-items: center; padding: 24px; }
+.login-caja {
+  width: 100%; max-width: 380px; text-align: center;
+  display: grid; gap: 14px; justify-items: center;
+}
+.login-logo { font-size: 40px; line-height: 1; }
+.login-caja h1 { margin: 0; font-size: 22px; letter-spacing: .04em; }
+.login-sub { margin: 0; font-size: 14px; color: var(--txt-2); line-height: 1.55; max-width: 34ch; }
+.login-form { display: flex; gap: 8px; width: 100%; margin-top: 6px; }
+.login-mail {
+  flex: 1; min-width: 0; padding: 10px 12px;
+  background: var(--panel); color: var(--txt);
+  border: 1px solid var(--line); border-radius: var(--r-s);
+  font-family: inherit; font-size: 14px;
+}
+.login-mail:focus { outline: none; border-color: var(--foco); background: var(--foco-fondo); }
+.login-mail:disabled { opacity: .6; }
+.login-aviso { min-height: 20px; width: 100%; }
+.login-msg {
+  font-size: 13px; line-height: 1.55; padding: 9px 11px;
+  border-radius: var(--r-s); border: 1px solid var(--line); color: var(--txt-2);
+}
+.login-msg.ok  { border-color: var(--ok-linea);  background: var(--ok-fondo);  color: var(--ok); }
+.login-msg.err { border-color: var(--err-linea); background: var(--err-fondo); color: var(--err); }
+.login-pie {
+  display: grid; gap: 8px; justify-items: center; margin-top: 10px;
+  font-size: 11.5px; font-family: var(--mono);
+}
+.nube-sesion {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 8px; font-size: 12.5px; color: var(--txt-2);
+}
+.nube-sesion b { color: var(--txt); font-family: var(--mono); font-size: 12px; }

@@ -3,7 +3,7 @@
    ------------------------------------------------------------
    Toda la app habla con `store`, nunca con el almacenamiento
    directo. Hay dos drivers con la misma interfaz (read / write):
-   `LocalDriver` (este navegador) y `SupabaseDriver` (base
+   `LocalDriver` (este navegador) y `PostgresDriver` (base
    compartida). Se elige al arrancar y ninguna vista se entera.
    ============================================================ */
 
@@ -11,6 +11,8 @@ const KEY = 'jamportal.v1';
 const KEY_NUBE = 'jamportal.nube';   // { url, key } de la base compartida
 const LUGAR_POR_DEFECTO = 'Portal';   // casi todas las jams son ahí
 const SEED_URL = 'data/seed.json';
+
+import { NUBE } from './config.js';
 
 /* ---------- driver: localStorage ---------- */
 class LocalDriver {
@@ -35,6 +37,7 @@ class LocalDriver {
    vamos contra ella, y si no, contra el navegador. */
 let driver = new LocalDriver(KEY);
 let sondeo = null;
+let auth = null;      // la sesión, solo cuando trabajamos contra la nube
 
 let state = {
   version: 1,
@@ -51,9 +54,24 @@ let saveTimer = null;
 
 function emit() { listeners.forEach(fn => fn()); }
 
+/* Jams que hay que guardar pisando lo que haya, porque quien edita ya
+   decidió que su versión gana. Se vacía en cuanto se usa. */
+let aPisar = new Set();
+
 function persist() {
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => driver.write(state).catch(e => console.error('No se pudo guardar', e)), 120);
+  saveTimer = setTimeout(async () => {
+    const pisar = aPisar;
+    aPisar = new Set();
+    try {
+      await driver.write(state, pisar);
+    } catch (e) {
+      // Un choque no es un error a loguear y olvidar: alguien tiene que
+      // decidir qué versión queda, y eso no lo puede decidir el store.
+      if (e.conflicto && alChocar) alChocar(e);
+      else console.error('No se pudo guardar', e);
+    }
+  }, 120);
 }
 
 function touch() { persist(); emit(); }
@@ -62,31 +80,72 @@ function touch() { persist(); emit(); }
    Cada tanto preguntamos si alguien más tocó algo. Es solo una consulta de
    ids y fechas, así que es barata. Si hay novedades, avisamos y la vista se
    refresca — salvo que estés escribiendo en un campo, para no interrumpirte. */
-const SONDEO_MS = 8000;
+const SONDEO_MS = 8000;         // sin realtime, este es el ritmo
+const SONDEO_RED = 60_000;      // con realtime, el sondeo es solo una red
+const TIC_MS = 2000;
+
 let alSincronizar = null;
 let alCaerNube = null;
+let alChocar = null;
+let rt = null;                  // el websocket, si levantó
+let ultimoSondeo = 0;
 
 export function alHaberCambiosAjenos(fn) { alSincronizar = fn; }
 export function alFallarNube(fn) { alCaerNube = fn; }
+/** Se llama cuando otro guardó la misma jam mientras vos la editabas. */
+export function alChocarConOtro(fn) { alChocar = fn; }
+export function realtimeConectado() { return !!(rt && rt.conectado); }
 function avisarCaida(msg) { if (alCaerNube) alCaerNube(msg); }
 
-function detenerSondeo() { clearInterval(sondeo); sondeo = null; }
+function detenerSondeo() {
+  clearInterval(sondeo); sondeo = null;
+  if (rt) { rt.desconectar(); rt = null; }
+}
 
-function arrancarSondeo() {
+/** Trae lo que hayan cambiado otros. Lo usan el websocket y el sondeo. */
+async function traerCambios() {
+  try {
+    if (!driver.hayCambiosAjenos || !(await driver.hayCambiosAjenos())) return false;
+    const remoto = await driver.read();
+    if (!remoto) return false;
+    state = { ...state, ...remoto };
+    emit();
+    if (alSincronizar) alSincronizar();
+    return true;
+  } catch (e) {
+    console.warn('No pude sincronizar:', e.message);
+    return false;
+  }
+}
+
+async function arrancarSondeo() {
   detenerSondeo();
-  sondeo = setInterval(async () => {
-    if (document.hidden || !driver.hayCambiosAjenos) return;
+
+  /* Realtime avisa en el momento; el sondeo queda igual, pero espaciado,
+     porque el websocket se puede caer sin que nos enteremos. */
+  if (auth) {
     try {
-      if (!(await driver.hayCambiosAjenos())) return;
-      const remoto = await driver.read();
-      if (!remoto) return;
-      state = { ...state, ...remoto };
-      emit();
-      if (alSincronizar) alSincronizar();
+      const { Realtime } = await import('./realtime.js');
+      const cfg = store.configNube();
+      rt = new Realtime({
+        url: cfg.url, key: cfg.key, auth,
+        alCambiar: () => { if (!document.hidden) traerCambios(); },
+      });
+      await rt.conectar();
     } catch (e) {
-      console.warn('No pude sincronizar:', e.message);
+      console.warn('Realtime no levantó, sigo con el sondeo:', e.message);
+      rt = null;
     }
-  }, SONDEO_MS);
+  }
+
+  sondeo = setInterval(async () => {
+    if (document.hidden) return;
+    const cada = (rt && rt.conectado) ? SONDEO_RED : SONDEO_MS;
+    if (Date.now() - ultimoSondeo < cada) return;
+    ultimoSondeo = Date.now();
+    if (rt) rt.refrescarToken();
+    await traerCambios();
+  }, TIC_MS);
 }
 
 export function uid(prefix = 'x') {
@@ -104,7 +163,13 @@ export function norm(s) {
     .trim();
 }
 
-/** Franja de tempo según la convención del repertorio. */
+/**
+ * Franja de tempo según la convención del repertorio.
+ *
+ * En la base es una columna generada, así que el valor autoritativo lo
+ * calcula Postgres. Esto queda para pintar la franja en el acto, sin
+ * esperar a releer: lo que la app manda en `franja` se ignora al guardar.
+ */
 export function franjaDeBpm(bpm) {
   const n = parseInt(bpm, 10);
   if (!n) return null;
@@ -123,10 +188,76 @@ export const store = {
   get driverName() { return driver.name; },
   get enLaNube() { return driver.name === 'nube'; },
 
-  /** Config de la base compartida, si está puesta. */
+  /** La sesión, si estamos contra la nube. */
+  get auth() { return auth; },
+  get email() { return auth && auth.email; },
+
+  /**
+   * Guarda a qué base apuntamos, sin conectarse.
+   *
+   * Va separado de conectarNube() por un problema de orden: validar la
+   * conexión ahora requiere sesión, y para conseguir sesión hay que
+   * saber contra qué proyecto pedirla. Así que primero se guarda el
+   * destino, después se entra, y recién ahí se lee.
+   */
+  guardarConfigNube({ url, key }) {
+    const limpia = (url || '').trim().replace(/\/+$/, '');
+    if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(limpia)) {
+      throw new Error('La URL tiene que ser https://xxxx.supabase.co');
+    }
+    // Dos formatos conviven: el nuevo `sb_publishable_…` y el JWT `anon`
+    // de siempre, que empieza con `ey`. Los dos sirven.
+    const k = (key || '').trim();
+    if (!k.startsWith('sb_publishable_') && !k.startsWith('ey')) {
+      throw new Error('Esa no parece la clave publicable (sb_publishable_…) ni la anon (ey…)');
+    }
+    localStorage.setItem(KEY_NUBE, JSON.stringify({ url: limpia, key: k }));
+    return { url: limpia, key: k };
+  },
+
+  /**
+   * Prepara la sesión sin conectarse todavía. La usa la pantalla de
+   * entrada, que necesita poder mandar el mail antes de que haya con
+   * qué leer la base.
+   */
+  async prepararAuth() {
+    const nube = this.configNube();
+    if (!nube) return null;
+    if (!auth) {
+      const { Auth } = await import('./auth.js');
+      auth = new Auth(nube);
+    }
+    return auth;
+  },
+
+  /** Cierra la sesión y vuelve a la pantalla de entrada. */
+  cerrarSesion() {
+    if (auth) auth.cerrarSesion();
+    detenerSondeo();
+  },
+
+  /**
+   * A qué base apuntamos. Gana lo que haya en este navegador; si no
+   * hay nada, el proyecto que viene configurado en js/config.js.
+   */
   configNube() {
-    try { return JSON.parse(localStorage.getItem(KEY_NUBE) || 'null'); }
-    catch { return null; }
+    let propia = null;
+    try { propia = JSON.parse(localStorage.getItem(KEY_NUBE) || 'null'); }
+    catch { /* config corrupta: seguimos con la de fábrica */ }
+
+    // Marca explícita de "quiero trabajar solo en este navegador". Hace
+    // falta porque con una base de fábrica no alcanza con borrar la
+    // config: volvería a caer en ella en el próximo arranque.
+    if (propia && propia.local) return null;
+
+    if (propia && propia.url && propia.key) return propia;
+    return (NUBE && NUBE.url && NUBE.key) ? NUBE : null;
+  },
+
+  /** ¿Está apuntando a otra base distinta de la de fábrica? */
+  get nubePropia() {
+    const c = this.configNube();
+    return !!(c && NUBE && c.url !== NUBE.url);
   },
 
   /**
@@ -134,9 +265,11 @@ export const store = {
    * en este navegador como contenido inicial (para el primero que conecta).
    */
   async conectarNube({ url, key }, { subirLocal = false } = {}) {
-    const { SupabaseDriver } = await import('./drivers/supabase.js');
-    const nuevo = new SupabaseDriver({ url, key });
-    const filas = await nuevo.probar();          // valida credenciales y tabla
+    const { PostgresDriver } = await import('./drivers/postgres.js');
+    const { Auth } = await import('./auth.js');
+    auth = new Auth({ url, key });
+    const nuevo = new PostgresDriver({ url, key, auth });
+    const filas = await nuevo.probar();          // valida credenciales y permisos
 
     if (!filas || subirLocal) {
       await nuevo.write(state);                  // sembramos la base
@@ -154,11 +287,26 @@ export const store = {
 
   /** Vuelve a trabajar solo en este navegador (no borra nada de la nube). */
   desconectarNube() {
-    localStorage.removeItem(KEY_NUBE);
+    localStorage.setItem(KEY_NUBE, JSON.stringify({ local: true }));
+    if (auth) { auth.cerrarSesion(); auth = null; }
     detenerSondeo();
     driver = new LocalDriver(KEY);
     driver.write(state);
     emit();
+  },
+
+  /** Deshace el "trabajar solo acá" y vuelve a la base de la banda. */
+  volverALaNube() {
+    localStorage.removeItem(KEY_NUBE);
+  },
+
+  /**
+   * Guarda una jam pisando lo que haya en la base. Es lo que se elige
+   * cuando hubo un choque y quien edita decide que su versión queda.
+   */
+  pisarJam(jamId) {
+    aPisar.add(jamId);
+    touch();
   },
 
   /** Trae los cambios que hicieron otros. */
@@ -175,8 +323,10 @@ export const store = {
     const nube = this.configNube();
     if (nube) {
       try {
-        const { SupabaseDriver } = await import('./drivers/supabase.js');
-        driver = new SupabaseDriver(nube);
+        const { PostgresDriver } = await import('./drivers/postgres.js');
+        const { Auth } = await import('./auth.js');
+        auth = new Auth(nube);
+        driver = new PostgresDriver({ ...nube, auth });
         const remoto = await driver.read();
         if (remoto) {
           state = { ...state, ...remoto };
@@ -308,41 +458,6 @@ export const store = {
       && (j.items || []).some(it => it.tipo === 'medley'
         ? (it.songs || []).some(x => x.songId === id)
         : it.songId === id));
-  },
-
-  /**
-   * Pasa a repertorio lo que ya se tocó.
-   *
-   * Cuando la fecha de una jam propia queda atrás, sus temas cuentan como
-   * tocados: se les suma esa jam al historial y, si eran ideas, dejan de serlo.
-   * Es idempotente y se autocorrige — si sacaste un tema de una lista después
-   * de la fecha, también le saca esa jam del historial.
-   */
-  consolidarJamsPasadas() {
-    const nombresHistoricos = new Set(state.jams.filter(j => j.historica).map(j => j.nombre));
-    let promovidas = 0, sumadas = 0;
-    const graduados = [];
-
-    for (const jam of this.jamsPasadas()) {
-      const etiqueta = (jam.nombre || '').trim();
-      if (!etiqueta || nombresHistoricos.has(etiqueta)) continue;   // no pisamos las históricas
-
-      const dentro = new Set((jam.items || []).flatMap(it =>
-        it.tipo === 'medley' ? (it.songs || []).map(x => x.songId) : [it.songId]).filter(Boolean));
-
-      for (const s of state.songs) {
-        if (!Array.isArray(s.jams)) s.jams = [];
-        const tiene = s.jams.includes(etiqueta);
-        if (dentro.has(s.id)) {
-          if (!tiene) { s.jams.push(etiqueta); sumadas++; }
-          if (s.esIdea) { delete s.esIdea; promovidas++; graduados.push(s.titulo); }
-        } else if (tiene) {
-          s.jams = s.jams.filter(x => x !== etiqueta);              // lo sacaron de la lista
-        }
-      }
-    }
-    if (promovidas || sumadas) touch();
-    return { promovidas, sumadas, graduados };
   },
 
   song(id)   { return state.songs.find(s => s.id === id); },
@@ -481,9 +596,10 @@ export const store = {
   updateJam(id, patch) {
     const j = this.jam(id);
     if (!j) return null;
-    const cambiaFecha = patch.fecha !== undefined && patch.fecha !== j.fecha;
     Object.assign(j, patch);
-    if (cambiaFecha) this.consolidarJamsPasadas();   // pudo quedar en el pasado
+    // Si la fecha quedó en el pasado, los temas de la lista cuentan como
+    // tocados: eso lo resuelve la base al guardar (guardar_jam), y el
+    // historial de cada tema sale de la vista song_jam.
     touch();
     return j;
   },
