@@ -1319,6 +1319,8 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
 .login-caja h1 { margin: 0; font-size: 22px; letter-spacing: .04em; }
 .login-sub { margin: 0; font-size: 14px; color: var(--txt-2); line-height: 1.55; max-width: 34ch; }
 .login-form { display: flex; gap: 8px; width: 100%; margin-top: 6px; }
+.login-campos { display: grid; gap: 8px; width: 100%; margin-top: 6px; }
+.login-campos .btn { margin-top: 2px; }
 .login-mail {
   flex: 1; min-width: 0; padding: 10px 12px;
   background: var(--panel); color: var(--txt);

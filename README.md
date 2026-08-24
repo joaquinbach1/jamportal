@@ -9,17 +9,22 @@ sin dependencias. Se sube a Vercel como está.
 
 ## Online
 
-**<https://jamportal.vercel.app>** — publicado en Vercel, entra cualquiera con el link.
+**<https://jamportal-gules.vercel.app>** — la versión con base de datos.
 
-Para que todos vean y editen **lo mismo** falta un paso de 5 minutos: crear la base
-compartida. Está explicado adentro de la app, en **Datos → Base compartida**.
-Sin ese paso la app anda igual, pero cada navegador guarda lo suyo.
+<https://jamportal.vercel.app> es el deploy viejo, el que guardaba todo en el
+navegador. Sigue en pie hasta que se decida mover el dominio.
+
+Entrar es con el mail: llega un link y listo, no hay contraseña. Solo entran los
+que están en la tabla `miembro` — ver *Quién puede entrar*, más abajo.
 
 Para publicar cambios:
 
 ```bash
-npx vercel deploy --prod
+vercel deploy --prod
 ```
+
+Si cambia la URL, hay que agregarla a **Authentication → URL Configuration →
+Redirect URLs** en Supabase, o el link del mail no vuelve a la app.
 
 ## Correrlo local
 
@@ -57,6 +62,7 @@ scripts/migrar-a-sql.py       convierte el seed en db/10-datos.sql
 scripts/verificar-migracion.py  prueba la migración entera contra un Postgres local
 scripts/probar-store.mjs      ejercita js/store.js en Node, sin navegador
 scripts/probar-api.py         prueba la base por HTTP, como la usa el navegador
+scripts/probar-imports.py     comprueba que los imports entre módulos resuelvan
 ```
 
 ## Los tres métodos para armar el setlist
@@ -404,6 +410,7 @@ db/03-app-estado.sql   la función que le arma el estado a la app
 db/04-escritura.sql    las funciones de guardado
 db/05-permisos.sql     magic link + lista de miembros (RLS)
 db/06-concurrencia.sql control de versión por jam + realtime
+db/07-contrasena.sql   alta de miembros con contraseña
 db/10-datos.sql        el repertorio y las jams históricas, generado
 ```
 
@@ -448,14 +455,38 @@ Tres cosas que no se pueden hacer por SQL:
 1. **Authentication → URL Configuration**: agregar a *Redirect URLs* las
    direcciones desde las que se entra — `http://localhost:8090` para desarrollo y
    la de producción. Si no están, el link del mail te manda a la Site URL.
-2. **Authentication → Providers**: dejar Email prendido. No hace falta
-   contraseña; se usa solo el magic link.
-3. **Ojo con el SMTP que viene incluido**: manda muy pocos mails por hora. Para
-   una banda entrando el mismo día, conviene configurar un SMTP propio en
-   *Project Settings → Auth → SMTP*.
+2. **Authentication → Providers → Email tiene que estar prendido**, aunque se
+   entre con contraseña: el `grant_type=password` de Supabase también lo exige.
+   Apagarlo devuelve `email_provider_disabled` y no entra nadie.
+3. **El SMTP incluido manda 2 mails por hora.** Con contraseña no se manda
+   ninguno, así que eso solo afecta al link de emergencia. Si lo quieren usable,
+   hay que poner un SMTP propio en *Project Settings → Auth → SMTP*.
 
-Quién entra se maneja por SQL, en `db/11-miembros.sql`. Cualquiera puede pedir un
-link, pero si su mail no está en `miembro` la base no le devuelve ni una fila.
+Los passkeys no sirven como única puerta: Supabase exige estar logueado para
+registrar uno, así que hace falta otra forma de entrar primero.
+
+Las altas las hace quien tiene acceso a la base, de una sola vez:
+
+```sql
+select crear_miembro('quien@sea.com', 'una-clave-larga');  -- alta
+select poner_clave('quien@sea.com', 'otra-clave');         -- resetear
+delete from miembro where email = 'quien@sea.com';         -- baja
+```
+
+`crear_miembro` crea la cuenta ya confirmada, le pone la clave y la suma a
+`miembro`. Después cada uno se la cambia desde **Datos → Cambiar contraseña**.
+
+**Por qué no hay registro abierto en la app.** Si cualquiera pudiera registrarse
+con el mail que quisiera y quedar confirmado, bastaría con saber que
+`joaco@ejemplo.com` está en `miembro` para crearse una cuenta con ese mail y
+entrar. Con magic link eso no puede pasar porque hace falta la casilla; con
+contraseña autoconfirmada, sí. Por eso las altas pasan por la base.
+
+La lista **no** se versiona: son mails de personas y este repo es público.
+`db/11-miembros.sql` es solo la plantilla con los comandos.
+
+Cualquiera puede pedir un magic link, pero si su mail no está en `miembro` la base
+no le devuelve ni una fila. Sacar a alguien de la lista lo deja afuera en el acto.
 
 ### La clave en el código
 
@@ -464,10 +495,9 @@ link, pero si su mail no está en `miembro` la base no le devuelve ni una fila.
 proyecto y nada más. Comprobado contra este proyecto — con esa clave y sin
 sesión, la base contesta `permission denied` a todo, tablas y funciones.
 
-Lo único que sí habilita es pedir un magic link, y el SMTP incluido manda pocos
-mails por hora. Por eso conviene, una vez que la banda entró al menos una vez,
-apagar *Authentication → Sign Ups* en el panel: desde ahí solo pueden entrar los
-que ya tienen cuenta.
+Lo único que sí habilita es pedir un magic link. Conviene apagar
+*Authentication → Sign Ups* en el panel: las altas pasan por `crear_miembro`, así
+que el registro abierto no hace falta para nada.
 
 Quien quiera apuntar a otro proyecto lo hace desde Datos → Base compartida, y eso
 pisa lo de `config.js`. El botón "trabajar solo en este navegador" deja una marca

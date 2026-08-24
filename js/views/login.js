@@ -5,8 +5,15 @@
    y no hay sesión. En modo local no se ve nunca: ahí no hay nada
    que proteger porque los datos son de este navegador.
 
-   Entrar es con magic link. No hay contraseña, así que no hay
-   contraseña que se filtre ni que alguien tenga que rotar.
+   Se entra con mail y contraseña. El magic link queda abajo,
+   como salida para quien se la olvidó: depende de que lleguen
+   mails, que con el SMTP incluido de Supabase son dos por hora.
+
+   Las altas las hace quien tiene acceso a la base (ver
+   db/07-contrasena.sql). No hay registro abierto a propósito:
+   con las cuentas autoconfirmadas, cualquiera que supiera qué
+   mail está en `miembro` podría adelantarse y quedarse con esa
+   cuenta.
    ============================================================ */
 
 import { store } from '../store.js';
@@ -24,7 +31,10 @@ export async function vistaLogin(donde, alEntrar) {
     type: 'email', placeholder: 'tu@mail.com', autocomplete: 'email',
     autofocus: true, inputmode: 'email',
   });
-  const boton = h('button.btn.primary', {}, 'Mandame el link');
+  const clave = h('input.login-mail', {
+    type: 'password', placeholder: 'contraseña', autocomplete: 'current-password',
+  });
+  const boton = h('button.btn.primary', {}, 'Entrar');
   const aviso = h('div.login-aviso');
 
   function decir(txt, tipo = '') {
@@ -32,44 +42,64 @@ export async function vistaLogin(donde, alEntrar) {
     if (txt) aviso.appendChild(h('div.login-msg' + (tipo ? '.' + tipo : ''), {}, txt));
   }
 
-  async function pedir() {
+  async function entrar() {
     const dir = email.value.trim();
     if (!dir || !dir.includes('@')) { decir('Escribí tu mail.', 'err'); email.focus(); return; }
+    if (!clave.value) { decir('Falta la contraseña.', 'err'); clave.focus(); return; }
 
     boton.disabled = true;
     const antes = boton.textContent;
-    boton.textContent = 'Mandando…';
+    boton.textContent = 'Entrando…';
     try {
-      await auth.enviarMagicLink(dir);
-      decir(`Te mandé un link a ${dir}. Abrilo desde este mismo navegador.`, 'ok');
-      email.disabled = true;
-      boton.textContent = 'Link mandado ✓';
-      return;
+      await auth.entrarConClave(dir, clave.value);
+      decir('Listo, entrando…', 'ok');
+      alEntrar();
     } catch (e) {
-      // El SMTP que viene con Supabase manda pocos mails por hora: si es
-      // eso, conviene decirlo en vez de dejar a la persona reintentando.
-      const lim = /rate|limit|seconds/i.test(e.message);
-      decir(lim
-        ? 'Supabase limita cuántos mails manda por hora. Esperá un rato y probá de nuevo.'
-        : 'No se pudo mandar el link: ' + e.message, 'err');
+      decir(e.message, 'err');
       boton.disabled = false;
       boton.textContent = antes;
+      clave.select();
     }
   }
 
-  boton.addEventListener('click', pedir);
-  email.addEventListener('keydown', e => { if (e.key === 'Enter') pedir(); });
+  async function pedirLink() {
+    const dir = email.value.trim();
+    if (!dir || !dir.includes('@')) { decir('Escribí tu mail primero.', 'err'); email.focus(); return; }
+    decir('Mandando…');
+    try {
+      await auth.enviarMagicLink(dir);
+      decir(`Te mandé un link a ${dir}. Abrilo desde este mismo navegador.`, 'ok');
+    } catch (e) {
+      // El SMTP incluido manda dos mails por hora: cuando se agota, la
+      // persona merece saber que no es culpa suya ni de la contraseña.
+      const lim = /rate|limit|seconds|too many/i.test(e.message);
+      const off = /disabled|not allowed/i.test(e.message);
+      decir(lim
+        ? 'Supabase manda pocos mails por hora y el cupo está agotado. '
+          + 'Esperá un rato, o pedile a alguien que te resetee la contraseña.'
+        : off
+          ? 'El login por mail está apagado en Supabase, así que no hay link. '
+            + 'Pedile a alguien que te resetee la contraseña.'
+          : 'No se pudo mandar el link: ' + e.message, 'err');
+    }
+  }
+
+  boton.addEventListener('click', entrar);
+  for (const campo of [email, clave]) {
+    campo.addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+  }
 
   clear(donde);
   donde.appendChild(h('div.login', {},
     h('div.login-caja', {},
       h('div.login-logo', {}, '🎸'),
       h('h1', {}, 'JAM PORTAL'),
-      h('p.login-sub', {},
-        'Entrá con tu mail. Te llega un link y listo — no hay contraseña.'),
-      h('div.login-form', {}, email, boton),
+      h('p.login-sub', {}, 'Entrá con tu mail y tu contraseña.'),
+      h('div.login-campos', {}, email, clave, boton),
       aviso,
       h('div.login-pie', {},
+        h('button.btn.xs.ghost', { onclick: pedirLink },
+          '¿Te olvidaste? Pedí un link por mail'),
         h('span.dim', {}, cfg.url ? cfg.url.replace(/^https?:\/\//, '') : ''),
         h('button.btn.xs.ghost', {
           onclick: () => {
