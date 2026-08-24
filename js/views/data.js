@@ -3,8 +3,9 @@
    ============================================================ */
 
 import { store, norm } from '../store.js';
-import { h, frag, clear, field, input, modal, toast, confirmar, descargar, copiar } from '../ui.js';
+import { h, frag, clear, field, toast, confirmar, descargar, copiar } from '../ui.js';
 import { PASOS_SQL } from '../drivers/postgres.js';
+import { dialogoClave } from './usuario.js';
 import { refrescar } from '../app.js';
 
 /* ---------- parser CSV / TSV ---------- */
@@ -75,40 +76,6 @@ function filasAObjetos(filas) {
 /* ============================================================
    Base compartida — para que entren varios y editen lo mismo
    ============================================================ */
-/** Cambiar la propia contraseña, ya estando adentro. */
-function dialogoClave() {
-  const f1 = input({ type: 'password', autocomplete: 'new-password',
-                     placeholder: 'nueva contraseña (mínimo 8)' });
-  const f2 = input({ type: 'password', autocomplete: 'new-password',
-                     placeholder: 'repetila' });
-  const aviso = h('div.method-hint', {},
-    'Se cambia en el acto y no se manda ningún mail. Las sesiones que '
-    + 'tengas abiertas en otros dispositivos siguen andando hasta que venzan.');
-
-  const m = modal({
-    title: 'Cambiar contraseña',
-    body: h('div', { style: { display: 'grid', gap: '10px' } }, f1, f2, aviso),
-    footer: [
-      h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
-      h('button.btn.primary', {
-        onclick: async e => {
-          if (f1.value !== f2.value) { toast('No coinciden', 'err'); f2.select(); return; }
-          const b = e.currentTarget; b.disabled = true; b.textContent = 'Cambiando…';
-          try {
-            await store.auth.cambiarClave(f1.value);
-            m.close();
-            toast('Contraseña cambiada', 'ok');
-          } catch (err) {
-            toast(err.message, 'err');
-            b.disabled = false; b.textContent = 'Cambiar';
-          }
-        },
-      }, 'Cambiar'),
-    ],
-  });
-  f1.focus();
-}
-
 function tarjetaNube() {
   const cfg = store.configNube();
   const estado = h('div');
