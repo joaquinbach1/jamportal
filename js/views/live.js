@@ -9,6 +9,7 @@
    ============================================================ */
 
 import { store } from '../store.js';
+import { notaDe } from '../notas.js';
 import { h, clear, frag, toast, fechaLinda, descargarBlob } from '../ui.js';
 import { setlistDocx } from '../docx.js';
 
@@ -133,7 +134,9 @@ export function vistaLive(jamId) {
               h('div.live-sub-song', {},
                 h('span', {}, x.song ? x.song.titulo : '—'),
                 x.cantantes.length ? h('span.live-cantante', {}, x.cantantes.join(', ')) : null,
-                x.song && x.song.bpm ? h('span.live-bpm', {}, x.song.bpm) : null))))));
+                x.song && x.song.bpm ? h('span.live-bpm', {}, x.song.bpm) : null,
+                x.song && notaDe(jam.id, x.song.id)
+                  ? h('span.live-nota.chica', {}, notaDe(jam.id, x.song.id)) : null))))));
         return;
       }
 
@@ -149,7 +152,9 @@ export function vistaLive(jamId) {
             s && (s.patches || []).length ? h('span.live-patch', {}, '🎹 ' + s.patches.join(' ')) : null,
             s && s.cifraUrl
               ? h('a.live-cifra', { href: s.cifraUrl, target: '_blank', rel: 'noopener', onclick: e => e.stopPropagation() }, '🎸 cifra')
-              : null))));
+              : null),
+          /* la nota es tuya y de esta máquina: nadie más la ve */
+          s && notaDe(jam.id, s.id) ? h('div.live-nota', {}, notaDe(jam.id, s.id)) : null)));
     });
 
     contador.textContent = `${Math.min(actual + 1, tocables.length)} / ${tocables.length}`;

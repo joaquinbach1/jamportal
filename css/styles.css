@@ -383,6 +383,12 @@ label.field > span {
 .seg.seg-epocas { flex-wrap: wrap; }
 .seg.seg-epocas button { flex: 0 0 auto; padding: 4px 9px; font-size: 11.5px; }
 
+/* nota privada: apagada hasta que hay algo escrito */
+.icon-btn.nota { filter: grayscale(1); opacity: .35; }
+.sl-item:hover .icon-btn.nota { opacity: .7; }
+.icon-btn.nota:hover { filter: none; opacity: 1; }
+.icon-btn.nota.tiene { filter: none; opacity: 1; }
+
 /* patch de teclados: mismo trato que el tempo, editable en la fila */
 .patch { display: inline-flex; align-items: center; }
 .patch-val {
@@ -1249,6 +1255,19 @@ body.en-vivo { background: var(--live-fondo); }
   color: var(--acc-2); border: 1px solid var(--medley-linea); background: var(--medley-badge);
   padding: 2px 7px; border-radius: 4px; vertical-align: middle;
 }
+/* la nota de uno, en el vivo: destacada pero sin robarle el lugar al tema */
+.live-nota {
+  margin-top: 10px;
+  padding: 7px 12px;
+  border-left: 3px solid var(--acc);
+  background: var(--acc-tinte);
+  color: var(--txt-2);
+  font-size: 17px; line-height: 1.5;
+  white-space: pre-wrap;
+  border-radius: 0 6px 6px 0;
+}
+.live-nota.chica { font-size: 14px; margin-top: 4px; padding: 4px 9px; display: block; }
+
 .live-medley-songs { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
 .live-sub-song {
   display: flex; align-items: baseline; gap: 12px;

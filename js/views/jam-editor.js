@@ -16,6 +16,7 @@ import { buscarEnWeb, webAResultado, buscarBpm, temasDeArtista } from '../lookup
 import { buscarCifra, urlBusqueda } from '../cifra.js';
 import { chipTempo } from '../tempo.js';
 import { chipPatch } from '../patch.js';
+import { notaDe, ponerNota } from '../notas.js';
 import { dialogoCancion } from './song-form.js';
 import { seccionEnsayos } from './ensayos.js';
 import { borrarJam } from './jams.js';
@@ -602,6 +603,59 @@ export function vistaEditor(jamId) {
     arrastre = null;
   });
 
+  /* ---------- nota privada ----------
+     Es tuya y de esta máquina: no va a la base compartida. Se escribe
+     acá y se lee en el LIVE VIEW, que es cuando hace falta. */
+  function botonNota(s) {
+    const btn = h('button.icon-btn.nota', {
+      onclick: e => { e.stopPropagation(); dialogoNota(s, () => pintarNota()); },
+    });
+    function pintarNota() {
+      const hay = !!notaDe(jam.id, s.id);
+      btn.classList.toggle('tiene', hay);
+      btn.textContent = hay ? '📝' : '📝';
+      btn.title = hay
+        ? `Tu nota: ${notaDe(jam.id, s.id)}`
+        : 'Escribir una nota tuya — solo la ves vos, y aparece en el LIVE VIEW';
+    }
+    pintarNota();
+    return btn;
+  }
+
+  function dialogoNota(s, alGuardar) {
+    const area = h('textarea', {
+      value: notaDe(jam.id, s.id),
+      placeholder: 'Entro en el segundo estribillo · afinar medio tono abajo · ojo con el corte…',
+      style: { minHeight: '120px' },
+    });
+    const m = modal({
+      title: 'Tu nota para « ' + s.titulo + ' »',
+      body: [
+        h('div.method-hint', {},
+          'Es tuya: no la ve el resto de la banda y no viaja a la base compartida. ',
+          'Aparece en el ', h('b', {}, 'LIVE VIEW'), ', que es donde la vas a necesitar. ',
+          h('span.dim', {}, 'Vive en este navegador, así que no te sigue a otro dispositivo.')),
+        h('div', { style: { marginTop: '12px' } }, area),
+      ],
+      footer: [
+        h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
+        notaDe(jam.id, s.id)
+          ? h('button.btn.sm.danger', {
+              onclick: () => { ponerNota(jam.id, s.id, ''); m.close(); alGuardar(); toast('Nota borrada'); },
+            }, 'Borrar')
+          : null,
+        h('button.btn.primary', {
+          onclick: () => {
+            ponerNota(jam.id, s.id, area.value);
+            m.close(); alGuardar();
+            toast(area.value.trim() ? 'Nota guardada' : 'Nota borrada', 'ok');
+          },
+        }, 'Guardar'),
+      ],
+    });
+    setTimeout(() => area.focus(), 60);
+  }
+
   function filaSong(it, i, numero) {
     const s = store.song(it.songId);
     if (!s) return h('div.sl-item', {}, h('span.sl-num', {}, numero), h('div.sl-main', {}, h('span.dim', {}, 'Tema borrado de DBSongs')),
@@ -635,7 +689,10 @@ export function vistaEditor(jamId) {
             ? (it.cantantes || []).map(n => h('span.chip.sel', {}, n))
             : chipsPersonas(it.cantantes || [], opcionesGente(), v => { it.cantantes = v; guardar(); pintarTodo(); }, s.cantantes || []),
         )),
-      bloqueada() ? h('div.sl-actions', {}, botonCifra(s, () => pintarTodo())) : h('div.sl-actions', {},
+      bloqueada()
+        ? h('div.sl-actions', {}, botonNota(s), botonCifra(s, () => pintarTodo()))
+        : h('div.sl-actions', {},
+        botonNota(s),
         botonCifra(s, () => pintarTodo()),
         h('button.icon-btn', { title: 'Unir en medley con el siguiente', onclick: () => unirEnMedley(i) }, '⛓'),
         h('button.icon-btn', { title: 'Editar el tema en DBSongs', onclick: () => dialogoCancion(s, () => pintarTodo()) }, '✎'),
