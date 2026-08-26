@@ -38,7 +38,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1984
   },
   {
    "id": "ac-dc--hell-s-bells",
@@ -58,7 +59,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "ac-dc--highway-to-hell",
@@ -90,7 +93,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1979
   },
   {
    "id": "adele--rolling-in-the-deep",
@@ -117,7 +121,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2010
   },
   {
    "id": "aerosmith--crazy",
@@ -142,7 +147,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1980
   },
   {
    "id": "aerosmith--cryin",
@@ -166,7 +172,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1993
   },
   {
    "id": "aerosmith--i-don-t-want-to-miss-a-thing",
@@ -188,7 +195,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1990
   },
   {
    "id": "aerosmith--jaded",
@@ -211,7 +219,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2000
   },
   {
    "id": "al-green--let-s-stay-together",
@@ -231,7 +240,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1971
   },
   {
    "id": "alanis-morissette--ironic",
@@ -253,7 +263,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1995
   },
   {
    "id": "alanis-morissette--you-oughta-know",
@@ -282,7 +293,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "alannah-myles--black-velvet",
@@ -306,7 +319,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1989
   },
   {
    "id": "alaska-y-dinarama--a-quien-le-importa",
@@ -328,7 +342,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1986
   },
   {
    "id": "alcides--violeta",
@@ -350,7 +365,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1990
   },
   {
    "id": "alejandro-lerner--juntos-para-siempre",
@@ -372,7 +388,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1974
   },
   {
    "id": "alicia-keys--fallin",
@@ -396,7 +413,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2001
   },
   {
    "id": "amistades-peligrosas--me-haces-tanto-bien",
@@ -418,7 +436,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1993
   },
   {
    "id": "amy-winehouse--valerie-orig-the-zutons",
@@ -449,7 +468,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "amy-winehouse--you-know-i-m-no-good",
@@ -473,7 +494,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2006
   },
   {
    "id": "andres-calamaro--alta-suciedad",
@@ -503,7 +525,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1997
   },
   {
    "id": "andres-calamaro--costumbres-argentinas",
@@ -523,7 +546,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2023
   },
   {
    "id": "andres-calamaro--el-salmon",
@@ -546,7 +570,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1994
   },
   {
    "id": "andres-calamaro--flaca",
@@ -566,7 +591,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1997
   },
   {
    "id": "andres-calamaro--loco",
@@ -595,7 +621,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1997
   },
   {
    "id": "andres-calamaro--mi-enfermedad",
@@ -622,7 +649,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2006
   },
   {
    "id": "andres-calamaro--te-quiero-igual",
@@ -642,7 +670,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1994
   },
   {
    "id": "aretha-franklin--respect",
@@ -666,7 +695,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1967
   },
   {
    "id": "attaque-77--hacelo-por-mi",
@@ -688,7 +718,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1990
   },
   {
    "id": "attaque-77--porque-te-vas-orig-jeanette",
@@ -712,7 +743,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "backstreet-boys--i-want-it-that-way",
@@ -736,7 +769,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1999
   },
   {
    "id": "baltimora--tarzan-boy",
@@ -762,7 +796,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1985
   },
   {
    "id": "bee-gees--how-deep-is-your-love",
@@ -785,7 +820,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1977
   },
   {
    "id": "bee-gees--more-than-a-woman",
@@ -815,7 +851,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1977
   },
   {
    "id": "bee-gees--stayin-alive",
@@ -839,7 +876,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1977
   },
   {
    "id": "bersuit-vergarabat--estallido",
@@ -860,7 +898,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "beyonce--crazy-in-love",
@@ -886,7 +926,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2003
   },
   {
    "id": "bill-medley-jennifer-warnes--i-ve-had-the-time-of-my-life",
@@ -906,7 +947,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1987
   },
   {
    "id": "bill-withers--ain-t-no-sunshine",
@@ -928,7 +970,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1971
   },
   {
    "id": "billy-idol--mony-mony-orig-tommy-james",
@@ -959,7 +1002,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "blink-182--all-the-small-things",
@@ -982,7 +1027,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1999
   },
   {
    "id": "blur--song-2",
@@ -1002,7 +1048,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1997
   },
   {
    "id": "bob-marley--could-you-be-loved",
@@ -1028,7 +1075,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1980
   },
   {
    "id": "bob-marley--i-shot-the-sheriff",
@@ -1052,7 +1100,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1973
   },
   {
    "id": "bon-jovi--como-yo-nadie-te-ha-amado-vers-espanol-de-this-ain-t-a-love-song",
@@ -1080,7 +1129,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1995
   },
   {
    "id": "bon-jovi--wanted-dead-or-alive",
@@ -1100,7 +1150,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1986
   },
   {
    "id": "bon-jovi--you-give-love-a-bad-name",
@@ -1126,7 +1177,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1986
   },
   {
    "id": "britney-spears--baby-one-more-time",
@@ -1159,7 +1211,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1998
   },
   {
    "id": "britney-spears--toxic",
@@ -1188,7 +1241,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1991
   },
   {
    "id": "bruno-mars--locked-out-of-heaven",
@@ -1214,7 +1268,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2012
   },
   {
    "id": "bruno-mars--treasure",
@@ -1234,7 +1289,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2012
   },
   {
    "id": "bruno-mars--uptown-funk-mark-ronson-ft-bruno-mars",
@@ -1266,7 +1322,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "bryan-adams--everything-i-do-i-do-it-for-you",
@@ -1292,7 +1350,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1991
   },
   {
    "id": "bryan-adams--all-for-love-con-rod-stewart-y-sting",
@@ -1314,7 +1373,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1995
   },
   {
    "id": "bryan-adams--heaven",
@@ -1337,7 +1397,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1984
   },
   {
    "id": "bryan-adams--summer-of-69",
@@ -1369,7 +1430,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1983
   },
   {
    "id": "buena-vista-social-club--el-cuarto-de-tula",
@@ -1389,7 +1451,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1997
   },
   {
    "id": "buena-vista-social-club--lagrimas-negras",
@@ -1409,7 +1472,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2015
   },
   {
    "id": "cardellino--toscana-a-confirmar",
@@ -1429,7 +1493,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "carlos-gardel--por-una-cabeza",
@@ -1453,7 +1519,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1931
   },
   {
    "id": "catriel-y-paco--dumbai",
@@ -1482,7 +1549,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "catupecu-machu--magia-veneno",
@@ -1504,7 +1573,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2004
   },
   {
    "id": "ceelo-green--fuck-you",
@@ -1528,7 +1598,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "charly-garcia--bienvenidos-al-tren",
@@ -1548,7 +1620,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1980
   },
   {
    "id": "charly-garcia--buscando-un-simbolo-de-paz",
@@ -1583,7 +1656,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1987
   },
   {
    "id": "charly-garcia--cerca-de-la-revolucion",
@@ -1612,7 +1686,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1984
   },
   {
    "id": "charly-garcia--demoliendo-hoteles",
@@ -1632,7 +1707,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1984
   },
   {
    "id": "charly-garcia--fanky",
@@ -1652,7 +1728,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1988
   },
   {
    "id": "charly-garcia--hablando-a-tu-corazon",
@@ -1677,7 +1754,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "charly-garcia--los-dinosaurios",
@@ -1702,7 +1781,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "charly-garcia--me-siento-mucho-mejor-orig-the-byrds",
@@ -1730,7 +1811,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "charly-garcia--no-soy-un-extrano",
@@ -1752,7 +1835,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "charly-garcia--no-voy-en-tren",
@@ -1785,7 +1870,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "charly-garcia--nos-siguen-pegando-abajo",
@@ -1809,7 +1896,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "charly-garcia--promesas-sobre-el-bidet",
@@ -1831,7 +1920,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "charly-garcia--rezo-por-vos",
@@ -1861,7 +1952,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "chayanne--lo-dejaria-todo",
@@ -1884,7 +1977,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "chayanne--provocame",
@@ -1909,7 +2004,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "chic--le-freak",
@@ -1937,7 +2034,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "chris-isaak--wicked-game-tocan-la-vers-him",
@@ -1963,7 +2062,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "coldplay--fix-you",
@@ -1988,7 +2089,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "commodores--easy",
@@ -2012,7 +2115,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "coti--nada-de-esto-fue-un-error",
@@ -2034,7 +2139,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "counting-crows--mr-jones",
@@ -2059,7 +2166,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "creedence-clearwater-revival--fortunate-son",
@@ -2082,7 +2191,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "creedence-clearwater-revival--have-you-ever-seen-the-rain",
@@ -2107,7 +2218,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "creedence-clearwater-revival--midnight-special",
@@ -2132,7 +2245,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1969
   },
   {
    "id": "cristian-castro--azul",
@@ -2152,7 +2266,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1994
   },
   {
    "id": "cristian-castro--lloviendo-estrellas",
@@ -2175,7 +2290,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2001
   },
   {
    "id": "cristian-castro--no-podras",
@@ -2204,7 +2320,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1992
   },
   {
    "id": "david-bowie--under-pressure-con-queen",
@@ -2224,7 +2341,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1981
   },
   {
    "id": "david-guetta-ft-sia--titanium",
@@ -2244,7 +2362,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2011
   },
   {
    "id": "depeche-mode--just-can-t-get-enough",
@@ -2268,7 +2387,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1981
   },
   {
    "id": "depeche-mode--personal-jesus",
@@ -2290,7 +2410,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1987
   },
   {
    "id": "diego-torres--no-lo-sone",
@@ -2312,7 +2433,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1993
   },
   {
    "id": "dire-straits--money-for-nothing",
@@ -2336,7 +2458,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1985
   },
   {
    "id": "dire-straits--sultans-of-swing",
@@ -2360,7 +2483,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1978
   },
   {
    "id": "divididos--ala-delta",
@@ -2385,7 +2509,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1991
   },
   {
    "id": "divididos--spaghetti-del-rock",
@@ -2409,7 +2534,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1996
   },
   {
    "id": "donna-summer--bad-girls",
@@ -2437,7 +2563,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1979
   },
   {
    "id": "donna-summer--hot-stuff",
@@ -2464,7 +2591,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1978
   },
   {
    "id": "duran-duran--ordinary-world",
@@ -2492,7 +2620,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1981
   },
   {
    "id": "eagles--hotel-california",
@@ -2516,7 +2645,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1976
   },
   {
    "id": "earth-wind-fire--beijo",
@@ -2538,7 +2668,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1977
   },
   {
    "id": "earth-wind-fire--september",
@@ -2558,7 +2689,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1978
   },
   {
    "id": "elton-john--your-song",
@@ -2581,7 +2713,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1970
   },
   {
    "id": "elvis-presley--can-t-help-falling-in-love",
@@ -2601,7 +2734,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1961
   },
   {
    "id": "elvis-presley--jailhouse-rock",
@@ -2623,7 +2757,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1957
   },
   {
    "id": "elvis-presley--trouble",
@@ -2646,7 +2781,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1958
   },
   {
    "id": "enanitos-verdes--amigos",
@@ -2669,7 +2805,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1992
   },
   {
    "id": "enanitos-verdes--lamento-boliviano",
@@ -2689,7 +2826,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1990
   },
   {
    "id": "enrique-iglesias--experiencia-religiosa",
@@ -2715,7 +2853,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1995
   },
   {
    "id": "enrique-santos-discepolo--cambalache",
@@ -2739,7 +2878,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2006
   },
   {
    "id": "erasure--a-little-respect",
@@ -2772,7 +2912,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1988
   },
   {
    "id": "eric-clapton--change-the-world",
@@ -2794,7 +2935,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1996
   },
   {
    "id": "extreme--more-than-words",
@@ -2819,7 +2961,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1990
   },
   {
    "id": "fabiana-cantilo--mary-poppins-y-sus-dos-maridos",
@@ -2855,7 +2998,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "fabiana-cantilo--nada-es-para-siempre",
@@ -2877,7 +3022,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1995
   },
   {
    "id": "fey--azucar-amargo",
@@ -2903,7 +3049,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1996
   },
   {
    "id": "fito-paez--brillante-sobre-el-mic",
@@ -2925,7 +3072,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1992
   },
   {
    "id": "fito-paez--cable-a-tierra",
@@ -2947,7 +3095,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1985
   },
   {
    "id": "fito-paez--ciudad-de-pobres-corazones",
@@ -2967,7 +3116,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1987
   },
   {
    "id": "fito-paez--el-amor-despues-del-amor",
@@ -2987,7 +3137,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "fito-paez--fue-amor",
@@ -3007,7 +3159,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "fito-paez--llueve-sobre-mojado-con-sabina",
@@ -3032,7 +3186,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "fito-paez--un-vestido-y-un-amor",
@@ -3055,7 +3211,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "foo-fighters--learn-to-fly",
@@ -3077,7 +3235,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "foreigner--i-want-to-know-what-love-is",
@@ -3102,7 +3262,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1981
   },
   {
    "id": "frank-sinatra--fly-me-to-the-moon",
@@ -3125,7 +3286,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1964
   },
   {
    "id": "frank-sinatra--my-way-a-mi-manera",
@@ -3147,7 +3309,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1964
   },
   {
    "id": "gala--freed-from-desire",
@@ -3167,7 +3330,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1996
   },
   {
    "id": "george-michael-wham--careless-whisper",
@@ -3191,7 +3355,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1984
   },
   {
    "id": "gianluca-grignani--mi-historia-entre-tus-dedos",
@@ -3221,7 +3386,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1995
   },
   {
    "id": "gilda--paisaje",
@@ -3248,7 +3414,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1994
   },
   {
    "id": "gloria-gaynor--i-will-survive",
@@ -3279,7 +3446,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1978
   },
   {
    "id": "green-day--basket-case",
@@ -3301,7 +3469,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1994
   },
   {
    "id": "green-day--boulevard-of-broken-dreams",
@@ -3323,7 +3492,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "guns-n-roses--knockin-on-heaven-s-door",
@@ -3348,7 +3519,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1987
   },
   {
    "id": "guns-n-roses--paradise-city",
@@ -3368,7 +3540,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1987
   },
   {
    "id": "gustavo-cerati--crimen",
@@ -3392,7 +3565,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2006
   },
   {
    "id": "huey-lewis-and-the-news--the-power-of-love",
@@ -3416,7 +3590,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "iggy-pop--candy",
@@ -3442,7 +3618,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1991
   },
   {
    "id": "illya-kuryaki-and-the-valderramas--jaguar-house",
@@ -3466,7 +3643,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "illya-kuryaki-and-the-valderramas--jugo",
@@ -3492,7 +3671,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "intoxicados--quieren-rock",
@@ -3516,7 +3697,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2021
   },
   {
    "id": "inxs--mistify",
@@ -3539,7 +3721,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "inxs--new-sensation",
@@ -3567,7 +3751,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1987
   },
   {
    "id": "irene-cara--what-a-feeling-flashdance",
@@ -3587,7 +3772,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1983
   },
   {
    "id": "jamiroquai--cosmic-girl",
@@ -3616,7 +3802,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1996
   },
   {
    "id": "janis-joplin--cry-baby",
@@ -3638,7 +3825,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1966
   },
   {
    "id": "jerry-rivera--amores-como-el-nuestro",
@@ -3659,7 +3847,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1992
   },
   {
    "id": "joan-jett-the-blackhearts--i-love-rock-n-roll",
@@ -3691,7 +3880,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1981
   },
   {
    "id": "joe-cocker--you-are-so-beautiful",
@@ -3711,7 +3901,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1974
   },
   {
    "id": "joe-cocker--you-can-leave-your-hat-on",
@@ -3742,7 +3933,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1972
   },
   {
    "id": "john-lennon--love",
@@ -3766,7 +3958,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1970
   },
   {
    "id": "john-lennon--stand-by-me-orig-ben-e-king",
@@ -3790,7 +3983,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "john-lennon--watching-the-wheels",
@@ -3813,7 +4008,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1980
   },
   {
    "id": "john-mayer--slow-dancing-in-a-burning-room",
@@ -3835,7 +4031,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2006
   },
   {
    "id": "jorge-fandermole--oracion-del-remanso",
@@ -3857,7 +4054,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2018
   },
   {
    "id": "juan-gabriel--se-me-olvido-otra-vez",
@@ -3881,7 +4079,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "juanes--a-dios-le-pido",
@@ -3903,7 +4103,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2002
   },
   {
    "id": "justin-bieber--baby",
@@ -3930,7 +4131,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2010
   },
   {
    "id": "kaoma-tropical--la-isla-del-sol",
@@ -3954,7 +4156,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "kaoma-tropical--levantando-las-manos",
@@ -3978,7 +4182,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "katy-perry--hot-n-cold",
@@ -4000,7 +4206,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "katy-perry--i-kissed-a-girl",
@@ -4024,7 +4232,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "keane--somewhere-only-we-know",
@@ -4046,7 +4256,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2004
   },
   {
    "id": "kenny-loggins--footloose",
@@ -4069,7 +4280,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "kings-of-leon--use-somebody",
@@ -4091,7 +4304,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "kiss--i-was-made-for-lovin-you",
@@ -4118,7 +4333,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "la-joven-guardia--el-extrano-de-pelo-largo",
@@ -4140,7 +4357,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "la-mona-jimenez--al-compas-del-tamborin",
@@ -4160,7 +4379,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "la-mona-jimenez--ocho-cuarenta",
@@ -4180,7 +4401,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "la-mona-jimenez--quien-se-ha-tomado-todo-el-vino",
@@ -4200,7 +4423,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "la-mona-jimenez--que-tendra-el-marron",
@@ -4220,7 +4445,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "la-mona-jimenez--que-tendra-el-petiso",
@@ -4242,7 +4469,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "la-renga--balada-del-diablo-y-la-muerte",
@@ -4267,7 +4496,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1996
   },
   {
    "id": "la-renga--la-bifurcada",
@@ -4292,7 +4522,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "lady-gaga-bradley-cooper--shallow",
@@ -4317,7 +4549,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2018
   },
   {
    "id": "led-zeppelin--rock-and-roll",
@@ -4345,7 +4578,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1971
   },
   {
    "id": "led-zeppelin--stairway-to-heaven",
@@ -4373,7 +4607,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1971
   },
   {
    "id": "led-zeppelin--whole-lotta-love",
@@ -4393,7 +4628,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1969
   },
   {
    "id": "lenny-kravitz--again",
@@ -4413,7 +4649,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2000
   },
   {
    "id": "lenny-kravitz--are-you-gonna-go-my-way",
@@ -4435,7 +4672,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1993
   },
   {
    "id": "lenny-kravitz--can-t-get-you-off-my-mind",
@@ -4457,7 +4695,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1995
   },
   {
    "id": "lenny-kravitz--fly-away",
@@ -4481,7 +4720,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1998
   },
   {
    "id": "los-abuelos-de-la-nada--lunes-por-la-madrugada",
@@ -4507,7 +4747,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1984
   },
   {
    "id": "los-abuelos-de-la-nada--mil-horas",
@@ -4543,7 +4784,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1983
   },
   {
    "id": "los-autenticos-decadentes--loco-me-volvio-loco-tu-forma-de-ser",
@@ -4570,7 +4812,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1989
   },
   {
    "id": "los-autenticos-decadentes--tuta-tuta",
@@ -4590,7 +4833,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "los-cafres--si-el-amor-se-cae",
@@ -4619,7 +4864,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2001
   },
   {
    "id": "los-fabulosos-cadillacs--carnaval-toda-la-vida",
@@ -4648,7 +4894,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1990
   },
   {
    "id": "los-fabulosos-cadillacs--el-satanico-dr-cadillac",
@@ -4681,7 +4928,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1989
   },
   {
    "id": "los-fabulosos-cadillacs--manuel-santillan-el-leon",
@@ -4711,7 +4959,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1992
   },
   {
    "id": "los-fabulosos-cadillacs--matador",
@@ -4731,7 +4980,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1993
   },
   {
    "id": "los-fabulosos-cadillacs--mi-novia-se-cayo-en-un-pozo-ciego",
@@ -4759,7 +5009,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1987
   },
   {
    "id": "los-palmeras--bombon-asesino",
@@ -4780,7 +5031,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "los-panchos-alvaro-carrillo--sabor-a-mi",
@@ -4802,7 +5055,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1956
   },
   {
    "id": "los-pericos--parate-y-mira",
@@ -4829,7 +5083,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1994
   },
   {
    "id": "los-pericos--runaway",
@@ -4855,7 +5110,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1994
   },
   {
    "id": "los-piojos--tan-solo",
@@ -4879,7 +5135,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1992
   },
   {
    "id": "los-piojos--verano-del-92",
@@ -4903,7 +5160,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1996
   },
   {
    "id": "los-teen-tops--popotitos",
@@ -4930,7 +5188,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1957
   },
   {
    "id": "luis-alberto-spinetta--bajan-pescado-rabioso",
@@ -4952,7 +5211,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "luis-alberto-spinetta--cheques",
@@ -4977,7 +5238,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "luis-alberto-spinetta--ojos-de-video-tape",
@@ -4997,7 +5260,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "luis-alberto-spinetta--seguir-viviendo-sin-tu-amor",
@@ -5017,7 +5282,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1986
   },
   {
    "id": "luis-miguel--ahora-te-puedes-marchar",
@@ -5041,7 +5307,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1987
   },
   {
    "id": "luis-miguel--como-es-posible",
@@ -5068,7 +5335,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1996
   },
   {
    "id": "luis-miguel--hasta-que-me-olvides",
@@ -5092,7 +5360,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1993
   },
   {
    "id": "luis-miguel--sera-que-no-me-amas",
@@ -5121,7 +5390,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1990
   },
   {
    "id": "macy-gray--i-try",
@@ -5141,7 +5411,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1998
   },
   {
    "id": "madonna--like-a-prayer",
@@ -5168,7 +5439,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1985
   },
   {
    "id": "mambru--a-veces",
@@ -5188,7 +5460,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "mana--clavado-en-un-bar",
@@ -5211,7 +5485,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "mana--corazon-espinado",
@@ -5231,7 +5507,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "mana--en-el-muelle-de-san-blas",
@@ -5254,7 +5532,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "mana--oye-mi-amor",
@@ -5277,7 +5557,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "mana--rayando-el-sol",
@@ -5300,7 +5582,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "mana--vivir-sin-aire",
@@ -5323,7 +5607,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "maroon-5--this-love",
@@ -5345,7 +5631,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2002
   },
   {
    "id": "marvin-gaye--let-s-get-it-on",
@@ -5365,7 +5652,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1973
   },
   {
    "id": "memphis-la-blusera--la-ultima-lagrima",
@@ -5389,7 +5677,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1998
   },
   {
    "id": "metallica--enter-sandman",
@@ -5412,7 +5701,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1991
   },
   {
    "id": "mgmt--kids",
@@ -5435,7 +5725,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2005
   },
   {
    "id": "michael-jackson--billie-jean",
@@ -5467,7 +5758,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1966
   },
   {
    "id": "michael-jackson--black-or-white",
@@ -5489,7 +5781,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1991
   },
   {
    "id": "michael-jackson--man-in-the-mirror",
@@ -5515,7 +5808,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1987
   },
   {
    "id": "michael-jackson--rock-with-you",
@@ -5541,7 +5835,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1979
   },
   {
    "id": "miranda--perfecta",
@@ -5563,7 +5858,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2009
   },
   {
    "id": "modjo--lady-hear-me-tonight",
@@ -5588,7 +5884,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2000
   },
   {
    "id": "moloko--sing-it-back",
@@ -5618,7 +5915,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1975
   },
   {
    "id": "nico-ibarburu--mapa-tesoro",
@@ -5640,7 +5938,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "nirvana--smells-like-teen-spirit",
@@ -5663,7 +5963,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1991
   },
   {
    "id": "no-te-va-gustar--tan-lejos",
@@ -5688,7 +5989,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "oasis--don-t-look-back-in-anger",
@@ -5711,7 +6014,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1995
   },
   {
    "id": "oasis--wonderwall",
@@ -5736,7 +6040,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "opus--life-is-life",
@@ -5758,7 +6064,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "os-paralamas-do-sucesso--track-track",
@@ -5782,7 +6090,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "pappo-riff-pappo-s-blues--desconfio",
@@ -5807,7 +6117,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "pappo-riff-pappo-s-blues--el-viejo",
@@ -5830,7 +6142,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "pappo-riff-pappo-s-blues--juntos-a-la-par",
@@ -5855,7 +6169,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "pappo-riff-pappo-s-blues--rock-and-roll-y-fiebre",
@@ -5884,7 +6200,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "pappo-riff-pappo-s-blues--ruta-66",
@@ -5904,7 +6222,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "patricio-rey-y-sus-redonditos-de-ricota--aquella-solitaria-vaca-cubana",
@@ -5929,7 +6249,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "patricio-rey-y-sus-redonditos-de-ricota--ji-ji-ji",
@@ -5966,7 +6288,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1986
   },
   {
    "id": "patricio-rey-y-sus-redonditos-de-ricota--mariposa-pontiac",
@@ -5993,7 +6316,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1996
   },
   {
    "id": "patricio-rey-y-sus-redonditos-de-ricota--mi-bestia-pop",
@@ -6018,7 +6342,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "patricio-rey-y-sus-redonditos-de-ricota--mi-perro-dinamita",
@@ -6040,7 +6366,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "patricio-rey-y-sus-redonditos-de-ricota--tarea-fina",
@@ -6062,7 +6390,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1991
   },
   {
    "id": "patricio-rey-y-sus-redonditos-de-ricota--todo-un-palo",
@@ -6090,7 +6419,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "pearl-jam--alive",
@@ -6113,7 +6444,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1991
   },
   {
    "id": "peter-gabriel--sledgehammer",
@@ -6142,7 +6474,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1986
   },
   {
    "id": "pink-floyd--wish-you-were-here",
@@ -6164,7 +6497,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "prince--kiss",
@@ -6195,7 +6530,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "prince--purple-rain",
@@ -6220,7 +6557,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "proyecto-uno--el-tiburon",
@@ -6246,7 +6585,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "queen--another-one-bites-the-dust",
@@ -6268,7 +6609,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1980
   },
   {
    "id": "queen--bohemian-rhapsody",
@@ -6296,7 +6638,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "queen--crazy-little-thing-called-love",
@@ -6320,7 +6664,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "queen--friends-will-be-friends",
@@ -6343,7 +6689,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1986
   },
   {
    "id": "queen--i-want-to-break-free",
@@ -6374,7 +6721,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1984
   },
   {
    "id": "queen--love-of-my-life",
@@ -6394,7 +6742,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1975
   },
   {
    "id": "queen--radio-ga-ga",
@@ -6416,7 +6765,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1984
   },
   {
    "id": "queen--somebody-to-love",
@@ -6442,7 +6792,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "queen--under-pressure-con-david-bowie",
@@ -6464,7 +6816,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1981
   },
   {
    "id": "radiohead--creep",
@@ -6489,7 +6842,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1992
   },
   {
    "id": "radiohead--high-and-dry",
@@ -6513,7 +6867,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1995
   },
   {
    "id": "rata-blanca--mujer-amante",
@@ -6539,7 +6894,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1986
   },
   {
    "id": "ratones-paranoicos--cowboy",
@@ -6563,7 +6919,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "ratones-paranoicos--rock-del-gato",
@@ -6586,7 +6944,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1989
   },
   {
    "id": "red-hot-chili-peppers--my-friends",
@@ -6609,7 +6968,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1987
   },
   {
    "id": "red-hot-chili-peppers--under-the-bridge",
@@ -6636,7 +6996,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1991
   },
   {
    "id": "ricardo-arjona--fuiste-tu",
@@ -6656,7 +7017,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2011
   },
   {
    "id": "ricardo-montaner--tan-enamorados",
@@ -6680,7 +7042,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1987
   },
   {
    "id": "ricky-martin--fuego-de-noche-nieve-de-dia",
@@ -6704,7 +7067,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "robbie-williams--angels",
@@ -6727,7 +7092,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "robbie-williams--rock-dj",
@@ -6755,7 +7122,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2000
   },
   {
    "id": "roberta-flack--killing-me-softly-with-his-song",
@@ -6777,7 +7145,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1970
   },
   {
    "id": "rod-stewart--forever-young",
@@ -6801,7 +7170,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1970
   },
   {
    "id": "rodrigo--la-mano-de-dios",
@@ -6824,7 +7194,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2001
   },
   {
    "id": "rodrigo--te-quiero",
@@ -6847,7 +7218,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "roxette--spending-my-time",
@@ -6871,7 +7244,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "roxette--the-look",
@@ -6895,7 +7270,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1988
   },
   {
    "id": "ruben-rada--heloisa",
@@ -6917,7 +7293,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2015
   },
   {
    "id": "rafaga--mentirosa",
@@ -6942,7 +7319,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1999
   },
   {
    "id": "sade--smooth-operator",
@@ -6972,7 +7350,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1984
   },
   {
    "id": "sandro--porque-yo-te-amo",
@@ -6996,7 +7375,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1967
   },
   {
    "id": "santana--black-magic-woman-mujer-de-magia-negra",
@@ -7022,7 +7402,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1970
   },
   {
    "id": "santana--corazon-espinado-con-mana",
@@ -7046,7 +7427,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "santana--oye-como-va",
@@ -7070,7 +7453,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1970
   },
   {
    "id": "scorpions--still-loving-you",
@@ -7094,7 +7478,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1984
   },
   {
    "id": "seru-giran--peperina",
@@ -7116,7 +7501,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1981
   },
   {
    "id": "seru-giran--seminare",
@@ -7140,7 +7526,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "shakira--ciega-sordomuda",
@@ -7170,7 +7558,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1998
   },
   {
    "id": "shakira--estoy-aqui",
@@ -7198,7 +7587,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1995
   },
   {
    "id": "shakira--inevitable",
@@ -7222,7 +7612,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1998
   },
   {
    "id": "shakira--si-te-vas",
@@ -7246,7 +7637,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "shania-twain--man-i-feel-like-a-woman",
@@ -7273,7 +7666,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1997
   },
   {
    "id": "sheryl-crow--all-i-wanna-do",
@@ -7298,7 +7692,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1993
   },
   {
    "id": "sister-sledge--we-are-family",
@@ -7323,7 +7718,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1978
   },
   {
    "id": "soda-stereo--de-musica-ligera",
@@ -7352,7 +7748,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1990
   },
   {
    "id": "soda-stereo--disco-eterno",
@@ -7372,7 +7769,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1990
   },
   {
    "id": "soda-stereo--juegos-de-seduccion",
@@ -7397,7 +7795,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1985
   },
   {
    "id": "soda-stereo--persiana-americana",
@@ -7424,7 +7823,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "soundgarden--black-hole-sun",
@@ -7447,7 +7848,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1994
   },
   {
    "id": "spice-girls--wannabe",
@@ -7475,7 +7877,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "stevie-wonder--my-cherie-amour",
@@ -7497,7 +7901,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1969
   },
   {
    "id": "stevie-wonder--superstition",
@@ -7524,7 +7929,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "sting--englishman-in-new-york",
@@ -7546,7 +7953,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "stone-temple-pilots--plush",
@@ -7568,7 +7977,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "sui-generis--cancion-para-mi-muerte",
@@ -7591,7 +8002,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1972
   },
   {
    "id": "sui-generis--necesito",
@@ -7611,7 +8023,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1972
   },
   {
    "id": "sui-generis--rasguna-las-piedras",
@@ -7631,7 +8044,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1973
   },
   {
    "id": "sumo--la-rubia-tarada",
@@ -7655,7 +8069,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1982
   },
   {
    "id": "sumo--viejos-vinagres",
@@ -7679,7 +8094,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "survivor--eye-of-the-tiger",
@@ -7701,7 +8118,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "talking-heads--psycho-killer",
@@ -7730,7 +8149,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1977
   },
   {
    "id": "tan-bionica--ella-tiene-un-look",
@@ -7754,7 +8174,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2010
   },
   {
    "id": "tango-feroz-banda-de-sonido--el-amor-es-mas-fuerte",
@@ -7781,7 +8202,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "the-beatles--a-hard-day-s-night",
@@ -7806,7 +8229,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "the-beatles--all-you-need-is-love",
@@ -7830,7 +8255,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1967
   },
   {
    "id": "the-beatles--can-t-buy-me-love",
@@ -7850,7 +8276,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1964
   },
   {
    "id": "the-beatles--come-together",
@@ -7879,7 +8306,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1969
   },
   {
    "id": "the-beatles--don-t-let-me-down",
@@ -7903,7 +8331,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1969
   },
   {
    "id": "the-beatles--eleanor-rigby",
@@ -7925,7 +8354,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1966
   },
   {
    "id": "the-beatles--get-back",
@@ -7947,7 +8377,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "the-beatles--help",
@@ -7971,7 +8403,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1965
   },
   {
    "id": "the-beatles--here-comes-the-sun",
@@ -7993,7 +8426,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1969
   },
   {
    "id": "the-beatles--hey-jude",
@@ -8017,7 +8451,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1968
   },
   {
    "id": "the-beatles--i-saw-her-standing-there",
@@ -8042,7 +8477,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "the-beatles--let-it-be",
@@ -8066,7 +8503,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1968
   },
   {
    "id": "the-beatles--medley-beatles-hey-jude-let-it-be-imagine",
@@ -8086,7 +8524,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1970
   },
   {
    "id": "the-beatles--oh-darling",
@@ -8114,7 +8553,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "the-beatles--something",
@@ -8141,7 +8582,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1969
   },
   {
    "id": "the-beatles--twist-and-shout",
@@ -8164,7 +8606,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1963
   },
   {
    "id": "the-beatles--with-a-little-help-from-my-friends-vers-joe-cocker",
@@ -8191,7 +8634,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "the-clash--should-i-stay-or-should-i-go",
@@ -8215,7 +8660,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1982
   },
   {
    "id": "the-cranberries--linger",
@@ -8237,7 +8683,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1993
   },
   {
    "id": "the-cranberries--zombie",
@@ -8260,7 +8707,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "the-doors--roadhouse-blues",
@@ -8284,7 +8733,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1967
   },
   {
    "id": "the-killers--all-these-things-that-i-ve-done",
@@ -8306,7 +8756,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "the-killers--mr-brightside",
@@ -8328,7 +8780,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2003
   },
   {
    "id": "the-outfield--all-the-love-in-the-world",
@@ -8353,7 +8806,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1985
   },
   {
    "id": "the-outfield--your-love",
@@ -8377,7 +8831,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1985
   },
   {
    "id": "the-police--every-breath-you-take",
@@ -8401,7 +8856,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1983
   },
   {
    "id": "the-police--every-little-thing-she-does-is-magic",
@@ -8425,7 +8881,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1981
   },
   {
    "id": "the-police--message-in-a-bottle",
@@ -8450,7 +8907,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1979
   },
   {
    "id": "the-police--walking-on-the-moon",
@@ -8476,7 +8934,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1979
   },
   {
    "id": "the-rolling-stones--miss-you",
@@ -8502,7 +8961,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1978
   },
   {
    "id": "the-rolling-stones--start-me-up",
@@ -8525,7 +8985,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1981
   },
   {
    "id": "the-rolling-stones--sympathy-for-the-devil",
@@ -8553,7 +9014,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1968
   },
   {
    "id": "the-rolling-stones--wild-horses",
@@ -8573,7 +9035,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "the-rolling-stones--you-can-t-always-get-what-you-want",
@@ -8597,7 +9061,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1969
   },
   {
    "id": "the-strokes--last-nite",
@@ -8619,7 +9084,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2001
   },
   {
    "id": "the-verve--bittersweet-symphony",
@@ -8641,7 +9107,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "the-who--my-generation",
@@ -8666,7 +9134,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1965
   },
   {
    "id": "tina-turner--proud-mary",
@@ -8693,7 +9162,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "tina-turner--the-best-simply-the-best",
@@ -8726,7 +9197,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "toco-para-vos--hasta-la-luna",
@@ -8746,7 +9219,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "toto--hold-the-line",
@@ -8771,7 +9246,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1978
   },
   {
    "id": "trueno--dance-crip",
@@ -8793,7 +9269,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 2022
   },
   {
    "id": "turf--yo-no-me-quiero-casar-y-usted",
@@ -8824,7 +9301,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "u2--one",
@@ -8854,7 +9333,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "u2--pride-in-the-name-of-love",
@@ -8876,7 +9357,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "vicentico--tumbas-de-la-gloria",
@@ -8900,7 +9383,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "viejas-locas--me-gustas-mucho",
@@ -8922,7 +9407,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1999
   },
   {
    "id": "village-people--y-m-c-a",
@@ -8944,7 +9430,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1978
   },
   {
    "id": "vilma-palma-e-vampiros--auto-rojo",
@@ -8969,7 +9456,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "vilma-palma-e-vampiros--la-pachanga",
@@ -8993,7 +9482,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1991
   },
   {
    "id": "virus--luna-de-miel",
@@ -9015,7 +9505,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "whitesnake--is-this-love",
@@ -9040,7 +9532,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1987
   },
   {
    "id": "whitney-houston--i-have-nothing",
@@ -9064,7 +9557,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   },
   {
    "id": "whitney-houston--i-will-always-love-you",
@@ -9086,7 +9581,8 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": 1992
   },
   {
    "id": "wild-cherry--play-that-funky-music",
@@ -9108,7 +9604,9 @@
    "origen": "import",
    "cifraUrl": "",
    "cifraArtista": "",
-   "cifraConfianza": ""
+   "cifraConfianza": "",
+   "anio": null,
+   "anioFuente": "sin"
   }
  ],
  "cantantes": [
