@@ -72,7 +72,7 @@ export function ponerNota(jamId, songId, texto) {
 
 /**
  * Baja las notas propias y las deja listas para leer. Si la base
- * todavía no tiene la tabla (falta correr db/09-notas.sql), sigue
+ * todavía no tiene la tabla (falta correr db/12-notas.sql), sigue
  * andando con las de este navegador y no molesta a nadie.
  */
 export async function cargarNotas() {
