@@ -1621,3 +1621,98 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
   .miembro { flex-wrap: wrap; }
   .miembro-acciones { margin-left: 0; width: 100%; }
 }
+
+/* ============================================================
+   Mobile y iPad: la lista, con el dedo
+   ------------------------------------------------------------
+   Va al final a propósito: tiene que ganarle a las reglas de la
+   vista compacta, que están pensadas para una pantalla ancha.
+
+   A 375px la compacta no sirve — el título quedaba en "Bie..." —
+   así que acá se apaga sola y todo lo que se toca crece a un
+   tamaño de dedo (40px o más).
+   ============================================================ */
+@media (max-width: 820px) {
+  /* Tres renglones por tema: título, datos, y los botones abajo a la
+     derecha. Meterlos en la misma línea no entra —cinco botones de dedo
+     son 200px de los 313 que hay— y encima aplastaba el título. */
+  .setlist.compacta .sl-item,
+  .sl-item {
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 9px 10px 9px 4px;
+    min-height: 0;
+    line-height: 1.5;
+    gap: 6px;
+  }
+  .setlist.compacta .sl-main,
+  .sl-item > .sl-main {
+    display: block;
+    overflow: visible;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .setlist.compacta .sl-main,
+  .sl-item > .sl-main { flex: 1 1 60%; }     /* que no se caiga de renglón */
+
+  /* la manija y el número, arriba junto al título: centrados contra un
+     bloque de tres renglones quedaban a la altura del artista */
+  .sl-item > .handle,
+  .sl-item > .sl-num { align-self: flex-start; margin-top: 3px; }
+
+  .sl-item > .sl-actions {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    margin: 2px 0 0;
+    opacity: 1;
+  }
+  /* los bloques y los breaks tienen un solo botón: no necesitan renglón propio */
+  .sl-item.sl-bloque > .sl-actions,
+  .sl-item.sl-break > .sl-actions { flex: 0 0 auto; margin: 0; }
+  .setlist.compacta .sl-title {
+    font-size: 15px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+  .setlist.compacta .sl-sub {
+    margin: 5px 0 0;
+    margin-left: 0;
+    max-width: none;
+    flex-wrap: wrap;
+    overflow: visible;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .setlist.compacta .sl-sub > span:nth-child(2) { max-width: none; }
+  /* vuelven las que habíamos sacado por falta de ancho */
+  .setlist.compacta .cat-pill { display: inline-flex; }
+  .setlist.compacta .patch-val.vacio { display: inline-block; }
+  .setlist.compacta .drop-line { height: 3px; margin: 1px 0; }
+  .setlist.compacta .sl-bloque { margin: 14px 0 2px; padding: 2px 8px 5px; }
+  .setlist.compacta .sl-bloque input { font-size: 12px; }
+
+  /* tamaño de dedo: 40px es lo mínimo que se acierta sin mirar */
+  .sl-actions { gap: 2px; }
+  .sl-actions .icon-btn,
+  .med-song .icon-btn {
+    min-width: 40px; min-height: 40px;
+    font-size: 17px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .sl-item .handle, .preview-row .handle {
+    font-size: 21px; padding: 8px 5px; letter-spacing: -3px;
+  }
+  .setlist.compacta .patch-val,
+  .setlist.compacta .tempo-val,
+  .tempo-val, .patch-val {
+    font-size: 13px; padding: 6px 9px;
+  }
+  .tempo-buscar { display: none; }        /* el lápiz del tempo no entra: se edita tocando el número */
+  .chip { font-size: 12.5px; padding: 4px 9px; }
+  .chip button { padding: 2px 4px; font-size: 12px; }
+  .sl-num { font-size: 13px; min-width: 20px; }
+
+  /* el conmutador de densidad no decide nada acá */
+  .card-head .btn.xs.densidad { display: none; }
+}

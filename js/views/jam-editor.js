@@ -7,12 +7,12 @@
      3) Sugerencias: nunca tocados de bandas que ya funcionan
    ============================================================ */
 
-import { store, norm, franjaDeBpm, FRANJA_LABEL } from '../store.js';
+import { store, norm, FRANJA_LABEL } from '../store.js';
 import {
   h, frag, clear, poner, field, input, select, personPicker, toast, modal, confirmar, songAutocomplete,
   catPill, catCorta, franjaDot, fechaLinda, copiar, debounce,
 } from '../ui.js';
-import { buscarEnWeb, webAResultado, buscarBpm, temasDeArtista } from '../lookup.js';
+import { buscarEnWeb, webAResultado, temasDeArtista } from '../lookup.js';
 import { buscarCifra, urlBusqueda } from '../cifra.js';
 import { chipTempo } from '../tempo.js';
 import { chipPatch } from '../patch.js';
@@ -238,7 +238,7 @@ export function vistaEditor(jamId) {
     },
   });
 
-  const btnDensidad = h('button.btn.xs', {
+  const btnDensidad = h('button.btn.xs.densidad', {
     onclick: () => {
       localStorage.setItem(CLAVE_DENSIDAD, compacta() ? 'comoda' : 'compacta');
       aplicarDensidad();
@@ -1452,66 +1452,8 @@ export function vistaEditor(jamId) {
     return L.join('\n');
   }
 
-  /** Resuelve la cifra de todos los temas de la lista que todavía no la tengan. */
-  async function cifrasDeLaLista(btn) {
-    const ids = [...idsEnLista()];
-    const pendientes = ids.map(id => store.song(id)).filter(s => s && !s.cifraUrl && s.cifraConfianza !== 'no');
 
-    if (!pendientes.length) { toast('Ya están todas las cifras que se pueden conseguir', 'ok'); return; }
 
-    btn.disabled = true;
-    let hallada = 0, dudosa = 0, sin = 0;
-    for (const [i, s] of pendientes.entries()) {
-      btn.textContent = `🎸 ${i + 1}/${pendientes.length}…`;
-      try {
-        const r = await buscarCifra(s.titulo, s.artista);
-        if (r) {
-          store.updateSong(s.id, { cifraUrl: r.url, cifraArtista: r.artista, cifraConfianza: r.confianza });
-          r.confianza === 'alta' ? hallada++ : dudosa++;
-        } else {
-          store.updateSong(s.id, { cifraUrl: '', cifraConfianza: 'no' });
-          sin++;
-        }
-      } catch { sin++; }
-      await new Promise(r => setTimeout(r, 180));   // no castigar la API
-    }
-    btn.textContent = '🎸 Cifras'; btn.disabled = false;
-    pintarTodo();
-    toast(`${hallada} cifras encontradas` + (dudosa ? ` · ${dudosa} dudosas` : '') + (sin ? ` · ${sin} sin cifra` : ''), 'ok');
-  }
-
-  const btnCifras = h('button.btn.sm', { onclick: () => cifrasDeLaLista(btnCifras) }, '🎸 Cifras');
-
-  /** Completa los BPM que faltan buscándolos en internet. Nunca pisa los medidos. */
-  async function temposDeLaLista(btn) {
-    const pendientes = [...idsEnLista()].map(id => store.song(id))
-      .filter(s => s && !s.bpm && s.bpmFuente !== 'sin');
-
-    if (!pendientes.length) { toast('Todos los temas de la lista ya tienen tempo', 'ok'); return; }
-
-    btn.disabled = true;
-    let ok = 0, sin = 0;
-    for (const [i, s] of pendientes.entries()) {
-      btn.textContent = `⏱ ${i + 1}/${pendientes.length}…`;
-      const r = await buscarBpm(s.titulo, s.artista);
-      if (r) {
-        store.updateSong(s.id, { bpm: r.bpm, bpmFuente: 'sugerido', franja: franjaDeBpm(r.bpm) });
-        ok++;
-      } else {
-        store.updateSong(s.id, { bpmFuente: 'sin' });
-        sin++;
-      }
-      await new Promise(r => setTimeout(r, 150));
-    }
-    btn.textContent = '⏱ Tempos'; btn.disabled = false;
-    pintarTodo();
-    toast(`${ok} tempos sugeridos` + (sin ? ` · ${sin} sin dato` : ''), 'ok');
-  }
-
-  const btnTempos = h('button.btn.sm', {
-    onclick: () => temposDeLaLista(btnTempos),
-    title: 'Busca en internet el BPM de los temas que no lo tienen. No toca los que ya están medidos.',
-  }, '⏱ Tempos');
 
   /* ---------- encabezado de impresión ----------
      Al imprimir con "Guardar como PDF", Chrome y Safari conservan los <a href>
@@ -1542,8 +1484,6 @@ export function vistaEditor(jamId) {
       onclick: () => { location.hash = '#/lyrics/' + jam.id; },
       title: 'Las letras de todos los temas, en orden',
     }, '📖 LYRICS VIEW'),
-    btnCifras,
-    btnTempos,
     h('button.btn.sm', { onclick: () => copiar(comoTexto()) }, '📋 Copiar lista'),
     (jam.historica || bloqueada()) ? null
       : h('button.btn.sm', {
