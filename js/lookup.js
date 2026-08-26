@@ -78,9 +78,9 @@ async function buscarMusicBrainz(q, limit = 6) {
 }
 
 /** Busca un tema en internet. Nunca lanza: si falla, devuelve []. */
-export async function buscarEnWeb(q, limite = 8) {
+export async function buscarEnWeb(q) {
   try {
-    const r = await buscarItunes(q, limite);
+    const r = await buscarItunes(q);
     if (r.length) return r;
   } catch (e) { console.warn('iTunes no respondió:', e.message); }
   try {

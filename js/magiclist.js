@@ -7,8 +7,7 @@
 
 import { store, norm } from './store.js';
 import { h, field, toast, catCorta, grupoPorcentajes } from './ui.js';
-import { temasDeArtista, sugerirCategoria, buscarEnWeb } from './lookup.js';
-import { buscarLetra } from './letras.js';
+import { temasDeArtista, sugerirCategoria } from './lookup.js';
 
 /* Presets de energía: reparten el % de cada franja y en qué momento va. */
 export const PRESETS = {
@@ -30,8 +29,7 @@ export function estadoInicial() {
     // ordenar la lista (lentos primero, rápidos sobre el final).
     franjas: {},
     momentos: { ...PRESETS.progresiva.momento },
-    historial: 'tocados',   // 'tocados' | 'nuevos' | 'mix' | 'tematica'
-    tematica: '',           // en 'tematica': lo que escribís vos
+    historial: 'tocados',   // 'tocados' | 'nuevos' | 'mix'
     mix: { nuevos: 30 },    // en 'mix': % para estrenar; el resto, ya tocados
     cantidad: 18,
     evitarRepetirArtista: true,
@@ -88,22 +86,7 @@ export function filtrosMagicList(gen, onCambio) {
       h('div.seg', {},
         btn('Ya tocados', gen.historial === 'tocados', () => { gen.historial = 'tocados'; onCambio(); }),
         btn('🌐 Nunca tocados', gen.historial === 'nuevos', () => { gen.historial = 'nuevos'; onCambio(); }),
-        btn('⇄ Mix', gen.historial === 'mix', () => { gen.historial = 'mix'; onCambio(); }),
-        btn('🎯 Temática', gen.historial === 'tematica', () => { gen.historial = 'tematica'; onCambio(); })),
-
-      gen.historial === 'tematica'
-        ? h('div', { style: { marginTop: '10px' } },
-            h('input', {
-              type: 'text', value: gen.tematica, placeholder: 'sale el sol, verano, amanecer…',
-              style: { width: '100%' },
-              oninput: e => { gen.tematica = e.target.value; },
-            }),
-            h('div.dim', { style: { fontSize: '11px', marginTop: '6px', lineHeight: '1.45' } },
-              'Busca temas nuevos por título y después mira la letra de cada uno para ver si habla de eso. ',
-              h('b', {}, 'Separá con comas las palabras de la temática'),
-              ': ninguna base gratis busca adentro de las letras, así que el hallazgo sale del título — ',
-              'cuantas más palabras le des, más lejos llega.'))
-        : null,
+        btn('⇄ Mix', gen.historial === 'mix', () => { gen.historial = 'mix'; onCambio(); })),
 
       gen.historial === 'nuevos'
         ? h('div.dim', { style: { fontSize: '11px', marginTop: '6px', lineHeight: '1.45' } },
@@ -229,99 +212,6 @@ export function ordenarPorMomento(songs, momentos) {
   return out;
 }
 
-/* ============================================================
-   Pool por temática
-   ------------------------------------------------------------
-   Ninguna base gratis busca adentro de las letras, así que el
-   hallazgo sale del título: se buscan los términos que escribiste
-   y lo que aparece se contrasta contra la letra. Los que además
-   la nombran en la letra van primero.
-   ============================================================ */
-function terminosDe(tematica) {
-  return (tematica || '')
-    .split(/[,;]+/)
-    .map(t => t.trim())
-    .filter(t => t.length >= 3)
-    .slice(0, 6);
-}
-
-/** ¿La letra (o el título) nombra alguno de los términos? */
-function nombraLaTematica(texto, terminos) {
-  const t = norm(texto || '');
-  return terminos.some(x => t.includes(norm(x)));
-}
-
-async function poolTematica(gen, excluir, btn) {
-  const terminos = terminosDe(gen.tematica);
-  if (!terminos.length) return { pool: [], sinTerminos: true };
-
-  const enBase = new Set(store.songs.map(s => norm(s.titulo) + '|' + norm(s.artista)));
-  const textoOriginal = btn ? btn.textContent : '';
-
-  /* Un montón por término, para después repartir parejo entre todos */
-  const porTermino = [];
-  const titulosVistos = new Set();
-
-  for (let i = 0; i < terminos.length; i++) {
-    if (btn) btn.textContent = `🌐 buscando "${terminos[i]}"…`;
-    let res = [];
-    /* pedimos de más: al quedarnos con un tema por título, la mitad se cae */
-    try { res = await buscarEnWeb(terminos[i], 25); } catch { /* seguimos con los otros */ }
-
-    const míos = [];
-    for (const r of res) {
-      if (!r.titulo || !r.artista) continue;
-      if (enBase.has(norm(r.titulo) + '|' + norm(r.artista))) continue;   // la gracia es que sean nuevos
-      /* Buscando "lluvia" vuelven ocho temas llamados Lluvia de ocho
-         artistas distintos. Uno por título alcanza: el resto es ruido. */
-      const soloTitulo = norm(r.titulo);
-      if (titulosVistos.has(soloTitulo)) continue;
-      titulosVistos.add(soloTitulo);
-      míos.push(r);
-    }
-    porTermino.push(míos);
-  }
-
-  /* Intercalados: si pediste tres temáticas, que aparezcan las tres y no
-     quince de la primera. */
-  const candidatos = [];
-  for (let v = 0; v < 12; v++) {
-    for (const lista of porTermino) if (lista[v]) candidatos.push(lista[v]);
-  }
-
-  /* Miramos la letra de los primeros: es lo que más tarda, así que se
-     acota. Los que la nombran en la letra suben; el resto queda por el
-     título, que ya matcheó al buscarlos. */
-  const aMirar = candidatos.slice(0, 16);
-  const conLetra = new Set();
-  for (let i = 0; i < aMirar.length; i += 3) {
-    const tanda = aMirar.slice(i, i + 3);
-    if (btn) btn.textContent = `📖 leyendo letras ${Math.min(i + 3, aMirar.length)}/${aMirar.length}…`;
-    const letras = await Promise.all(tanda.map(c => buscarLetra(c).catch(() => ({ ok: false }))));
-    tanda.forEach((c, k) => {
-      if (letras[k].ok && nombraLaTematica(letras[k].texto, terminos)) conLetra.add(c);
-    });
-  }
-  if (btn) btn.textContent = textoOriginal;
-
-  const aSong = (r, enLaLetra) => ({
-    id: 'web-' + norm(r.artista).replace(/ /g, '-') + '--' + norm(r.titulo).replace(/ /g, '-'),
-    titulo: r.titulo, artista: r.artista,
-    categoria: sugerirCategoria(r.genero, r.artista),
-    franja: null, bpm: null, jams: [], cantantes: [],
-    esWeb: true, enLaLetra,
-    datos: { titulo: r.titulo, artista: r.artista, categoria: sugerirCategoria(r.genero, r.artista),
-             anio: r.anio, generoWeb: r.genero, origen: 'web:tematica' },
-  });
-
-  const pool = [
-    ...aMirar.filter(c => conLetra.has(c)).map(c => aSong(c, true)),
-    ...candidatos.filter(c => !conLetra.has(c)).map(c => aSong(c, false)),
-  ];
-
-  return { pool, enLaLetra: conLetra.size, mirados: aMirar.length };
-}
-
 /**
  * Arma la propuesta.
  * @param gen      estado de los filtros
@@ -410,15 +300,6 @@ export async function generarPropuesta(gen, excluir = new Set(), btn = null) {
   if (gen.historial === 'tocados') {
     const res = ordenar(seleccionar(poolTocados(excluir), gen));
     if (!res.length) toast('No hay temas tocados para esa mezcla', 'err');
-    return avisarSiFaltan(res);
-  }
-
-  if (gen.historial === 'tematica') {
-    const { pool, sinTerminos, enLaLetra, mirados } = await poolTematica(gen, excluir, btn);
-    if (sinTerminos) { toast('Escribí la temática que querés buscar', 'err'); return []; }
-    const res = ordenar(seleccionar(pool, gen));
-    if (!res.length) toast(`No encontré temas sobre «${gen.tematica}»`, 'err');
-    else toast(`${enLaLetra} de los ${mirados} que miré la nombran en la letra`, enLaLetra ? 'ok' : '');
     return avisarSiFaltan(res);
   }
 
