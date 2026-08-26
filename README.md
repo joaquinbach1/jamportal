@@ -411,6 +411,7 @@ db/05-permisos.sql     magic link + lista de miembros (RLS)
 db/06-concurrencia.sql control de versión por jam + realtime
 db/07-contrasena.sql   alta de miembros con contraseña
 db/08-admin.sql        administrar la lista desde la app
+db/09-rol-dev.sql      un acceso acotado a la base, para otro dev
 db/10-datos.sql        el repertorio y las jams históricas, generado
 ```
 
@@ -547,6 +548,42 @@ las policies miran el segundo.
 | Logueado y en `miembro` | todo |
 
 El código de cada jam se guarda con `crypt()`, nunca en claro.
+
+### Darle acceso a la base a otro dev
+
+Compartir el rol `postgres` es más de lo que hace falta: puede leer `auth.users`
+—los mails y los hashes de contraseña de toda la banda— y borrar el proyecto.
+
+`db/09-rol-dev.sql` crea `jamportal_dev`, que alcanza para trabajar y no llega a
+las cuentas de nadie:
+
+| Puede | No puede |
+|---|---|
+| leer y escribir las tablas de `public` | tocar `auth` (cuentas, sesiones, hashes) |
+| correr migraciones (DDL) | leer el `vault` |
+| llamar a las funciones de la app | crear otros roles |
+
+Nace sin poder entrar. Para habilitarlo:
+
+```sql
+alter role jamportal_dev login password 'la-que-elijas';
+```
+
+Y la connection string que se le pasa —por un canal privado, nunca por el repo:
+
+```
+postgresql://jamportal_dev.<ref>@aws-0-<region>.pooler.supabase.com:5432/postgres
+```
+
+Para cortarle el acceso: `alter role jamportal_dev nologin;`. **Cambiarle la
+contraseña no alcanza** — el pooler de Supabase cachea la anterior un rato;
+`nologin` sí corta enseguida. Para sacárselo del todo, `drop owned by
+jamportal_dev; drop role jamportal_dev;`.
+
+**La alternativa sin compartir nada**: invitarlo al proyecto en Supabase
+(*Organization → Team → Invite*). Ahí tiene su propio acceso, su propio MCP con
+su cuenta, y se le revoca desde el panel. Es lo que conviene si además va a
+tocar la configuración; el rol de arriba sirve cuando alcanza con la base.
 
 ### Probarla
 
