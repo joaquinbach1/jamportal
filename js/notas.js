@@ -1,16 +1,18 @@
 /* ============================================================
    notas.js — las notas privadas de cada uno
    ------------------------------------------------------------
-   "Entro yo en el segundo estribillo", "afinar medio tono abajo",
-   "ojo con el corte del final". Cosas que le sirven a uno solo.
+   "Entro yo en el segundo estribillo", "afinar medio tono abajo".
+   Cosas que le sirven a uno solo, y que nadie más ve.
 
-   Viven en el navegador de cada uno, no en la base compartida:
-   así son privadas por construcción, sin depender de permisos ni
-   de tocar el esquema. El costo es que no te siguen a otro
-   dispositivo — son de esta máquina.
+   Viven en la base, en una tabla donde cada fila lleva el email
+   de su dueño y la policy solo te deja tocar las tuyas. El email
+   lo pone la base leyéndolo del JWT, no el cliente: por eso son
+   privadas de verdad y no por buena voluntad del navegador.
 
-   Se guardan por jam y por tema, porque la nota casi siempre es
-   sobre cómo se toca ese tema en esa jam.
+   Además quedan copiadas en este navegador. Eso hace dos cosas:
+   se leen al toque cuando dibujamos (sin esperar a la red) y el
+   LIVE VIEW sigue mostrándolas sin señal, que es justo donde más
+   falta hacen.
    ============================================================ */
 
 import { store } from './store.js';
@@ -30,10 +32,19 @@ function guardarTodo(datos) {
   catch { /* sin espacio: no es motivo para romper nada */ }
 }
 
+/* ---------- lectura, siempre sincrónica ---------- */
+
 export function notaDe(jamId, songId) {
   const datos = leerTodo();
   return ((datos[dueño()] || {})[jamId] || {})[songId] || '';
 }
+
+export function cuantasNotas(jamId) {
+  const datos = leerTodo();
+  return Object.keys((datos[dueño()] || {})[jamId] || {}).length;
+}
+
+/* ---------- escritura ---------- */
 
 export function ponerNota(jamId, songId, texto) {
   const datos = leerTodo();
@@ -46,10 +57,47 @@ export function ponerNota(jamId, songId, texto) {
 
   if (!Object.keys(deLaJam).length) delete mías[jamId];
   guardarTodo(datos);
+
+  /* a la base, si hay. Si falla, la nota igual quedó acá: no la
+     perdés por un problema de red. */
+  const d = store.driver;
+  if (d && d.guardarNota) {
+    d.guardarNota(jamId, songId, limpio).catch(e => {
+      console.warn('No pude guardar la nota en la base:', e.message);
+    });
+  }
 }
 
-/** Cuántas notas tenés puestas en esta jam. */
-export function cuantasNotas(jamId) {
-  const datos = leerTodo();
-  return Object.keys((datos[dueño()] || {})[jamId] || {}).length;
+/* ---------- traerlas al entrar ---------- */
+
+/**
+ * Baja las notas propias y las deja listas para leer. Si la base
+ * todavía no tiene la tabla (falta correr db/09-notas.sql), sigue
+ * andando con las de este navegador y no molesta a nadie.
+ */
+export async function cargarNotas() {
+  const d = store.driver;
+  if (!d || !d.misNotas) return { origen: 'navegador' };
+
+  try {
+    const remotas = await d.misNotas();
+    if (!remotas || typeof remotas !== 'object') return { origen: 'navegador' };
+
+    const datos = leerTodo();
+    const locales = datos[dueño()] || {};
+
+    /* Lo de la base manda, pero no se pierde lo que hayas escrito acá
+       y todavía no haya subido (una nota puesta sin señal). */
+    const unidas = { ...locales };
+    for (const [jamId, temas] of Object.entries(remotas)) {
+      unidas[jamId] = { ...(locales[jamId] || {}), ...temas };
+    }
+
+    datos[dueño()] = unidas;
+    guardarTodo(datos);
+    return { origen: 'base', jams: Object.keys(remotas).length };
+  } catch (e) {
+    console.warn('No pude traer las notas de la base:', e.message);
+    return { origen: 'navegador', error: e.message };
+  }
 }

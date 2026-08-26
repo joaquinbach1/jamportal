@@ -19,6 +19,7 @@ import { vistaStats }   from './views/stats.js';
 import { vistaData }    from './views/data.js';
 import { vistaLogin, hayQueEntrar } from './views/login.js';
 import { montarUsuario } from './views/usuario.js';
+import { cargarNotas } from './notas.js';
 
 const view = $('#view');
 
@@ -174,6 +175,10 @@ $('#temaSlot').appendChild(botonTema(h));
   }
 
   montarUsuario($('#usuarioSlot'));
+
+  /* Las notas privadas, para tenerlas al dibujar. Si la base todavía
+     no tiene la tabla, sigue con las de este navegador. */
+  cargarNotas().then(r => { if (r.origen === 'base') render(true); });
 
   function pintarBadge() {
     // El punto va como título y no como texto: escrito entero no entra en

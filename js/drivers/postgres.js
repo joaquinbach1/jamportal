@@ -170,6 +170,10 @@ export class PostgresDriver {
   /* ---------- administrar la lista ----------
      La base decide si quien llama puede: estas funciones comprueban por
      su cuenta y devuelven 403 si no. El cliente no gana nada mintiendo. */
+  /* notas privadas: el email lo pone la base desde el JWT, no el cliente */
+  misNotas()                   { return this.rpc('mis_notas'); }
+  guardarNota(jam, song, txt)  { return this.rpc('guardar_nota', { p_jam: jam, p_song: song, p_texto: txt }); }
+
   listarMiembros()             { return this.rpc('listar_miembros'); }
   agregarMiembro(email, admin) { return this.rpc('agregar_miembro', { p_email: email, p_admin: !!admin }); }
   sacarMiembro(email)          { return this.rpc('sacar_miembro', { p_email: email }); }
