@@ -104,39 +104,15 @@ alHaberCambiosAjenos(() => {
 alFallarNube(msg => setTimeout(() =>
   toast('No pude entrar a la base compartida, sigo con los datos de este navegador. ' + msg, 'err'), 800));
 
-/* Choque: otro guardó la misma jam mientras vos la editabas. La base
-   frenó tu escritura en vez de aceptarla y perder lo del otro, así que
-   acá hay que decidir cuál de las dos versiones queda. No hay respuesta
-   automática buena: la elige quien está editando. */
+/* Choque: otro guardó la misma jam mientras vos la editabas y la base
+   frenó tu escritura. Antes esto abría una ventana a decidir; ahora no
+   interrumpe: queda tu versión, que es la que tenés delante y estás
+   mirando, y el aviso cuenta qué pasó por si querés ir a buscar lo del
+   otro. Es una decisión tomada a conciencia: lo que la otra persona
+   había guardado en esa jam se pisa. */
 alChocarConOtro(e => {
-  const nombre = e.jamNombre || 'esa jam';
-  const m = modal({
-    title: '⚠ Chocaron los cambios',
-    body: h('div', { style: { display: 'grid', gap: '10px', color: 'var(--txt-2)', lineHeight: '1.6' } },
-      h('p', { style: { margin: 0 } },
-        'Alguien más guardó ', h('b', {}, nombre), ' mientras vos la editabas. ',
-        'No guardé lo tuyo para no borrar lo de esa persona.'),
-      h('p', { style: { margin: 0, fontSize: '13.5px' } },
-        'Si traés lo de ellos, perdés los cambios que hiciste desde la última vez. ',
-        'Si guardás lo tuyo, se pierde lo que hizo la otra persona.')),
-    footer: [
-      h('button.btn.ghost', {
-        onclick: async () => {
-          m.close();
-          await store.sincronizar();
-          toast('Traje la versión de la otra persona');
-          render(true);
-        },
-      }, '↓ Traer lo de ellos'),
-      h('button.btn.danger', {
-        onclick: () => {
-          m.close();
-          store.pisarJam(e.jamId);
-          toast('Guardado: quedó tu versión', 'ok');
-        },
-      }, '↑ Que quede lo mío'),
-    ],
-  });
+  store.pisarJam(e.jamId);
+  toast(`Guardé lo tuyo en ${e.jamNombre || 'esa jam'} — pisó lo que había guardado otra persona`);
 });
 
 iniciarTema();
