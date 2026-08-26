@@ -3,7 +3,6 @@
    ============================================================ */
 
 import { store, norm, FRANJA_LABEL } from '../store.js';
-import { asegurarAnio } from '../epoca.js';
 import { h, frag, clear, poner, select, catPill, catCorta, franjaDot, toast, debounce, modal, songAutocomplete } from '../ui.js';
 import { dialogoCancion } from './song-form.js';
 import { botonCifra } from './jam-editor.js';
@@ -17,27 +16,6 @@ export function vistaSongs() {
   const f = { q: '', categoria: '', franja: '', cantante: '', historial: '' };
   let orden = { campo: 'artista', dir: 1 };
 
-  /* Rellena el año de los que no lo tienen. Es el dato que necesita el
-     filtro por época, y el repertorio original vino sin él. Solo agrega:
-     no toca ningún tema que ya tenga año puesto. */
-  const btnAnios = h('button.btn.sm', {
-    title: 'Busca en internet el año de los temas que no lo tienen',
-    onclick: async () => {
-      const faltan = store.repertorio.filter(x => !x.anio && x.anioFuente !== 'sin');
-      if (!faltan.length) { toast('Todos los temas ya tienen año', 'ok'); return; }
-
-      btnAnios.disabled = true;
-      let ok = 0;
-      for (const [i, x] of faltan.entries()) {
-        btnAnios.textContent = `📅 ${i + 1}/${faltan.length}…`;
-        if (await asegurarAnio(x)) ok++;
-        await new Promise(r => setTimeout(r, 150));
-      }
-      btnAnios.textContent = '📅 Años'; btnAnios.disabled = false;
-      pintar();
-      toast(`${ok} años encontrados` + (faltan.length - ok ? ` · ${faltan.length - ok} sin dato` : ''), 'ok');
-    },
-  }, '📅 Años');
 
   const cuerpo = h('tbody');
   const contador = h('span.count');
@@ -202,7 +180,6 @@ export function vistaSongs() {
         h('p.sub', {}, `${store.repertorio.length} temas tocados · ${store.artistas().length} artistas · ${store.repertorio.filter(s => s.bpm).length} con tempo` + (store.ideas.length ? ` · ${store.ideas.length} ideas sin tocar` : ''))),
       h('div.page-actions', {},
         h('button.btn.primary', { onclick: altaRapida }, '＋ Agregar tema'),
-        btnAnios,
         h('a.btn.ghost', { href: '#/data' }, 'Importar / exportar'))),
 
     h('div.filters', {},

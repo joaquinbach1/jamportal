@@ -92,7 +92,7 @@ export function filtrosMagicList(gen, onCambio) {
             'Se combina con las categorías: podés pedir 60% latino de los 90.',
             store.repertorio.some(s => !s.anio)
               ? h('div', { style: { marginTop: '3px' } },
-                  'Los temas sin año quedan afuera — se los podés cargar de una en Canciones DB → 📅 Años.')
+                  'Los temas sin año quedan afuera — se los cargás a mano en la ficha del tema.')
               : null)
         : null),
 

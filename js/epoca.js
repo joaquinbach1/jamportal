@@ -1,15 +1,11 @@
 /* ============================================================
    epoca.js — de qué década es cada tema
    ------------------------------------------------------------
-   El repertorio venía sin año: se rellena desde internet con el
-   mismo camino que el tempo. iTunes acierta la década en la
-   enorme mayoría, pero a veces devuelve la fecha de una
-   reedición —"Necesito" de Sui Generis vuelve como 1987 y es del
-   73—, así que el año se puede corregir a mano en la ficha.
+   Los años del repertorio ya vienen puestos (los trajo de iTunes
+   scripts/traer-anios.py). Los que falten o estén mal se cargan a
+   mano en la ficha del tema: iTunes a veces devuelve la fecha de
+   una reedición y el año se corre un par de años.
    ============================================================ */
-
-import { buscarEnWeb } from './lookup.js';
-import { store } from './store.js';
 
 const ESTE_ANIO = new Date().getFullYear();
 
@@ -41,21 +37,4 @@ export function etiquetaDe(anio) {
   if (!Number.isFinite(a)) return '';
   if (a >= 2000) return `${Math.floor(a / 10) * 10}s`;
   return `${String(Math.floor(a / 10) * 10).slice(2)}s`;
-}
-
-/** Busca el año en internet y lo guarda. Devuelve el año o null. */
-export async function asegurarAnio(song) {
-  if (!song) return null;
-  const fresco = store.song(song.id) || song;
-  if (fresco.anio) return fresco.anio;
-
-  let anio = null;
-  try {
-    const r = await buscarEnWeb(`${fresco.titulo} ${fresco.artista}`);
-    const bueno = r.find(x => x.anio);
-    if (bueno) anio = parseInt(bueno.anio, 10) || null;
-  } catch { /* sin internet o sin resultado: queda sin año */ }
-
-  store.updateSong(fresco.id, anio ? { anio } : { anioFuente: 'sin' });
-  return anio;
 }
