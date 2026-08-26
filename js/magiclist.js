@@ -8,6 +8,7 @@
 import { store, norm } from './store.js';
 import { h, field, toast, catCorta, grupoPorcentajes } from './ui.js';
 import { temasDeArtista, sugerirCategoria } from './lookup.js';
+import { EPOCAS, esDeLaEpoca } from './epoca.js';
 
 /* Presets de energía: reparten el % de cada franja y en qué momento va. */
 export const PRESETS = {
@@ -29,6 +30,7 @@ export function estadoInicial() {
     // ordenar la lista (lentos primero, rápidos sobre el final).
     franjas: {},
     momentos: { ...PRESETS.progresiva.momento },
+    epoca: '',              // '' = todas · '70' '80' '90' '00' '10' '20' 'actual'
     historial: 'tocados',   // 'tocados' | 'nuevos' | 'mix'
     mix: { nuevos: 30 },    // en 'mix': % para estrenar; el resto, ya tocados
     cantidad: 18,
@@ -82,6 +84,18 @@ export function filtrosMagicList(gen, onCambio) {
   actualizarTotal();
 
   return h('div', {}, cont, h('div.gen-opts', { style: { marginTop: '13px' } },
+    h('div.opt-group', {}, h('span', {}, 'Época'),
+      h('div.seg.seg-epocas', {},
+        EPOCAS.map(e => btn(e.etiqueta, gen.epoca === e.clave, () => { gen.epoca = e.clave; onCambio(); }))),
+      gen.epoca
+        ? h('div.dim', { style: { fontSize: '11px', marginTop: '6px', lineHeight: '1.45' } },
+            'Se combina con las categorías: podés pedir 60% latino de los 90.',
+            store.repertorio.some(s => !s.anio)
+              ? h('div', { style: { marginTop: '3px' } },
+                  'Los temas sin año quedan afuera — se los podés cargar de una en Canciones DB → 📅 Años.')
+              : null)
+        : null),
+
     h('div.opt-group', {}, h('span', {}, 'Historial'),
       h('div.seg', {},
         btn('Ya tocados', gen.historial === 'tocados', () => { gen.historial = 'tocados'; onCambio(); }),
@@ -219,9 +233,10 @@ export function ordenarPorMomento(songs, momentos) {
  * @param btn      botón opcional, para mostrar el progreso de la búsqueda web
  */
 /** Pool de lo que ya se tocó. */
-function poolTocados(excluir) {
+function poolTocados(excluir, gen = {}) {
   return store.repertorio
     .filter(s => (s.jams || []).length && !excluir.has(s.id))
+    .filter(s => esDeLaEpoca(s, gen.epoca))
     .sort(() => Math.random() - 0.5);
 }
 
@@ -232,6 +247,7 @@ function poolTocados(excluir) {
 async function poolNuevos(gen, excluir, btn) {
   const deLaBase = store.repertorio
     .filter(s => !(s.jams || []).length && !excluir.has(s.id))
+    .filter(s => esDeLaEpoca(s, gen.epoca))
     .sort(() => Math.random() - 0.5);
 
   // solo consultamos bandas de las categorías que pesan en la mezcla
@@ -262,9 +278,11 @@ async function poolNuevos(gen, excluir, btn) {
         const clave = norm(r.titulo) + '|' + norm(banda);
         if (!r.titulo || enBase.has(clave)) continue;
         enBase.add(clave);
+        const anio = parseInt(r.anio, 10) || null;
+        if (gen.epoca && !esDeLaEpoca({ anio }, gen.epoca)) continue;
         delaWeb.push({
           id: 'web-' + norm(banda).replace(/ /g, '-') + '--' + norm(r.titulo).replace(/ /g, '-'),
-          titulo: r.titulo, artista: banda, categoria,
+          titulo: r.titulo, artista: banda, categoria, anio,
           franja: null, bpm: null, jams: [], cantantes: [],
           esWeb: true,
           datos: { titulo: r.titulo, artista: banda, categoria, anio: r.anio, generoWeb: r.genero, origen: 'web:itunes' },
@@ -298,7 +316,7 @@ export async function generarPropuesta(gen, excluir = new Set(), btn = null) {
   };
 
   if (gen.historial === 'tocados') {
-    const res = ordenar(seleccionar(poolTocados(excluir), gen));
+    const res = ordenar(seleccionar(poolTocados(excluir, gen), gen));
     if (!res.length) toast('No hay temas tocados para esa mezcla', 'err');
     return avisarSiFaltan(res);
   }
@@ -318,7 +336,7 @@ export async function generarPropuesta(gen, excluir = new Set(), btn = null) {
   const usados = new Set(), artistas = new Set();
 
   const conocidos = nTocados
-    ? seleccionar(poolTocados(excluir), { ...gen, cantidad: nTocados }, usados, artistas)
+    ? seleccionar(poolTocados(excluir, gen), { ...gen, cantidad: nTocados }, usados, artistas)
     : [];
 
   let estrenos = [];

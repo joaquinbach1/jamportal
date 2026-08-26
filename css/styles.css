@@ -379,6 +379,10 @@ label.field > span {
 .tempo-buscar { font-size: 11px; opacity: 0; }
 .tempo:hover .tempo-buscar, .tempo-val.vacio + .tempo-buscar { opacity: .75; }
 .tempo-buscar:hover { opacity: 1; }
+/* las épocas son ocho botoncitos: que envuelvan en vez de desbordar */
+.seg.seg-epocas { flex-wrap: wrap; }
+.seg.seg-epocas button { flex: 0 0 auto; padding: 4px 9px; font-size: 11.5px; }
+
 /* patch de teclados: mismo trato que el tempo, editable en la fila */
 .patch { display: inline-flex; align-items: center; }
 .patch-val {
