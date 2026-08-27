@@ -20,6 +20,7 @@ const BASE = [
   './',
   './index.html',
   './css/styles.css',
+  './js/album.js',
   './js/app.js',
   './js/auth.js',
   './js/cifra.js',
