@@ -4,81 +4,63 @@
    Un documento, no un editor. Se abre parado en el Portal, con
    una mano, para saber qué viene y a qué hora se termina.
 
-   Por eso: un renglón por tema y nada más —número, título,
-   artista, quién canta—, los medleys agrupados, los breaks
-   partiendo la lista, y arriba el horario estimado. Todo lo que
-   se toca vive en el ⋯ de la barra o en el ＋ de abajo.
+   Por eso el renglón dice lo mínimo —número, título y quién
+   canta— y nada más. El artista no entra sin comerse el nombre
+   del cantante, que es el dato que se busca de verdad mirando
+   la lista, así que vive en el detalle: se toca el tema y ahí
+   están artista, duración, cantante y el link a Spotify.
 
-   El editor completo sigue existiendo, a un toque: #/jams/:id/editar
+   Editar también se puede, sin salir: se arrastra de la manija
+   para reordenar, se toca el horario para correrlo, y el ⋯ abre
+   la lista entera como texto a pantalla completa. El editor
+   completo sigue existiendo: #/jams/:id/editar
    ============================================================ */
 
 import { store } from '../store.js';
-import { h, frag, clear, toast, fechaLinda, copiar, hojaAcciones, confirmar, descargarBlob } from '../ui.js';
+import {
+  h, frag, clear, toast, fechaLinda, copiar, hojaAcciones, confirmar,
+  descargarBlob, modal, field, input,
+} from '../ui.js';
 import { agenda, duracionLinda, largoLindo } from '../duracion.js';
 import { linkSpotify } from '../spotify.js';
 import { notaDe } from '../notas.js';
 import { dialogoNuevaIdea } from './ideas.js';
+import { dialogoCancion } from './song-form.js';
 import { accionesDePagina } from '../app.js';
 import { setlistDocx } from '../docx.js';
+import { setlistATexto, textoASetlist } from '../setlist-texto.js';
+import { buscarCifra, urlBusqueda } from '../cifra.js';
 
 /* ============================================================
    El horario: de qué hora a qué hora, y el break en el medio
    ============================================================ */
-function tira(plan) {
+function tira(plan, alTocar) {
   const barra = h('div.mv-tl-barra');
   if (plan.total > 0) {
     plan.filas.forEach(f => {
       if (f.tipo === 'bloque' || !f.seg) return;
-      const pct = (f.seg / plan.total) * 100;
       barra.appendChild(h('div.mv-tl-seg' + (f.tipo === 'break' ? '.brk' : ''), {
-        style: { width: pct + '%' },
-        title: f.tipo === 'break'
-          ? `${f.label} · ${f.minutos}′`
-          : `${f.tipo === 'medley' ? f.titulo : (f.song ? f.song.titulo : '—')} · ${duracionLinda(f.seg)}`,
+        style: { width: (f.seg / plan.total) * 100 + '%' },
       }));
     });
   }
 
   /* Sin hora de arranque no hay reloj que mostrar, pero el largo total
-     sigue sirviendo: es lo que dura la jam, empiece cuando empiece. */
-  return h('div.mv-timeline', {},
+     sigue sirviendo: es lo que dura la jam, empiece cuando empiece. Y
+     que diga "poné la hora" es justamente dónde se toca para ponerla. */
+  return h('button.mv-timeline', {
+    onclick: alTocar,
+    title: 'Tocar para cambiar la fecha, la hora de arranque y el lugar',
+  },
     h('div.mv-tl-horas', {},
-      h('span.mv-tl-hora', {}, plan.inicio || 'sin hora'),
+      h('span.mv-tl-hora' + (plan.inicio ? '' : '.vacia'), {}, plan.inicio || 'poné la hora'),
       h('span.mv-tl-largo', {}, largoLindo(plan.total)),
       h('span.mv-tl-hora', {}, plan.fin || '')),
     barra,
     h('div.mv-tl-pie', {},
       `${plan.temas} tema${plan.temas === 1 ? '' : 's'}`,
       plan.breaks ? ` · ${Math.round(plan.breaks / 60)}′ de break` : '',
-      plan.sinDato
-        ? h('span.mv-tl-aprox', { title: `${plan.sinDato} temas sin duración cargada: se cuentan como 4 minutos` },
-            ` · ${plan.sinDato} estimado${plan.sinDato === 1 ? '' : 's'}`)
-        : ''));
-}
-
-/* ============================================================
-   Un renglón: número, título, artista, (cantante) y ♫
-   ------------------------------------------------------------
-   Todo el texto va en un solo nodo con ellipsis. Partirlo en
-   varios flex hace que el navegador recorte el título antes que
-   el artista, y el título es lo único que no se puede perder.
-   ============================================================ */
-function renglon(f, num) {
-  const s = f.song;
-  const cantantes = (f.cantantes || []).join(', ');
-  const url = s ? linkSpotify(s) : '';
-  const nota = s && f.jamId ? notaDe(f.jamId, s.id) : '';
-
-  return h('div.mv-fila', {},
-    h('span.mv-n', {}, num),
-    h('span.mv-txt', {},
-      h('b', {}, s ? s.titulo : 'Tema borrado'),
-      s && s.artista ? h('span.mv-art', {}, ' ' + s.artista) : null,
-      cantantes ? h('span.mv-quien', {}, ` (${cantantes})`) : null),
-    nota ? h('span.mv-nota', { title: nota }, '📝') : null,
-    h('span.mv-dur', {}, duracionLinda(f.seg)),
-    url ? h('a.mv-sp', { href: url, target: '_blank', rel: 'noopener',
-                         title: s.spotifyUrl ? 'Escuchar en Spotify' : 'Buscar en Spotify' }, '♫') : null);
+      plan.sinDato ? ` · ${plan.sinDato} estimado${plan.sinDato === 1 ? '' : 's'}` : ''));
 }
 
 /* ============================================================
@@ -90,14 +72,286 @@ export function vistaMovil(jamId) {
     return h('div.empty', {}, h('b', {}, 'Esa jam no existe'),
       h('a.btn.sm', { href: '#/jams', style: { marginTop: '12px' } }, 'Volver'));
   }
+  if (!Array.isArray(jam.items)) jam.items = [];
+
+  /* Las históricas y las cerradas son el registro de lo que ya pasó: no se
+     reordenan desde acá. Para abrirlas está el candado del editor completo,
+     que es donde vive esa decisión y pide confirmación. */
+  const editable = () => !(jam.historica || jam.cerrada);
 
   const cont = h('div.movil');
+  const lista = h('div.mv-lista');
 
+  function guardar() { store.commit(); }
+
+  /* ============================================================
+     Detalle de un tema — lo que no entra en el renglón
+     ============================================================ */
+  function hojaTema(f, indice) {
+    const s = f.song;
+    if (!s) return;
+    const cantantes = (f.cantantes || []).join(', ');
+    const url = linkSpotify(s);
+    const nota = notaDe(jam.id, s.id);
+
+    const detalle = h('div.hoja-detalle', {},
+      h('div.hd-fila', {}, h('span', {}, 'Artista'), h('b', {}, s.artista || '—')),
+      h('div.hd-fila', {}, h('span', {}, 'Dura'),
+        h('b', {}, duracionLinda(f.seg)),
+        s.duracionSec ? null : h('em', {}, ' estimado')),
+      h('div.hd-fila', {}, h('span', {}, 'Canta'), h('b', {}, cantantes || '—')),
+      s.bpm ? h('div.hd-fila', {}, h('span', {}, 'Tempo'),
+        h('b', {}, `${s.bpmFuente === 'sugerido' ? '≈ ' : ''}${s.bpm} bpm`)) : null,
+      nota ? h('div.hd-nota', {}, '📝 ' + nota) : null);
+
+    hojaAcciones(s.titulo, [
+      url ? { icono: '♫', clase: 'spotify',
+              texto: s.spotifyUrl ? 'Escuchar en Spotify' : 'Buscar en Spotify',
+              onClick: () => window.open(url, '_blank', 'noopener') } : null,
+      { icono: '🎸', texto: s.cifraUrl ? 'Abrir la cifra' : 'Buscar la cifra',
+        onClick: async () => {
+          if (s.cifraUrl) { window.open(s.cifraUrl, '_blank', 'noopener'); return; }
+          const r = await buscarCifra(s.titulo, s.artista).catch(() => null);
+          if (r) {
+            store.updateSong(s.id, { cifraUrl: r.url, cifraArtista: r.artista, cifraConfianza: r.confianza });
+            window.open(r.url, '_blank', 'noopener');
+          } else {
+            store.updateSong(s.id, { cifraUrl: '', cifraConfianza: 'no' });
+            window.open(urlBusqueda(s.titulo, s.artista), '_blank', 'noopener');
+          }
+        } },
+      editable() ? { icono: '✎', texto: 'Editar el tema', onClick: () => dialogoCancion(s, pintar) } : null,
+      editable() && indice != null
+        ? { icono: '✕', texto: 'Sacar de la lista', peligro: true,
+            onClick: () => { jam.items.splice(indice, 1); guardar(); pintar(); toast('Sacado de la lista'); } }
+        : null,
+    ], { detalle });
+  }
+
+  /* ============================================================
+     Fecha, hora y lugar — se llega tocando el timeline
+     ============================================================ */
+  function dialogoHorario() {
+    const fFecha = h('input', { type: 'date', value: jam.fecha || '' });
+    const fHora  = h('input', { type: 'time', value: jam.hora || '' });
+    const fLugar = input({ value: jam.lugar || '', placeholder: 'Portal' });
+
+    const m = modal({
+      title: 'Cuándo y dónde',
+      body: [
+        h('div.method-hint', {},
+          'La hora de arranque es la que manda en el horario de la lista: de ahí para '
+          + 'abajo se van sumando los temas, los respiros y los breaks.'),
+        field('Fecha', fFecha),
+        field('Hora de arranque', fHora),
+        field('Lugar', fLugar),
+      ],
+      footer: [
+        h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
+        h('button.btn.primary', {
+          onclick: () => {
+            jam.fecha = fFecha.value || '';
+            jam.hora = fHora.value || '';
+            jam.lugar = fLugar.value.trim();
+            guardar(); m.close(); pintar();
+            toast(jam.hora ? `Arranca ${jam.hora}` : 'Guardado', 'ok');
+          },
+        }, 'Guardar'),
+      ],
+    });
+    setTimeout(() => fHora.focus(), 80);
+  }
+
+  /* ============================================================
+     La lista como texto, a pantalla completa
+     ------------------------------------------------------------
+     Es la forma de editar que sirve con el dedo: se ve todo junto,
+     se corta y se pega, se agrega escribiendo. Guardar vuelve acá.
+     ============================================================ */
+  function editorTexto() {
+    const ta = h('textarea.mv-ta', {
+      value: setlistATexto(jam, store), spellcheck: false,
+      autocapitalize: 'off', autocorrect: 'off',
+    });
+    const pie = h('div.mv-ed-pie');
+    let analisis = { items: [], lineas: [] };
+
+    function analizar() {
+      analisis = textoASetlist(ta.value, store);
+      const enMedleys = analisis.items.filter(it => it.tipo === 'medley')
+        .reduce((a, m) => a + m.songs.length, 0);
+      const temas = analisis.items.filter(it => it.tipo === 'song').length + enMedleys;
+      const falt = analisis.lineas.filter(l => l.tipo === 'tema' && !l.match && l.titulo);
+      clear(pie);
+      pie.append(h('b', {}, `${temas} temas`),
+        falt.length
+          ? h('span.mv-ed-falta', {},
+              ` · ${falt.length} sin reconocer: ${falt.slice(0, 3).map(l => l.titulo).join(', ')}`
+              + (falt.length > 3 ? '…' : '') + ' — se guardan sin esas')
+          : h('span', {}, ' · todo reconocido'));
+    }
+
+    const cerrar = () => { pantalla.remove(); document.removeEventListener('keydown', esc); };
+    const esc = e => { if (e.key === 'Escape') cerrar(); };
+
+    const pantalla = h('div.mv-editor', {},
+      h('div.mv-ed-barra', {},
+        h('button.tb-btn', { onclick: cerrar, title: 'Salir sin guardar' }, '✕'),
+        h('div.mv-ed-tit', {}, 'Editar como texto'),
+        h('button.btn.sm.primary', {
+          onclick: () => {
+            if (!analisis.items.length) { toast('La lista quedaría vacía', 'err'); return; }
+            jam.items = analisis.items;
+            guardar(); cerrar(); pintar();
+            toast('Lista actualizada', 'ok');
+          },
+        }, 'Guardar')),
+      ta,
+      pie);
+
+    ta.addEventListener('input', () => {
+      clearTimeout(ta._t);
+      ta._t = setTimeout(analizar, 250);
+    });
+    analizar();
+
+    clear(document.getElementById('modalRoot')).appendChild(pantalla);
+    document.addEventListener('keydown', esc);
+  }
+
+  /* ============================================================
+     Reordenar con el dedo
+     ------------------------------------------------------------
+     El drag-and-drop de HTML5 no existe en el celular, así que va
+     con eventos de puntero y una manija propia: `touch-action:none`
+     solo en la manija, para que el resto de la lista siga scrolleando
+     normalmente.
+
+     Mientras arrastrás, la fila se mueve en el DOM en cuanto cruza el
+     medio de su vecina. Eso le cambia la posición de layout, así que
+     después de cada movida se corrige el punto de origen: sin eso la
+     fila pega un salto justo cuando la estás soltando.
+     ============================================================ */
+  let arrastre = null;
+  /* Cuándo terminó el último arrastre. Es una marca de tiempo y no un
+     "ignorá el próximo click": al soltar se redibuja la lista, así que el
+     click que había que tragarse nunca llega a la fila nueva — y la bandera
+     quedaba puesta, comiéndose el toque siguiente, que sí era de verdad. */
+  let finArrastre = 0;
+
+  function manija() {
+    const asa = h('span.mv-handle', { title: 'Arrastrar para mover' }, '⠿');
+
+    /* La manija no sabe de antemano a quién mueve: la fila todavía no
+       existe cuando se la crea. La resuelve al agarrarla, subiendo hasta
+       el primer ancestro con `data-i`, que es la unidad que se reordena
+       —el tema, el bloque, el break o el medley entero. */
+    asa.addEventListener('pointerdown', e => {
+      if (arrastre) return;                 // dos dedos a la vez: gana el primero
+      const fila = asa.closest('[data-i]');
+      if (!fila) return;
+      e.preventDefault();
+      e.stopPropagation();
+      /* La captura es lo que hace que el dedo siga mandando aunque se salga
+         de la manija. Si el navegador la niega, el arrastre igual arranca. */
+      try { asa.setPointerCapture(e.pointerId); } catch { /* seguimos igual */ }
+      arrastre = { fila, y0: e.clientY, y: e.clientY, movio: false };
+      fila.classList.add('mv-arrastrando');
+      document.body.classList.add('mv-arrastrando-algo');
+      autoScroll();
+    });
+
+    asa.addEventListener('pointermove', e => {
+      if (!arrastre) return;
+      arrastre.y = e.clientY;
+      acomodar();
+    });
+
+    const soltar = () => {
+      if (!arrastre) return;
+      const fila = arrastre.fila;
+      fila.style.transform = '';
+      fila.classList.remove('mv-arrastrando');
+      document.body.classList.remove('mv-arrastrando-algo');
+      const movio = arrastre.movio;
+      arrastre = null;
+      if (!movio) return;
+      /* el orden nuevo sale del DOM, que es lo que la persona vio */
+      const orden = [...lista.children]
+        .filter(el => el.dataset.i !== undefined)
+        .map(el => jam.items[+el.dataset.i]);
+      jam.items = orden;
+      guardar();
+      finArrastre = performance.now();
+      pintar();
+      toast('Lista reordenada', 'ok');
+    };
+    asa.addEventListener('pointerup', soltar);
+    asa.addEventListener('pointercancel', soltar);
+
+    return asa;
+  }
+
+  /** Mueve la fila y, si cruzó a una vecina, la reubica en el DOM. */
+  function acomodar() {
+    const { fila } = arrastre;
+    fila.style.transform = `translateY(${arrastre.y - arrastre.y0}px)`;
+
+    const r = fila.getBoundingClientRect();
+    const centro = r.top + r.height / 2;
+
+    const reubicar = (ref, antes) => {
+      const y1 = fila.getBoundingClientRect().top;
+      lista.insertBefore(fila, antes ? ref : ref.nextSibling);
+      /* corrige el origen para que la fila no salte al cambiar de lugar */
+      arrastre.y0 += fila.getBoundingClientRect().top - y1;
+      arrastre.movio = true;
+      fila.style.transform = `translateY(${arrastre.y - arrastre.y0}px)`;
+    };
+
+    const prev = fila.previousElementSibling;
+    if (prev) {
+      const rp = prev.getBoundingClientRect();
+      if (centro < rp.top + rp.height / 2) { reubicar(prev, true); return; }
+    }
+    const sig = fila.nextElementSibling;
+    if (sig) {
+      const rs = sig.getBoundingClientRect();
+      if (centro > rs.top + rs.height / 2) reubicar(sig, false);
+    }
+  }
+
+  /** Con el dedo quieto contra el borde, la lista tiene que seguir bajando. */
+  function autoScroll() {
+    if (!arrastre) return;
+    const margen = 90;
+    const alto = window.innerHeight;
+    let d = 0;
+    if (arrastre.y < margen) d = -Math.ceil((margen - arrastre.y) / 6);
+    else if (arrastre.y > alto - margen) d = Math.ceil((arrastre.y - (alto - margen)) / 6);
+    if (d) {
+      const antes = window.scrollY;
+      window.scrollBy(0, d);
+      /* la pantalla se movió pero el dedo no: el origen se corre con ella */
+      arrastre.y0 -= window.scrollY - antes;
+      acomodar();
+    }
+    requestAnimationFrame(autoScroll);
+  }
+
+  /* ============================================================
+     El ⋯ de la barra de arriba
+     ============================================================ */
   function menu() {
     hojaAcciones(jam.nombre || 'Jam', [
-      { icono: '✎', texto: 'Editar la lista', onClick: () => { location.hash = `#/jams/${jam.id}/editar`; } },
+      editable()
+        ? { icono: '✎', texto: 'Editar la lista como texto', onClick: editorTexto }
+        : { icono: '🔒', texto: 'Está cerrada — abrirla en el editor',
+            onClick: () => { location.hash = `#/jams/${jam.id}/editar`; } },
+      { icono: '🕘', texto: 'Fecha, hora y lugar', onClick: dialogoHorario },
       { icono: '▶', texto: 'LIVE VIEW — pasarla en la jam', onClick: () => { location.hash = '#/live/' + jam.id; } },
       { icono: '📖', texto: 'Las letras, en orden', onClick: () => { location.hash = '#/lyrics/' + jam.id; } },
+      { icono: '⛶', texto: 'Abrir el editor completo', onClick: () => { location.hash = `#/jams/${jam.id}/editar`; } },
       { icono: '📋', texto: 'Copiar la lista como texto', onClick: () => copiar(comoTexto()) },
       { icono: '⬇', texto: 'Bajar el setlist en Word', onClick: bajarDocx },
       { icono: '⧉', texto: 'Duplicar la jam', onClick: () => {
@@ -150,6 +404,33 @@ export function vistaMovil(jamId) {
     }
   }
 
+  /* ============================================================
+     Un renglón: número, título y quién canta. Nada más.
+     ------------------------------------------------------------
+     El texto va en un solo nodo con ellipsis. Partirlo en varios
+     flex hace que el navegador recorte el título antes que el
+     cantante, y con el cantante puesto a mano en esa jam, el que
+     no puede faltar es él.
+     ============================================================ */
+  function renglon(f, num, indice) {
+    const s = f.song;
+    const cantantes = (f.cantantes || []).join(', ');
+    return h('div.mv-fila', {
+      onclick: e => {
+        if (e.target.closest('.mv-handle')) return;
+        if (performance.now() - finArrastre < 300) return;
+        hojaTema(f, indice);
+      },
+    },
+      editable() && indice != null ? manija() : null,
+      h('span.mv-n', {}, num),
+      h('span.mv-txt', {},
+        h('b', {}, s ? s.titulo : 'Tema borrado'),
+        cantantes ? h('span.mv-quien', {}, ` (${cantantes})`) : null),
+      s && notaDe(jam.id, s.id) ? h('span.mv-nota', {}, '📝') : null,
+      h('span.mv-dur', {}, duracionLinda(f.seg)));
+  }
+
   function pintar() {
     clear(cont);
     const plan = agenda(jam, id => store.song(id));
@@ -160,41 +441,46 @@ export function vistaMovil(jamId) {
         h('div.mv-cab-sub', {},
           [jam.fecha ? fechaLinda(jam.fecha) : '', jam.lugar].filter(Boolean).join(' · ')
           || 'sin fecha')),
-      tira(plan));
+      tira(plan, dialogoHorario));
 
     if (!plan.filas.length) {
       cont.appendChild(h('div.empty', {},
         h('b', {}, 'La lista está vacía'),
-        h('a.btn.sm', { href: `#/jams/${jam.id}/editar`, style: { marginTop: '12px' } }, 'Armarla')));
+        editable()
+          ? h('button.btn.sm', { style: { marginTop: '12px' }, onclick: editorTexto }, 'Escribirla')
+          : h('a.btn.sm', { href: `#/jams/${jam.id}/editar`, style: { marginTop: '12px' } }, 'Abrir el editor')));
       return;
     }
 
-    const lista = h('div.mv-lista');
-    plan.filas.forEach(f => {
+    clear(lista);
+    plan.filas.forEach((f, pos) => {
+      const marcar = el => { el.dataset.i = pos; return el; };
+
       if (f.tipo === 'bloque') {
-        lista.appendChild(h('div.mv-bloque', {}, f.label || 'BLOQUE'));
+        lista.appendChild(marcar(h('div.mv-bloque', {},
+          editable() ? manija() : null,
+          h('span', {}, f.label || 'BLOQUE'))));
         return;
       }
       if (f.tipo === 'break') {
-        lista.appendChild(h('div.mv-break', {},
+        lista.appendChild(marcar(h('div.mv-break', {},
+          editable() ? manija() : null,
           h('span.mv-break-txt', {}, `${f.label} · ${f.minutos}′`),
-          f.hora ? h('span.mv-break-hora', {}, f.hora) : null));
+          f.hora ? h('span.mv-break-hora', {}, f.hora) : null)));
         return;
       }
       if (f.tipo === 'medley') {
-        lista.appendChild(h('div.mv-medley', {},
+        lista.appendChild(marcar(h('div.mv-medley', {},
           h('div.mv-medley-cab', {},
+            editable() ? manija() : null,
             h('span.mv-n', {}, f.n),
-            /* casi todos los medleys se llaman "Medley": repetirlo al lado
-               del cartel no agrega nada y se come el ancho del renglón */
             h('span.mv-txt', {}, h('b', {}, 'MEDLEY'),
               /^medley$/i.test(f.titulo.trim()) ? null : h('span.mv-art', {}, ' ' + f.titulo)),
             h('span.mv-dur', {}, duracionLinda(f.seg))),
-          ...f.songs.map((x, k) => renglon({ ...x, jamId: jam.id },
-            `${f.n}${String.fromCharCode(97 + k)}`))));
+          ...f.songs.map((x, k) => renglon(x, `${f.n}${String.fromCharCode(97 + k)}`, null)))));
         return;
       }
-      lista.appendChild(renglon({ ...f, jamId: jam.id }, f.n));
+      lista.appendChild(marcar(renglon(f, f.n, pos)));
     });
     cont.appendChild(lista);
   }

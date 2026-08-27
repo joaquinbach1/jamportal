@@ -1899,12 +1899,19 @@ body.modo-compartido .topbar { display: none; }
 .mv-cab h1 { margin: 0; font-size: 21px; line-height: 1.25; letter-spacing: -.01em; }
 .mv-cab-sub { margin-top: 4px; font-size: 13px; color: var(--txt-3); }
 
-/* ---------- de qué hora a qué hora ---------- */
+/* ---------- de qué hora a qué hora ----------
+   Es un botón: tocarlo abre fecha, hora de arranque y lugar. La hora de
+   arranque no tenía dónde cargarse en el celular, y es de donde cuelga
+   todo el horario de abajo, así que se pone donde se lee. */
 .mv-timeline {
+  display: block; width: 100%; text-align: left;
   padding: 11px 12px 12px;
   background: var(--panel); border: 1px solid var(--line-soft);
   border-radius: var(--r);
+  font: inherit; color: inherit; cursor: pointer;
 }
+.mv-timeline:active { background: var(--panel-2); }
+.mv-tl-hora.vacia { font-size: 13px; color: var(--acc); letter-spacing: 0; }
 .mv-tl-horas { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .mv-tl-hora { font-family: var(--mono); font-size: 17px; color: var(--txt); }
 .mv-tl-largo { font-family: var(--mono); font-size: 11.5px; color: var(--txt-3); }
@@ -1945,15 +1952,31 @@ body.modo-compartido .topbar { display: none; }
 .mv-txt b { font-weight: 600; color: var(--txt); }
 .mv-art { color: var(--txt-3); }
 .mv-quien { color: var(--acc); }
-.mv-nota { flex: none; font-size: 12px; opacity: .8; cursor: help; }
+.mv-nota { flex: none; font-size: 12px; opacity: .8; }
 .mv-dur { flex: none; font-family: var(--mono); font-size: 11px; color: var(--txt-3); }
-.mv-sp {
-  flex: none; width: 38px; height: 38px;
+.mv-fila:active { background: var(--hover); }
+
+/* ---------- la manija ----------
+   `touch-action: none` va SOLO acá: si estuviera en la fila, arrastrar
+   para scrollear la lista dejaría de funcionar. 34px de ancho es lo que
+   se acierta sin mirar. */
+.mv-handle {
+  flex: none; width: 34px; align-self: stretch;
   display: flex; align-items: center; justify-content: center;
-  border-radius: 50%; font-size: 16px; color: var(--spotify);
-  text-decoration: none;
+  margin: -4px 0 -4px -6px;
+  font-size: 17px; letter-spacing: -3px; color: var(--txt-3);
+  cursor: grab; touch-action: none; user-select: none;
 }
-.mv-sp:active { background: var(--panel-2); }
+.mv-handle:active { color: var(--txt); cursor: grabbing; }
+
+.mv-arrastrando {
+  position: relative; z-index: 5;
+  background: var(--panel-2) !important;
+  box-shadow: 0 8px 24px var(--sombra-fab);
+  opacity: .96;
+}
+/* mientras se arrastra, que un dedo torcido no seleccione medio setlist */
+body.mv-arrastrando-algo { user-select: none; -webkit-user-select: none; }
 
 /* ---------- medley: los temas, agrupados ---------- */
 .mv-medley {
@@ -1989,11 +2012,13 @@ body.modo-compartido .topbar { display: none; }
    queda reservado para las dos cosas que sí hay que ver sin buscarlas —
    quién canta y dónde está el break. */
 .mv-bloque {
+  display: flex; align-items: center; gap: 4px;
   padding: 15px 12px 6px;
   font-family: var(--mono); font-size: 10.5px;
   letter-spacing: .18em; text-transform: uppercase; color: var(--txt-3);
   background: var(--panel);
 }
+.mv-bloque .mv-handle, .mv-break .mv-handle { align-self: center; margin: 0 0 0 -6px; }
 
 /* ---------- el ＋ de siempre, abajo a la derecha ---------- */
 .fab {
@@ -2006,3 +2031,70 @@ body.modo-compartido .topbar { display: none; }
   box-shadow: 0 6px 20px var(--sombra-fab);
 }
 .fab:active { background: var(--acc-hover); }
+
+/* ============================================================
+   El detalle de un tema, adentro de la hoja
+   ------------------------------------------------------------
+   Lo que no entra en el renglón: artista, cuánto dura, quién lo
+   canta. Va arriba de las acciones porque es para leer, no para
+   tocar, y ahí es donde cae el ojo cuando la hoja sube.
+   ============================================================ */
+.hoja-detalle {
+  margin: 2px 9px 8px; padding: 10px 11px;
+  background: var(--panel-2); border-radius: 10px;
+  display: grid; gap: 5px;
+}
+.hd-fila { display: flex; align-items: baseline; gap: 10px; font-size: 14px; }
+.hd-fila > span {
+  flex: 0 0 62px;
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--txt-3);
+}
+.hd-fila > b { color: var(--txt); font-weight: 600; min-width: 0; }
+.hd-fila > em { font-style: normal; font-size: 11.5px; color: var(--txt-3); }
+.hd-nota {
+  margin-top: 3px; padding-top: 8px; border-top: 1px solid var(--line-soft);
+  font-size: 13px; color: var(--txt-2);
+}
+
+/* ============================================================
+   La lista como texto, a pantalla completa
+   ------------------------------------------------------------
+   Con el dedo, escribir la lista entera de una es más rápido que
+   pelear con veinte controles chiquitos. El textarea se lleva
+   todo el alto que quede: `100dvh` y no `100vh` para que cuando
+   suba el teclado el cuadro se achique en vez de quedar tapado.
+   ============================================================ */
+.mv-editor {
+  position: fixed; top: 0; left: 0; right: 0; height: 100dvh; z-index: 220;
+  display: flex; flex-direction: column;
+  background: var(--bg);
+  padding-top: env(safe-area-inset-top);
+}
+.mv-ed-barra {
+  flex: none; display: flex; align-items: center; gap: 8px;
+  height: 50px; padding: 0 8px 0 4px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.mv-ed-tit {
+  flex: 1; min-width: 0; text-align: center;
+  font-family: var(--mono); font-size: 11.5px;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--txt-2);
+}
+.mv-ta {
+  flex: 1 1 auto; min-height: 0; width: 100%;
+  padding: 12px; margin: 0;
+  background: var(--bg); color: var(--txt);
+  border: 0; border-radius: 0; outline: none; resize: none;
+  font-family: var(--mono); font-size: 13px; line-height: 1.75;
+  /* la lista se lee por renglones: que una línea larga no se parta */
+  white-space: pre; overflow-wrap: normal; overflow-x: auto;
+}
+.mv-ed-pie {
+  flex: none;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line-soft);
+  font-size: 12px; color: var(--txt-3);
+}
+.mv-ed-falta { color: var(--warn); }
+.hoja-item.spotify .hoja-icono { color: var(--spotify); }
