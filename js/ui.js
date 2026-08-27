@@ -85,15 +85,19 @@ export function modal({ title, body, footer, wide = false, onClose }) {
  * Hoja de acciones, para el dedo.
  * En vez de cinco íconos de 40px apretados contra el borde, una lista
  * con el nombre de cada cosa. Se acierta sin mirar y se entiende qué hace.
- *   acciones: [{ icono, texto, onClick, peligro? }]
+ *   acciones: [{ icono, texto, onClick, peligro?, clase? }]
+ *   detalle:  nodo opcional debajo del título, para lo que hay que LEER
+ *             (de qué tema estamos hablando) y no tocar.
  */
-export function hojaAcciones(titulo, acciones) {
+export function hojaAcciones(titulo, acciones, { detalle = null } = {}) {
   const cerrar = () => { back.remove(); document.removeEventListener('keydown', esc); };
   const esc = e => { if (e.key === 'Escape') cerrar(); };
 
   const hoja = h('div.hoja', {},
     h('div.hoja-titulo', {}, titulo),
-    ...acciones.filter(Boolean).map(a => h('button.hoja-item' + (a.peligro ? '.peligro' : ''), {
+    detalle,
+    ...acciones.filter(Boolean).map(a => h('button.hoja-item'
+      + (a.peligro ? '.peligro' : '') + (a.clase ? '.' + a.clase : ''), {
       onclick: () => { cerrar(); a.onClick(); },
     }, h('span.hoja-icono', {}, a.icono), h('span', {}, a.texto))),
     h('button.hoja-item.hoja-cancelar', { onclick: cerrar }, 'Cancelar'));

@@ -201,12 +201,48 @@ derecha de esa barra, el **⋯** tiene lo que puede hacer la pantalla que estás
 mirando. Es siempre el mismo lugar, en todas las pantallas.
 
 Y una jam se abre como **lista para leer**, no como editor: un renglón por tema
-con número, título, artista y quién lo canta entre paréntesis, y nada más. Los
-medleys van agrupados y numerados `15a`, `15b`; el break parte la lista con una
-banda ámbar y la hora a la que cae. Cada tema tiene un **♫** que lo abre en
-Spotify. El **＋** de abajo a la derecha anota un tema en Ideas: busca en el
-repertorio y en iTunes, y si el tema no está en ninguno de los dos lo anota con
-el texto que escribiste.
+con número, título y quién lo canta entre paréntesis, y nada más. Los medleys
+van agrupados y numerados `15a`, `15b`; el break parte la lista con una banda
+ámbar y la hora a la que cae. El **＋** de abajo a la derecha anota un tema en
+Ideas: busca en el repertorio y en iTunes, y si el tema no está en ninguno de
+los dos lo anota con el texto que escribiste.
+
+El artista **no** está en el renglón, a propósito: no entra sin comerse el
+nombre del cantante, que es el dato que se busca de verdad mirando la lista. Se
+toca el tema y ahí están artista, cuánto dura, quién canta, el tempo y el link
+a Spotify, junto con las acciones (abrir la cifra, editarlo, sacarlo).
+
+### Editar sin salir
+
+Tres cosas se hacen desde la lista misma:
+
+- **Reordenar**, arrastrando de la manija ⠿. Anda con temas, bloques, breaks y
+  medleys enteros. El drag-and-drop de HTML5 no existe en el celular, así que va
+  con eventos de puntero; `touch-action: none` está solo en la manija, para que
+  el resto de la lista siga scrolleando normal. Contra el borde de la pantalla
+  la lista se desplaza sola.
+- **Corregir el horario**, tocando el timeline: fecha, hora de arranque y lugar.
+  La hora de arranque no tenía dónde cargarse en el celular y es de donde cuelga
+  todo lo demás, así que se pone donde se lee.
+- **Escribir la lista entera**, desde el ⋯ → *Editar la lista como texto*: un
+  textarea a pantalla completa con el mismo formato de `js/setlist-texto.js`
+  (`Tema — Artista  [Cantante]`, `▸ BLOQUE`, `—— BREAK (15') ——`, `(medley)`).
+  Con el dedo, escribir de una es más rápido que pelear con veinte controles
+  chiquitos. Guardar vuelve a la lista.
+
+### Qué tan apretada
+
+La lista arranca **compacta**: mirar la jam entera de un vistazo es lo que se
+hace de verdad con el teléfono en la mano, y leer un tema es la excepción —
+para eso está el detalle. Desde el ⋯ → *Tamaño de la lista* se cambia a
+**normal** o **cómoda**, y queda guardado en ese teléfono. Son tres juegos de
+medidas en variables CSS sobre `.movil[data-d]`, así que todo lo demás —el
+alto de la fila, la manija, el break, el bloque, el encabezado— se acomoda
+solo. En una pantalla de 844px entran 17 ítems en compacta y 12 en cómoda.
+
+Las jams **históricas o cerradas** no se editan desde acá: no hay manijas ni
+modo texto, y el ⋯ manda al editor completo, que es donde vive el candado y
+pide confirmación. La fecha y la hora sí se pueden tocar siempre.
 
 El editor completo sigue estando, en su propia URL (`#/jams/<id>/editar`), a un
 toque desde el ⋯. Y desde el editor se vuelve a la lista por el mismo lugar.
@@ -233,8 +269,8 @@ Los breaks suman sus propios minutos, tal como están cargados. La cuenta vive e
 ### El link de Spotify
 
 No hay API de por medio: Spotify pide credenciales de servidor y esto es un sitio
-estático. El **♫** abre una búsqueda con título y artista, que en el celular abre
-la app de Spotify con el tema arriba de todo. Si esa búsqueda cae en el vivo o el
+estático. El **♫** del detalle de cada tema abre una búsqueda con título y
+artista, que en el celular abre la app de Spotify con el tema arriba de todo. Si esa búsqueda cae en el vivo o el
 cover equivocado, se fija el link bueno a mano en el tema (campo *Spotify* del
 formulario) y la app lo respeta.
 
