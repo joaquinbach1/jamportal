@@ -6,6 +6,8 @@ import { store, franjaDeBpm, FRANJA_LABEL } from '../store.js';
 import { h, modal, field, input, select, personPicker, toast, confirmar } from '../ui.js';
 import { buscarCifra, urlBusqueda } from '../cifra.js';
 import { buscarBpm } from '../lookup.js';
+import { duracionLinda } from '../duracion.js';
+import { linkSpotify } from '../spotify.js';
 
 /**
  * Abre el diálogo de canción.
@@ -17,6 +19,7 @@ export function dialogoCancion(pre = {}, onOk) {
   const d = {
     titulo: '', artista: '', categoria: store.categorias[0], bpm: '', franja: '',
     cantantes: [], patches: [], notas: '', anio: '', generoWeb: '', origen: 'manual',
+    duracionSec: null, spotifyUrl: '',
     ...pre,
   };
 
@@ -33,6 +36,11 @@ export function dialogoCancion(pre = {}, onOk) {
   const fAnio    = input({ value: d.anio || '', placeholder: '—' });
   const fPatches = input({ value: (d.patches || []).join(', '), placeholder: 'a13, g52…' });
   const fCifra   = input({ value: d.cifraUrl || '', placeholder: 'https://www.cifraclub.com/…' });
+  const fSpotify = input({ value: d.spotifyUrl || '', placeholder: 'https://open.spotify.com/track/…' });
+  /* mm:ss, que es como se lee una duración. Vacío significa "no sé":
+     la app va a contar 4 minutos al estimar el horario de la jam. */
+  const fDur     = input({ value: d.duracionSec ? duracionLinda(d.duracionSec) : '',
+                           placeholder: '4:00', style: { maxWidth: '90px' } });
   const fNotas   = h('textarea', { value: d.notas || '', placeholder: 'Tonalidad, arreglo, quién la propuso…' });
 
   let cantantes = [...(d.cantantes || [])];
@@ -69,6 +77,15 @@ export function dialogoCancion(pre = {}, onOk) {
   fFranja.addEventListener('change', syncFranja);
   syncFranja();
 
+  /** 'mm:ss' o 'm' → segundos. Devuelve null si no se entiende. */
+  function segundosDe(txt) {
+    const t = (txt || '').trim();
+    if (!t) return null;
+    const m = /^(\d{1,2}):([0-5]\d)$/.exec(t);
+    const seg = m ? (+m[1] * 60 + +m[2]) : (/^\d{1,4}$/.test(t) ? +t * 60 : null);
+    return seg && seg >= 20 && seg <= 1800 ? seg : null;
+  }
+
   function guardar() {
     const titulo = fTitulo.value.trim();
     if (!titulo) { toast('Falta el título', 'err'); fTitulo.focus(); return; }
@@ -85,6 +102,8 @@ export function dialogoCancion(pre = {}, onOk) {
       notas: fNotas.value.trim(),
       origen: d.origen,
       bpmFuente: esSugerido() ? 'sugerido' : '',
+      duracionSec: segundosDe(fDur.value),
+      spotifyUrl: fSpotify.value.trim(),
       cifraUrl: fCifra.value.trim(),
       cifraConfianza: fCifra.value.trim() && fCifra.value.trim() !== (d.cifraUrl || '') ? 'alta' : d.cifraConfianza,
     };
@@ -116,9 +135,10 @@ export function dialogoCancion(pre = {}, onOk) {
         : null,
       h('div.grid-2', {}, field('Título', fTitulo), field('Artista / banda', fArtista)),
       field('Categoría', fCat),
-      h('div.grid-3', {},
+      h('div.grid-4', {},
         field('BPM', h('div', { style: { display: 'flex', gap: '6px' } }, fBpm, btnBpm)),
-        field('Franja', fFranja), field('Año', fAnio)),
+        field('Franja', fFranja), field('Año', fAnio),
+        field('Duración', fDur)),
       previewFranja,
       field('Cantantes habituales', pick),
       h('div.grid-2', {}, field('Patch de teclado', fPatches)),
@@ -142,6 +162,19 @@ export function dialogoCancion(pre = {}, onOk) {
           },
         }, '🎸 Buscar'),
         d.cifraUrl ? h('a.btn.sm.ghost', { href: d.cifraUrl, target: '_blank', rel: 'noopener', style: { flex: 'none' } }, 'Abrir') : null)),
+      /* Vacío está bien: la app arma sola un link de búsqueda con título y
+         artista. Esto es para cuando esa búsqueda cae en el tema equivocado. */
+      field('Spotify (opcional)', h('div', { style: { display: 'flex', gap: '8px' } },
+        fSpotify,
+        h('button.btn.sm', {
+          style: { flex: 'none' },
+          title: 'Abrir la búsqueda en Spotify y copiar de ahí el link del tema',
+          /* se arma al tocar, no al dibujar: en un alta el título todavía
+             no estaba escrito cuando este botón se creó */
+          onclick: () => window.open(
+            linkSpotify({ titulo: fTitulo.value, artista: fArtista.value, spotifyUrl: fSpotify.value.trim() }),
+            '_blank', 'noopener'),
+        }, '♫ Buscar'))),
       field('Notas', fNotas),
     ],
   });

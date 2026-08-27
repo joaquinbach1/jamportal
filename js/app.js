@@ -10,6 +10,7 @@ import { vistaJams }    from './views/jams.js';
 import { vistaNueva }   from './views/nueva.js';
 import { vistaEditor }  from './views/jam-editor.js';
 import { vistaLive }    from './views/live.js';
+import { vistaMovil }   from './views/movil.js';
 import { vistaLyrics, vistaLetrasCompartidas } from './views/lyrics.js';
 import { desempaquetar } from './compartir.js';
 import { vistaSongs }   from './views/songs.js';
@@ -23,10 +24,16 @@ import { cargarNotas } from './notas.js';
 
 const view = $('#view');
 
+/** En el celular la jam se abre como lista para leer, no como editor. */
+export const enCelular = () => window.matchMedia('(max-width: 820px)').matches;
+
 const RUTAS = [
   [/^\/live\/(.+)$/,  (m) => vistaLive(m[1]),   'jams'],
   [/^\/lyrics\/(.+)$/, (m) => vistaLyrics(m[1]), 'jams'],
-  [/^\/jams\/(.+)$/, (m) => vistaEditor(m[1]), 'jams'],
+  /* El editor completo tiene ruta propia: así se llega desde el celular
+     a propósito, y el link se puede compartir sin depender de la pantalla. */
+  [/^\/jams\/(.+)\/editar$/, (m) => vistaEditor(m[1]), 'jams'],
+  [/^\/jams\/(.+)$/, (m) => (enCelular() ? vistaMovil(m[1]) : vistaEditor(m[1])), 'jams'],
   [/^\/jams$/,       () => vistaJams(),        'jams'],
   [/^\/nueva$/,      () => vistaNueva(),       'jams'],  // sin ítem propio: se llega desde Jams
   [/^\/songs$/,      () => vistaSongs(),       'songs'],
@@ -39,6 +46,35 @@ const RUTAS = [
 let rutaActual = '';
 
 export function ir(hash) { location.hash = hash; }
+
+/* ============================================================
+   Barra de arriba (solo en pantalla chica)
+   ------------------------------------------------------------
+   El ☰ saca el menú lateral, que en el celular vive escondido a
+   la izquierda. El ⋯ es de la pantalla que está abierta: cada
+   vista pone ahí sus acciones con accionesDePagina() y el router
+   lo vacía antes de dibujar la siguiente.
+   ============================================================ */
+const btnMas = $('#btnMas');
+
+export function abrirMenu(abierto) {
+  document.body.classList.toggle('menu-abierto', abierto);
+  $('#menuBack').hidden = !abierto;
+  $('#btnMenu').setAttribute('aria-expanded', String(abierto));
+}
+
+/** La vista actual declara qué hay detrás del ⋯. null lo esconde. */
+export function accionesDePagina(fn) {
+  btnMas.onclick = fn || null;
+  btnMas.hidden = !fn;
+}
+
+$('#btnMenu').onclick = () => abrirMenu(!document.body.classList.contains('menu-abierto'));
+$('#menuBack').onclick = () => abrirMenu(false);
+/* Elegir a dónde ir es terminar con el menú: si quedara abierto, taparía
+   la pantalla a la que acabás de entrar. */
+$('#nav').addEventListener('click', e => { if (e.target.closest('a')) abrirMenu(false); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') abrirMenu(false); });
 
 /** Vuelve a dibujar la vista actual (lo usan las vistas después de mutar datos). */
 export function refrescar() { render(true); }
@@ -71,6 +107,11 @@ function render(forzar = false) {
 
   $$('#nav a').forEach(a => a.classList.toggle('active', match && a.dataset.route === match.nav));
   document.body.classList.toggle('en-vivo', ruta.startsWith('/live/'));
+
+  abrirMenu(false);
+  accionesDePagina(null);                       // lo vuelve a poner la vista, si tiene
+  const activo = $$('#nav a').find(a => a.classList.contains('active'));
+  $('#tbTitulo').textContent = activo ? activo.textContent : 'JAM PORTAL';
 
   clear(view);
   if (!match) {

@@ -104,6 +104,16 @@ create table song (
   cifra_artista   text not null default '',
   cifra_confianza text not null default '',
 
+  -- Cuánto dura el tema, en segundos. Viene de iTunes al dar de alta el
+  -- tema; sirve para estimar a qué hora termina la jam. Sin dato, la app
+  -- usa un promedio, así que puede quedar null sin romper nada.
+  duracion_sec smallint check (duracion_sec between 20 and 1800),
+
+  -- Link fijo a Spotify. Vacío es lo normal: la app arma sola un link de
+  -- búsqueda con título y artista, que abre la app en el celular. Esto es
+  -- para cuando esa búsqueda cae en la versión equivocada.
+  spotify_url text not null default '',
+
   patches text[] not null default '{}',        -- 'g43': códigos de teclado
 
   creada      timestamptz not null default now(),

@@ -22,7 +22,15 @@ import { refrescar } from '../app.js';
 /* ============================================================
    Alta de una idea: nombre → metadata completa
    ============================================================ */
-export function dialogoNuevaIdea(alGuardar) {
+/**
+ * @param {function} alGuardar   recibe la idea creada
+ * @param {object}  [opts]
+ * @param {boolean} [opts.simple] En el celular no se abre el formulario
+ *   largo: si el tema no aparece ni en la base ni en internet, se anota
+ *   con el texto tal como se escribió y listo. Los datos que falten se
+ *   completan después, desde la compu.
+ */
+export function dialogoNuevaIdea(alGuardar, { simple = false } = {}) {
   const estado = h('div.method-hint', {},
     'Escribí el nombre del tema. Lo busco en internet y completo artista, categoría y año; ',
     'el tempo lo traigo aparte y queda marcado como sugerido hasta que lo confirmes vos.');
@@ -51,7 +59,11 @@ export function dialogoNuevaIdea(alGuardar) {
     },
     buscarWeb: buscarEnWeb,
     onPickWeb: r => { m.close(); alta(webAResultado(r)); },
-    onNew: q => { m.close(); dialogoCancion({ titulo: q, esIdea: true }, s => s && alGuardar && alGuardar(s)); },
+    onNew: q => {
+      m.close();
+      if (simple) { alta({ titulo: q, artista: '' }); return; }
+      dialogoCancion({ titulo: q, esIdea: true }, s => s && alGuardar && alGuardar(s));
+    },
   });
 
   const m = modal({

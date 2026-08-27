@@ -108,7 +108,8 @@ begin
 
     insert into song (id, titulo, artista, categoria_id, estado, bpm, bpm_raw,
                       bpm_fuente, anio, notas, origen, genero_web,
-                      cifra_url, cifra_artista, cifra_confianza, patches, actualizada)
+                      cifra_url, cifra_artista, cifra_confianza,
+                      duracion_sec, spotify_url, patches, actualizada)
     values (e->>'id', e->>'titulo', e->>'artista', cid,
             case when coalesce((e->>'esIdea')::boolean, false)
                  then 'idea'::estado_song else 'repertorio'::estado_song end,
@@ -117,6 +118,7 @@ begin
             coalesce(e->>'notas', ''), coalesce(e->>'origen', 'manual'),
             coalesce(e->>'generoWeb', ''), coalesce(e->>'cifraUrl', ''),
             coalesce(e->>'cifraArtista', ''), coalesce(e->>'cifraConfianza', ''),
+            nullif(e->>'duracionSec', '')::smallint, coalesce(e->>'spotifyUrl', ''),
             coalesce((select array_agg(x#>>'{}')
                         from jsonb_array_elements(e->'patches') x), '{}'),
             now())
@@ -129,6 +131,7 @@ begin
       genero_web = excluded.genero_web, cifra_url = excluded.cifra_url,
       cifra_artista = excluded.cifra_artista,
       cifra_confianza = excluded.cifra_confianza,
+      duracion_sec = excluded.duracion_sec, spotify_url = excluded.spotify_url,
       patches = excluded.patches, actualizada = now()
     -- El WHERE es lo que hace que `actualizada` signifique algo. Sin él,
     -- cambiar un título marcaba los 551 temas como actualizados y no
@@ -145,6 +148,8 @@ begin
        or song.notas           is distinct from excluded.notas
        or song.origen          is distinct from excluded.origen
        or song.genero_web      is distinct from excluded.genero_web
+       or song.duracion_sec    is distinct from excluded.duracion_sec
+       or song.spotify_url     is distinct from excluded.spotify_url
        or song.cifra_url       is distinct from excluded.cifra_url
        or song.cifra_artista   is distinct from excluded.cifra_artista
        or song.cifra_confianza is distinct from excluded.cifra_confianza

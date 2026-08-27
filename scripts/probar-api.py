@@ -159,6 +159,32 @@ def main():
         st, rele = pedir('/rest/v1/rpc/app_estado', {}, jwt)
         check(rele['songs'] == estado['songs'], 'revertir deja todo como estaba')
 
+        # Duración y link de Spotify: los dos son campos que la app manda y
+        # espera de vuelta enteros. Si guardar_catalogo se olvida de uno, la
+        # app no rompe —sigue andando con el promedio de 4 minutos— y la
+        # pérdida solo se nota semanas después, cuando el horario estimado
+        # de la jam ya no le cierra a nadie.
+        sid = estado['songs'][0]['id']
+        antes = {k: estado['songs'][0].get(k) for k in ('duracionSec', 'spotifyUrl')}
+        for s in cat['songs']:
+            if s['id'] == sid:
+                s['duracionSec'], s['spotifyUrl'] = 247, 'https://open.spotify.com/track/prueba'
+        st, _ = pedir('/rest/v1/rpc/guardar_catalogo', {'c': cat}, jwt)
+        check(st == 200, 'guardar_catalogo acepta duración y Spotify', f'HTTP {st}')
+        st, rele = pedir('/rest/v1/rpc/app_estado', {}, jwt)
+        vuelta = next(x for x in rele['songs'] if x['id'] == sid)
+        check(vuelta.get('duracionSec') == 247, 'la duración vuelve igual',
+              f"volvió {vuelta.get('duracionSec')!r}")
+        check(vuelta.get('spotifyUrl') == 'https://open.spotify.com/track/prueba',
+              'el link de Spotify vuelve igual', f"volvió {vuelta.get('spotifyUrl')!r}")
+
+        for s in cat['songs']:
+            if s['id'] == sid:
+                s['duracionSec'], s['spotifyUrl'] = antes['duracionSec'], antes['spotifyUrl'] or ''
+        pedir('/rest/v1/rpc/guardar_catalogo', {'c': cat}, jwt)
+        st, rele = pedir('/rest/v1/rpc/app_estado', {}, jwt)
+        check(rele['songs'] == estado['songs'], 'y se puede volver atrás')
+
         print('\n── control de versión ──────────────────────────────────')
         jam = rele['jams'][0]
         v = jam['version']
