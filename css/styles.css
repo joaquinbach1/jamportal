@@ -51,6 +51,8 @@
   --av-5: #c79bff; --av-6: #ffab6b; --av-7: #6fd99a; --av-8: #ff8f8f;
   --live-fondo: #000;         --live-hover: #101018;
   --live-proximo: #0f1016;    --live-pista: #16161d;
+  --spotify: #1db954;         --sombra-fab: rgba(0, 0, 0, .45);
+  --break-fondo: #2a2109;     --break-linea: #4d3d10;
 
   --cat-intl-bg: #1e2b3d;     --cat-intl-fg: #7fb4ff;
   --cat-nac-bg:  #2d2438;     --cat-nac-fg:  #c79bff;
@@ -108,6 +110,8 @@
   --av-5: #6b3fb0; --av-6: #a35a12; --av-7: #1a7a45; --av-8: #c0392b;
   --live-fondo: #ffffff;      --live-hover: #f4f4f0;
   --live-proximo: #f7f7f3;    --live-pista: #e6e6e0;
+  --spotify: #128a3e;         --sombra-fab: rgba(0, 0, 0, .22);
+  --break-fondo: #f8ecd0;     --break-linea: #ddc48a;
 
   --cat-intl-bg: #e3edfb;     --cat-intl-fg: #1f5fa8;
   --cat-nac-bg:  #eee4fb;     --cat-nac-fg:  #6b3fb0;
@@ -1664,8 +1668,9 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
   border-top: 1px solid var(--line-soft); border-radius: 0 0 10px 10px;
 }
 
-/* el ⋯ es solo para pantalla chica */
-.icon-btn.mas, .btn.mas-jam { display: none; }
+/* el ⋯ de cada fila es solo para pantalla chica; el de la jam entera se
+   mudó al ⋯ de la barra de arriba (app.js → accionesDePagina) */
+.icon-btn.mas { display: none; }
 
 /* ============================================================
    Mobile y iPad: la lista, con el dedo
@@ -1780,12 +1785,224 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
   .setlist.compacta .sl-main,
   .sl-item > .sl-main { flex: 1 1 0; min-width: 0; }
 
-  /* del header quedan LIVE VIEW y LYRICS VIEW; el resto, en la hoja */
+  /* del header quedan LIVE VIEW y LYRICS VIEW; el resto está en el ⋯ */
   .page-actions .btn.secundaria { display: none; }
-  .page-actions .btn.mas-jam { display: inline-flex; }
 
   /* ruido que no aporta con el dedo */
   .card.compacta > .energy, .card > .energy { display: none; }
   .card-head > .dim { display: none; }
   .editor-grid .page-head .sub { display: none; }
 }
+
+/* ============================================================
+   LA APP EN EL CELULAR
+   ------------------------------------------------------------
+   Va al final del archivo a propósito: acá se reescriben reglas
+   de más arriba, y con la misma especificidad gana la última.
+
+   Dos cosas, y las dos existen solo abajo de 820px:
+
+   1. Una barra arriba. El menú lateral no entra al lado del
+      contenido, así que se guarda detrás del ☰ y sale por
+      encima; las acciones de la pantalla abierta viven en el ⋯.
+   2. La jam se abre como lista para leer (views/movil.js), no
+      como editor. Un renglón por tema y nada más.
+   ============================================================ */
+
+.topbar { display: none; }
+.menu-back { display: none; }
+
+@media (max-width: 820px) {
+
+  /* ---------- barra de arriba ---------- */
+  .topbar {
+    display: flex; align-items: center; gap: 4px;
+    position: sticky; top: 0; z-index: 120;
+    height: calc(52px + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 6px 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .tb-btn {
+    flex: none; width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: 0; border-radius: var(--r-s);
+    font-size: 19px; color: var(--txt-2); cursor: pointer;
+  }
+  .tb-btn:active { background: var(--panel-2); color: var(--txt); }
+  .tb-btn[hidden] { display: none; }
+  /* el hueco del ⋯ se reserva igual: sin esto el título se corre de
+     lugar entre una pantalla y otra según haya acciones o no */
+  .topbar #btnMas[hidden] { display: block; visibility: hidden; }
+  .tb-titulo {
+    flex: 1; min-width: 0; text-align: center;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-family: var(--mono); font-size: 11.5px;
+    letter-spacing: .16em; text-transform: uppercase; color: var(--txt-2);
+  }
+
+  /* ---------- el menú lateral, guardado a la izquierda ---------- */
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: 78vw; max-width: 300px; height: auto;
+    flex-direction: column; align-items: stretch; gap: 16px;
+    padding: 20px 12px calc(16px + env(safe-area-inset-bottom));
+    background: var(--bg-2);
+    border-right: 1px solid var(--line); border-bottom: 0;
+    overflow-y: auto; overflow-x: hidden;
+    transform: translateX(-100%);
+    transition: transform .22s ease;
+    z-index: 200;
+  }
+  body.menu-abierto .sidebar { transform: none; }
+
+  /* El fondo se prende con la clase del body, no con el atributo `hidden`:
+     una regla de clase le gana al `display:none` que el navegador le pone a
+     [hidden], así que definirlo acá como `display:block` lo dejaba pintado
+     siempre — encima de todo, tragándose cada toque de la pantalla. */
+  .menu-back {
+    position: fixed; inset: 0; z-index: 190;
+    background: rgba(0, 0, 0, .5);
+  }
+  body.menu-abierto .menu-back { display: block; }
+
+  .brand { padding: 0 8px; }
+  #nav { flex-direction: column; gap: 2px; }
+  #nav a { padding: 12px 12px; font-size: 16px; white-space: normal; }
+  #nav a.active { box-shadow: none; }
+
+  /* Adentro del cajón sí hay ancho: vuelve el pie entero —con qué cuenta
+     entraste, el mail, el tema y cuántos temas hay— que en la barra
+     horizontal de antes había que esconder. */
+  .sidebar-foot { display: grid; gap: 10px; margin: auto 0 0; padding: 0 4px; }
+  .pie-sidebar { display: flex; }
+  .uwrap, .uchip { width: 100%; }
+  .uchip-mail { display: block; }
+  .umenu { bottom: calc(100% + 8px); top: auto; left: 0; right: auto; }
+
+  /* el FAB tapa el final de la lista si no le dejamos aire */
+  .view { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+}
+
+/* En vivo, en el login y en el link de letras compartido no hay navegación
+   que ofrecer: la barra sería un adorno que roba 52px de alto. */
+body.en-vivo .topbar,
+body.en-login .topbar,
+body.modo-compartido .topbar { display: none; }
+
+/* ============================================================
+   views/movil.js — la jam como documento
+   ============================================================ */
+.movil { max-width: 720px; margin: 0 auto; }
+
+.mv-cab { padding: 4px 2px 14px; }
+.mv-cab h1 { margin: 0; font-size: 21px; line-height: 1.25; letter-spacing: -.01em; }
+.mv-cab-sub { margin-top: 4px; font-size: 13px; color: var(--txt-3); }
+
+/* ---------- de qué hora a qué hora ---------- */
+.mv-timeline {
+  padding: 11px 12px 12px;
+  background: var(--panel); border: 1px solid var(--line-soft);
+  border-radius: var(--r);
+}
+.mv-tl-horas { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.mv-tl-hora { font-family: var(--mono); font-size: 17px; color: var(--txt); }
+.mv-tl-largo { font-family: var(--mono); font-size: 11.5px; color: var(--txt-3); }
+.mv-tl-barra {
+  display: flex; gap: 1px; height: 8px; margin-top: 9px;
+  border-radius: 5px; overflow: hidden; background: var(--rayado-a);
+}
+.mv-tl-seg { background: var(--acc); min-width: 1px; }
+.mv-tl-seg.brk { background: var(--rayado); }
+.mv-tl-pie { margin-top: 7px; font-size: 12px; color: var(--txt-3); }
+.mv-tl-aprox { color: var(--txt-3); border-bottom: 1px dotted var(--linea-fuerte); cursor: help; }
+
+/* ---------- la lista ---------- */
+.mv-lista {
+  margin-top: 14px;
+  border: 1px solid var(--line-soft); border-radius: var(--r);
+  background: var(--panel); overflow: hidden;
+}
+
+/* Un renglón, y uno solo. Todo el texto va en un mismo nodo con ellipsis:
+   partido en varios flex, el navegador recorta el título antes que el
+   artista, y el título es lo único que no se puede perder. */
+.mv-fila {
+  display: flex; align-items: center; gap: 9px;
+  min-height: 46px; padding: 4px 8px 4px 10px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.mv-fila:last-child { border-bottom: 0; }
+.mv-n {
+  flex: 0 0 26px; text-align: right;
+  font-family: var(--mono); font-size: 12px; color: var(--txt-3);
+}
+.mv-txt {
+  flex: 1 1 auto; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 15px; line-height: 1.35;
+}
+.mv-txt b { font-weight: 600; color: var(--txt); }
+.mv-art { color: var(--txt-3); }
+.mv-quien { color: var(--acc); }
+.mv-nota { flex: none; font-size: 12px; opacity: .8; cursor: help; }
+.mv-dur { flex: none; font-family: var(--mono); font-size: 11px; color: var(--txt-3); }
+.mv-sp {
+  flex: none; width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; font-size: 16px; color: var(--spotify);
+  text-decoration: none;
+}
+.mv-sp:active { background: var(--panel-2); }
+
+/* ---------- medley: los temas, agrupados ---------- */
+.mv-medley {
+  background: var(--medley-fondo);
+  border-bottom: 1px solid var(--line-soft);
+  box-shadow: inset 3px 0 0 var(--medley-linea);
+}
+.mv-medley:last-child { border-bottom: 0; }
+.mv-medley-cab { display: flex; align-items: center; gap: 9px; min-height: 40px; padding: 4px 10px; }
+.mv-medley-cab .mv-txt b {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em;
+  color: var(--acc-2); font-weight: 500;
+}
+.mv-medley .mv-fila { border-bottom: 1px solid var(--medley-song-linea); padding-left: 18px; }
+.mv-medley .mv-fila:last-child { border-bottom: 0; }
+.mv-medley .mv-txt { font-size: 14.5px; }
+
+/* ---------- break: parte la lista en dos ----------
+   Tiene que verse de lejos y de un vistazo: es lo que separa la primera
+   parte de la segunda, y en el medio de la jam nadie va a leer con
+   atención. Por eso va tintado y en el color de acento, no en gris. */
+.mv-break {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 15px 12px;
+  background: var(--break-fondo);
+  border-top: 1px solid var(--break-linea); border-bottom: 1px solid var(--break-linea);
+  font-family: var(--mono); font-size: 12px;
+  letter-spacing: .18em; text-transform: uppercase; color: var(--acc);
+}
+.mv-break-hora { font-size: 13.5px; letter-spacing: .04em; color: var(--acc); }
+
+/* El bloque es un rótulo de sección, no un aviso: va en gris. El ámbar
+   queda reservado para las dos cosas que sí hay que ver sin buscarlas —
+   quién canta y dónde está el break. */
+.mv-bloque {
+  padding: 15px 12px 6px;
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: .18em; text-transform: uppercase; color: var(--txt-3);
+  background: var(--panel);
+}
+
+/* ---------- el ＋ de siempre, abajo a la derecha ---------- */
+.fab {
+  position: fixed; z-index: 90;
+  right: 16px; bottom: calc(18px + env(safe-area-inset-bottom));
+  width: 56px; height: 56px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 0; background: var(--acc); color: var(--acc-ink);
+  font-size: 24px; line-height: 1; cursor: pointer;
+  box-shadow: 0 6px 20px var(--sombra-fab);
+}
+.fab:active { background: var(--acc-hover); }

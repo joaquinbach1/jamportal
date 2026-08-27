@@ -31,6 +31,16 @@
 </head>
 <body>
 
+<!-- La barra de arriba existe solo en pantalla chica: ahí el menú
+     lateral no entra, así que se guarda detrás del ☰ y las acciones
+     de cada pantalla detrás del ⋯. -->
+<header class="topbar" id="topbar">
+  <button class="tb-btn" id="btnMenu" aria-label="Abrir el menú" aria-expanded="false">☰</button>
+  <div class="tb-titulo" id="tbTitulo">JAM PORTAL</div>
+  <button class="tb-btn" id="btnMas" aria-label="Más acciones" hidden>⋯</button>
+</header>
+<div class="menu-back" id="menuBack" hidden></div>
+
 <div id="app">
   <aside class="sidebar">
     <div class="brand">

@@ -21,7 +21,7 @@ import { dialogoCancion } from './song-form.js';
 import { seccionEnsayos } from './ensayos.js';
 import { borrarJam } from './jams.js';
 import { setlistATexto, textoASetlist } from '../setlist-texto.js';
-import { refrescar } from '../app.js';
+import { refrescar, accionesDePagina } from '../app.js';
 import { estadoInicial, filtrosMagicList, generarPropuesta, propuestaAItems } from '../magiclist.js';
 
 /* ============================================================
@@ -1523,18 +1523,23 @@ export function vistaEditor(jamId) {
     h('button.btn.sm.secundaria', { onclick: () => { const j = store.duplicateJam(jam.id); if (j) { toast('Jam duplicada', 'ok'); location.hash = '#/jams/' + j.id; } } }, '⧉ Duplicar'),
     h('button.btn.sm.danger.secundaria', { onclick: () => borrarJam(jam) }, 'Borrar'),
 
-    /* En el celular solo quedan LIVE y LYRICS, que es lo que se usa parado
-       frente a la gente. El resto entra acá. */
-    h('button.btn.sm.mas-jam', {
-      onclick: () => hojaAcciones(jam.nombre || 'Jam', [
-        { icono: '📋', texto: 'Copiar la lista', onClick: () => copiar(comoTexto()) },
-        (jam.historica || bloqueada()) ? null
-          : { icono: '🔒', texto: 'Cerrar la jam', onClick: dialogoCerrar },
-        { icono: '⧉', texto: 'Duplicar', onClick: () => { const j = store.duplicateJam(jam.id); if (j) { toast('Jam duplicada', 'ok'); location.hash = '#/jams/' + j.id; } } },
-        { icono: '✕', texto: 'Borrar la jam', peligro: true, onClick: () => borrarJam(jam) },
-      ]),
-    }, '⋯ Más'),
   );
+
+  /* En el celular solo quedan LIVE y LYRICS entre los botones, que es lo que
+     se usa parado frente a la gente. El resto va al ⋯ de la barra de arriba
+     —el mismo lugar en el que está en todas las demás pantallas—, así no hay
+     que buscar dónde quedó el menú en cada una. */
+  function menuDeLaJam() {
+    hojaAcciones(jam.nombre || 'Jam', [
+      { icono: '☰', texto: 'Verla como lista', onClick: () => { location.hash = '#/jams/' + jam.id; } },
+      { icono: '📋', texto: 'Copiar la lista', onClick: () => copiar(comoTexto()) },
+      (jam.historica || bloqueada()) ? null
+        : { icono: '🔒', texto: 'Cerrar la jam', onClick: dialogoCerrar },
+      { icono: '⧉', texto: 'Duplicar', onClick: () => { const j = store.duplicateJam(jam.id); if (j) { toast('Jam duplicada', 'ok'); location.hash = '#/jams/' + j.id; } } },
+      { icono: '✕', texto: 'Borrar la jam', peligro: true, onClick: () => borrarJam(jam) },
+    ]);
+  }
+  accionesDePagina(menuDeLaJam);
 
   /* ---------- barra de inserción ---------- */
   const insertBar = h('div.insert-bar');

@@ -55,13 +55,19 @@ js/app.js             router por hash
 js/views/login.js     la puerta: solo aparece contra la base compartida
 js/views/usuario.js   el chip con tu mail y el menú para salir
 js/views/miembros.js  administrar quién entra (solo para admins)
+js/views/movil.js     la jam en el celular: un renglón por tema y el horario
 js/views/             una vista por pantalla
+js/duracion.js        cuánto dura la jam y a qué hora termina
+js/spotify.js         el link para escuchar cada tema
 scripts/convert-seed.py       regenera data/seed.json desde el .json original
 scripts/migrar-a-sql.py       convierte el seed en db/10-datos.sql
 scripts/verificar-migracion.py  prueba la migración entera contra un Postgres local
 scripts/probar-store.mjs      ejercita js/store.js en Node, sin navegador
 scripts/probar-api.py         prueba la base por HTTP, como la usa el navegador
 scripts/probar-imports.py     comprueba que los imports entre módulos resuelvan
+scripts/probar-duracion.mjs   la cuenta del horario de la jam, sin navegador
+scripts/traer-anios.py        completa el año de cada tema desde iTunes
+scripts/traer-duraciones.py   completa la duración de cada tema desde iTunes
 ```
 
 ## Los tres métodos para armar el setlist
@@ -186,6 +192,51 @@ Sáb, 5 de septiembre de 2026  ·  19:30 a 22:00  ·  Sala Panda
 
 Total: 4 convocados · 1 ya avisados
 ```
+
+## En el celular
+
+Abajo de 820px la app es otra cosa. El menú lateral no entra al lado del
+contenido, así que se guarda detrás del **☰** de una barra fija arriba; a la
+derecha de esa barra, el **⋯** tiene lo que puede hacer la pantalla que estás
+mirando. Es siempre el mismo lugar, en todas las pantallas.
+
+Y una jam se abre como **lista para leer**, no como editor: un renglón por tema
+con número, título, artista y quién lo canta entre paréntesis, y nada más. Los
+medleys van agrupados y numerados `15a`, `15b`; el break parte la lista con una
+banda ámbar y la hora a la que cae. Cada tema tiene un **♫** que lo abre en
+Spotify. El **＋** de abajo a la derecha anota un tema en Ideas: busca en el
+repertorio y en iTunes, y si el tema no está en ninguno de los dos lo anota con
+el texto que escribiste.
+
+El editor completo sigue estando, en su propia URL (`#/jams/<id>/editar`), a un
+toque desde el ⋯. Y desde el editor se vuelve a la lista por el mismo lugar.
+
+### El horario de la jam
+
+Arriba de la lista va de qué hora a qué hora, con el break marcado en la barra.
+La cuenta tiene tres reglas y ninguna pretende ser exacta:
+
+1. Cada tema dura lo que dice su `duracionSec`, que sale de iTunes
+   (`scripts/traer-duraciones.py` lo completó para 424 de 487 temas). El que no
+   lo tiene se cuenta como **4 minutos** — el promedio real del repertorio
+   resultó ser 4:10, así que la mentira es barata. La lista avisa cuántos está
+   estimando.
+2. Entre tema y tema se pierde tiempo: se afina, se cambia de cantante, alguien
+   dice algo. Se suma un **20%** del tema. El último no lo lleva, porque después
+   no hay nada.
+3. En un medley los temas van **por la mitad**: se toca un pedazo y se encadena.
+
+Los breaks suman sus propios minutos, tal como están cargados. La cuenta vive en
+`js/duracion.js`, que es matemática pura —sin DOM ni base— y se prueba sola con
+`node scripts/probar-duracion.mjs`.
+
+### El link de Spotify
+
+No hay API de por medio: Spotify pide credenciales de servidor y esto es un sitio
+estático. El **♫** abre una búsqueda con título y artista, que en el celular abre
+la app de Spotify con el tema arriba de todo. Si esa búsqueda cae en el vivo o el
+cover equivocado, se fija el link bueno a mano en el tema (campo *Spotify* del
+formulario) y la app lo respeta.
 
 ## LIVE VIEW
 
@@ -412,6 +463,8 @@ db/06-concurrencia.sql control de versión por jam + realtime
 db/07-contrasena.sql   alta de miembros con contraseña
 db/08-admin.sql        administrar la lista desde la app
 db/10-datos.sql        el repertorio y las jams históricas, generado
+db/12-notas.sql        las notas privadas de cada quien
+db/13-duracion-spotify.sql  cuánto dura cada tema, y su link de Spotify
 ```
 
 **La regla que ordena el esquema: nada que se pueda calcular se guarda.** El

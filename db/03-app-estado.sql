@@ -64,6 +64,8 @@ select jsonb_build_object(
              'cifraUrl',        s.cifra_url,
              'cifraArtista',    s.cifra_artista,
              'cifraConfianza',  s.cifra_confianza,
+             'duracionSec',     s.duracion_sec,
+             'spotifyUrl',      s.spotify_url,
              'esIdea',    s.estado = 'idea',
              'cantantes', (select coalesce(jsonb_agg(p.nombre order by sc.orden, p.nombre), '[]'::jsonb)
                              from song_cantante sc
