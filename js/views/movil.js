@@ -24,7 +24,7 @@ import {
 import { agenda, duracionLinda, largoLindo } from '../duracion.js';
 import { linkSpotify } from '../spotify.js';
 import { notaDe } from '../notas.js';
-import { dialogoNuevaIdea } from './ideas.js';
+import { anotarIdea } from './ideas.js';
 import { dialogoCancion } from './song-form.js';
 import { songAutocomplete } from '../ui.js';
 import { buscarEnWeb, webAResultado } from '../lookup.js';
@@ -167,14 +167,46 @@ export function vistaMovil(jamId) {
     if (ultima) ultima.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
 
-  function dialogoAgregar() {
+  /**
+   * Buscador a pantalla completa.
+   *
+   * Adentro de un diálogo no entra: el `.modal` tiene alto máximo y
+   * `overflow: auto`, y el desplegable va posicionado absoluto, así que
+   * se cortaba a los tres resultados. Acá el desplegable deja de flotar
+   * y pasa a ser el cuerpo de la pantalla: se lleva todo el alto que
+   * quede libre, que con el teclado abierto es justo el que hay.
+   */
+  function panelBuscar({ titulo, ayuda, alElegir, alCrearWeb, alEscribir }) {
+    const cerrar = () => { panel.remove(); document.removeEventListener('keydown', esc); };
+    const esc = e => { if (e.key === 'Escape') cerrar(); };
+
     const ac = songAutocomplete({
-      placeholder: 'Buscar un tema…',
-      buscar: q => store.searchSongs(q, 8),
-      onPick: s => { m.close(); sumarTema(s); },
+      placeholder: 'Nombre del tema…',
+      buscar: q => store.searchSongs(q, 25),
+      onPick: s => { cerrar(); alElegir(s); },
       buscarWeb: buscarEnWeb,
-      onPickWeb: async r => {
-        m.close();
+      onPickWeb: r => { cerrar(); alCrearWeb(r); },
+      onNew: q => { cerrar(); alEscribir(q); },
+    });
+
+    const panel = h('div.buscador-full', {},
+      h('div.mv-ed-barra', {},
+        h('button.tb-btn', { onclick: cerrar, title: 'Cerrar' }, '✕'),
+        h('div.mv-ed-tit', {}, titulo)),
+      h('div.bf-ayuda', {}, ayuda),
+      ac);
+
+    clear(document.getElementById('modalRoot')).appendChild(panel);
+    document.addEventListener('keydown', esc);
+    setTimeout(() => ac.focusInput && ac.focusInput(), 60);
+  }
+
+  function dialogoAgregar() {
+    panelBuscar({
+      titulo: 'Sumar a ' + (jam.nombre || 'la jam'),
+      ayuda: 'Busco en el repertorio y después en internet. Si no aparece, se agrega con lo que escribas.',
+      alElegir: sumarTema,
+      alCrearWeb: r => {
         const s = store.addSong(webAResultado(r));
         sumarTema(s);
         if (!s.bpm) asegurarTempo(s, { alTerminar: pintar });   // el tempo llega solo
@@ -182,19 +214,19 @@ export function vistaMovil(jamId) {
       /* Si no está en ningún lado, entra igual con lo que escribiste: en el
          celular, frenar la carga para pedir artista y categoría es perder el
          tema. Los datos que falten se completan después. */
-      onNew: q => { m.close(); sumarTema(store.addSong({ titulo: q, artista: '' })); },
+      alEscribir: q => sumarTema(store.addSong({ titulo: q, artista: '' })),
     });
+  }
 
-    const m = modal({
-      title: 'Sumar a ' + (jam.nombre || 'la jam'),
-      body: [
-        h('div.method-hint', {}, 'Busco primero en el repertorio y después en internet. ',
-          'Si no aparece, se agrega con el nombre que escribas.'),
-        ac,
-      ],
-      footer: [h('button.btn.ghost', { onclick: () => m.close() }, 'Cerrar')],
+  function dialogoIdea() {
+    panelBuscar({
+      titulo: 'Anotar en Ideas',
+      ayuda: 'Queda en el cuaderno de ideas, sin entrar en esta jam.',
+      alElegir: s => toast(s.esIdea ? `«${s.titulo}» ya está en Ideas`
+        : `«${s.titulo}» ya está en el repertorio`, s.esIdea ? '' : 'err'),
+      alCrearWeb: r => anotarIdea(webAResultado(r)),
+      alEscribir: q => anotarIdea({ titulo: q, artista: '' }),
     });
-    setTimeout(() => ac.focusInput && ac.focusInput(), 80);
   }
 
   /* ============================================================
@@ -418,8 +450,7 @@ export function vistaMovil(jamId) {
         : { icono: '🔒', texto: 'Está cerrada — abrirla en el editor',
             onClick: () => { location.hash = `#/jams/${jam.id}/editar`; } },
       { icono: '🕘', texto: 'Fecha, hora y lugar', onClick: dialogoHorario },
-      { icono: '💡', texto: 'Anotar un tema en Ideas (sin sumarlo acá)',
-        onClick: () => dialogoNuevaIdea(() => {}, { simple: true }) },
+      { icono: '💡', texto: 'Anotar un tema en Ideas (sin sumarlo acá)', onClick: dialogoIdea },
       { icono: '▤', texto: 'Tamaño de la lista: ' + DENSIDADES.find(d => d.v === densidad()).label.toLowerCase(),
         onClick: hojaDensidad },
       { icono: '▶', texto: 'LIVE VIEW — pasarla en la jam', onClick: () => { location.hash = '#/live/' + jam.id; } },
