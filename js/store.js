@@ -526,6 +526,100 @@ export const store = {
     touch();
   },
 
+  /* ============================================================
+     Duplicados
+     ------------------------------------------------------------
+     Importar una planilla con el artista, cuando el tema ya estaba
+     cargado sin artista, dejaba dos filas del mismo tema. Esto los
+     junta en uno.
+
+     La regla es estricta a propósito: mismo título Y (mismo artista
+     o uno de los dos vacío). "Crazy" de Aerosmith y "Crazy" de
+     Gnarls Barkley NO son el mismo tema y no se tocan.
+     ============================================================ */
+
+  /** Qué tan completo está un tema: gana el que más sabe. */
+  _riqueza(s) {
+    let n = 0;
+    for (const c of ['artista', 'categoria', 'bpm', 'franja', 'anio', 'cifraUrl', 'notas']) {
+      if (s[c] !== '' && s[c] != null) n++;
+    }
+    for (const c of ['cantantes', 'patches', 'invitados']) n += (s[c] || []).length ? 1 : 0;
+    return n;
+  },
+
+  /** Los grupos de duplicados, sin tocar nada. Para poder mirarlos antes. */
+  duplicados() {
+    const porTitulo = new Map();
+    for (const s of state.songs) {
+      const t = norm(s.titulo);
+      if (!t) continue;
+      if (!porTitulo.has(t)) porTitulo.set(t, []);
+      porTitulo.get(t).push(s);
+    }
+
+    const grupos = [];
+    for (const candidatos of porTitulo.values()) {
+      if (candidatos.length < 2) continue;
+
+      /* dentro del mismo título, agrupamos por artista compatible */
+      const usados = new Set();
+      for (const a of candidatos) {
+        if (usados.has(a.id)) continue;
+        const grupo = [a];
+        usados.add(a.id);
+        for (const b of candidatos) {
+          if (usados.has(b.id)) continue;
+          const na = norm(a.artista), nb = norm(b.artista);
+          if (na === nb || !na || !nb) { grupo.push(b); usados.add(b.id); }
+        }
+        if (grupo.length > 1) {
+          /* se queda el que más historia tiene; a igualdad, el más completo */
+          grupo.sort((x, y) =>
+            (y.jams || []).length - (x.jams || []).length ||
+            this._riqueza(y) - this._riqueza(x));
+          grupos.push({ queda: grupo[0], sobran: grupo.slice(1) });
+        }
+      }
+    }
+    return grupos;
+  },
+
+  /** Junta los duplicados: completa el que queda y redirige las jams. */
+  fusionarDuplicados() {
+    const grupos = this.duplicados();
+    let fusionados = 0;
+
+    for (const { queda, sobran } of grupos) {
+      for (const otro of sobran) {
+        /* lo que el que queda no tiene y el otro sí, se lo lleva */
+        for (const c of ['artista', 'categoria', 'bpm', 'bpmRaw', 'bpmFuente', 'franja',
+                         'anio', 'cifraUrl', 'cifraArtista', 'cifraConfianza', 'notas', 'letra', 'letraUrl']) {
+          if ((queda[c] === '' || queda[c] == null) && otro[c] !== '' && otro[c] != null) queda[c] = otro[c];
+        }
+        for (const c of ['cantantes', 'patches', 'invitados', 'jams']) {
+          queda[c] = [...new Set([...(queda[c] || []), ...(otro[c] || [])])];
+        }
+
+        /* las jams que apuntaban al que se va, ahora apuntan al que queda */
+        for (const j of state.jams) {
+          for (const it of j.items || []) {
+            if (it.songId === otro.id) it.songId = queda.id;
+            if (it.tipo === 'medley') {
+              for (const m of it.songs || []) if (m.songId === otro.id) m.songId = queda.id;
+            }
+          }
+        }
+
+        state.songs = state.songs.filter(s => s.id !== otro.id);
+        fusionados++;
+      }
+    }
+
+    if (fusionados) touch();
+    return { grupos: grupos.length, fusionados };
+  },
+
   /** Busca un tema por título (+ artista opcional). Devuelve el más parecido o null. */
   matchSong(titulo, artista = '') {
     const nt = norm(titulo), na = norm(artista);

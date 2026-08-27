@@ -3,7 +3,7 @@
    ============================================================ */
 
 import { store, norm } from '../store.js';
-import { h, frag, clear, field, toast, confirmar, descargar, copiar } from '../ui.js';
+import { h, frag, clear, poner, field, toast, confirmar, descargar, copiar } from '../ui.js';
 import { PASOS_SQL } from '../drivers/postgres.js';
 import { dialogoClave } from './usuario.js';
 import { tarjetaMiembros } from './miembros.js';
@@ -254,6 +254,50 @@ export function vistaData() {
       }, `Importar ${objetos.length} temas`));
   }
 
+  /* --- juntar duplicados --- */
+  const infoDup = h('div');
+
+  function pintarDuplicados() {
+    clear(infoDup);
+    const grupos = store.duplicados();
+
+    if (!grupos.length) {
+      infoDup.appendChild(h('div.method-hint', {}, 'No hay temas repetidos.'));
+      return;
+    }
+
+    const cuantos = grupos.reduce((a, g) => a + g.sobran.length, 0);
+    poner(infoDup,
+      h('div.method-hint', {},
+        grupos.length === 1
+          ? `Hay 1 tema cargado ${cuantos + 1} veces. `
+          : `${grupos.length} temas están cargados más de una vez (${cuantos} de más). `,
+        'Se queda el que más historia y datos tiene, y el resto se funde adentro: ',
+        'lo que al que queda le falte se lo lleva del otro, y las jams que apuntaban al repetido pasan a apuntar al que queda.'),
+      h('div.paste-result', {}, grupos.slice(0, 15).map(g => h('div.paste-row.ok', {},
+        h('div.pr-main', {},
+          h('div.pr-t', {}, g.queda.titulo),
+          h('div.pr-s', {},
+            `queda: ${g.queda.artista || 'sin artista'}`
+            + ((g.queda.jams || []).length ? ` · ${g.queda.jams.length} jams` : '')
+            + '  ←  se funden: '
+            + g.sobran.map(x => x.artista || 'sin artista').join(', '))),
+        h('span.chip', {}, `${g.sobran.length + 1} copias`)))),
+      grupos.length > 15
+        ? h('div.dim', { style: { fontSize: '12px', marginTop: '6px' } }, `…y ${grupos.length - 15} más`)
+        : null,
+      h('button.btn.primary', {
+        style: { marginTop: '12px' },
+        onclick: async () => {
+          if (!await confirmar(`Se van a juntar ${cuantos} temas repetidos. No se pierde nada: los datos se suman en el que queda.`,
+            { titulo: 'Juntar duplicados', danger: false, okText: 'Juntarlos' })) return;
+          const r = store.fusionarDuplicados();
+          toast(`${r.fusionados} temas repetidos se fundieron`, 'ok');
+          pintarDuplicados(); refrescar();
+        },
+      }, `Juntar los ${cuantos} repetidos`));
+  }
+
   /* --- exportar CSV --- */
   function exportarCSV() {
     const cols = ['titulo', 'artista', 'categoria', 'bpm', 'franja', 'cantantes', 'patches', 'jams', 'cifraUrl', 'notas'];
@@ -326,6 +370,15 @@ export function vistaData() {
         h('button.btn.ghost', { onclick: () => fileCSV.click() }, '📄 Elegir archivo CSV'),
         fileCSV),
       infoImport),
+
+    h('div.card', {},
+      h('div.card-head', {}, h('h3', {}, 'Temas repetidos')),
+      h('p.muted', { style: { marginTop: 0, fontSize: '13.5px' } },
+        'Junta los que están cargados dos veces. Solo toca los que tienen el mismo título y '
+        + 'el mismo artista, o uno de los dos sin artista: dos temas distintos que se llamen '
+        + 'igual quedan como están.'),
+      h('button.btn', { onclick: pintarDuplicados }, '🔍 Buscar repetidos'),
+      infoDup),
 
     h('div.card', {},
       h('div.card-head', {}, h('h3', {}, 'Zona peligrosa')),
