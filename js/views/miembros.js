@@ -15,7 +15,7 @@ import { store } from '../store.js';
 import { h, clear, input, toast, confirmar, avatar, fechaLinda } from '../ui.js';
 
 export function tarjetaMiembros() {
-  if (!store.enLaNube || !store.esAdmin) return null;
+  if (!store.esAdmin) return null;
 
   const lista = h('div.miembros');
   const fMail = input({ type: 'email', placeholder: 'mail@ejemplo.com',

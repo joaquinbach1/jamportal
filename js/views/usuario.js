@@ -5,7 +5,7 @@
    un menú con lo poco que hay para hacer: cambiar la contraseña
    y salir.
 
-   Solo aparece contra la base compartida. En modo local no hay
+   Solo aparece si hay sesión. Sin ella no hay
    con quién identificarse.
    ============================================================ */
 
@@ -49,7 +49,7 @@ export function dialogoClave() {
 /* ---------- el chip del sidebar ---------- */
 export function montarUsuario(slot) {
   clear(slot);
-  if (!store.enLaNube || !store.email) return;
+  if (!store.email) return;
 
   const mail = store.email;
   const nombre = mail.split('@')[0].replace(/[._-]+/g, ' ');

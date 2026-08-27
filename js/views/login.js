@@ -1,9 +1,8 @@
 /* ============================================================
    views/login.js — la puerta
    ------------------------------------------------------------
-   Solo aparece cuando la app está conectada a la base compartida
-   y no hay sesión. En modo local no se ve nunca: ahí no hay nada
-   que proteger porque los datos son de este navegador.
+   Aparece cuando no hay sesión, que es lo mismo que decir siempre
+   que haga falta: la app no tiene otro lado de dónde sacar datos.
 
    Se entra con mail y contraseña. El magic link queda abajo,
    como salida para quien se la olvidó: depende de que lleguen
@@ -152,14 +151,7 @@ export async function vistaLogin(donde, alEntrar) {
         cambiarModo,
         h('button.btn.xs.ghost', { onclick: pedirLink },
           '¿Te olvidaste? Pedí un link por mail'),
-        h('span.dim', {}, cfg.url ? cfg.url.replace(/^https?:\/\//, '') : ''),
-        h('button.btn.xs.ghost', {
-          onclick: () => {
-            if (!confirm('¿Trabajar solo en este navegador? La base compartida queda como está.')) return;
-            store.desconectarNube();
-            location.reload();
-          },
-        }, 'Trabajar sin la base compartida')))));
+        h('span.dim', {}, cfg.url ? cfg.url.replace(/^https?:\/\//, '') : '')))));
 
   // Si volvemos del mail, el token viene en el hash.
   const vuelta = auth.capturarRedirect();
@@ -175,8 +167,8 @@ export async function vistaLogin(donde, alEntrar) {
 
 /** ¿Hay que mostrar la puerta? */
 export async function hayQueEntrar() {
-  if (!store.configNube()) return false;         // modo local: no hay puerta
   const auth = await store.prepararAuth();
+  if (!auth) return false;                       // sin base configurada, app.js lo cuenta
   // Si el token viene en el hash, la puerta se muestra igual para
   // capturarlo y entrar sola.
   if (location.hash.includes('access_token=') || location.hash.includes('error=')) return true;

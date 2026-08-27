@@ -65,6 +65,7 @@ scripts/verificar-migracion.py  prueba la migración entera contra un Postgres l
 scripts/probar-store.mjs      ejercita js/store.js en Node, sin navegador
 scripts/probar-api.py         prueba la base por HTTP, como la usa el navegador
 scripts/probar-imports.py     comprueba que los imports entre módulos resuelvan
+scripts/revisar-sw.py         que sw.js liste todos los módulos (se quedó vieja una vez)
 scripts/probar-duracion.mjs   la cuenta del horario de la jam, sin navegador
 scripts/traer-anios.py        completa el año de cada tema desde iTunes
 scripts/traer-duraciones.py   completa la duración de cada tema desde iTunes
@@ -439,47 +440,34 @@ Persona{ id, nombre, rol: 'voz'|'instrumento', instrumentos[], activo,
 Franja de tempo, igual que en el documento original:
 🔵 Low ≤ 99 · 🟢 Mid 100–124 · 🔴 High ≥ 125. Se calcula sola desde el BPM.
 
-## Guardado: solo este navegador o base compartida
+## Guardado
 
-Las vistas **nunca** tocan el almacenamiento: hablan solo con `store`, que adentro
-usa un driver con dos métodos, `read()` y `write(state)`. Hay dos:
+Todo vive en **la base compartida**. Lo que edita cualquiera lo ven todos, al
+instante: hay un websocket escuchando, y un sondeo de red por si se cae. En el
+navegador solo quedan tu sesión, el tema claro/oscuro, qué tan apretada querés
+la lista en el celular, y tus notas privadas por tema.
 
-- **`LocalDriver`** — `localStorage`. Es el de arranque: no hay que configurar nada
-  pero los datos son de ese navegador.
-- **`PostgresDriver`** (`js/drivers/postgres.js`) — una base compartida en
-  Postgres, para que entren varios y editen lo mismo. Habla con la API REST de
-  Supabase por `fetch`, sin SDK, así el sitio sigue sin dependencias.
+Antes había también un driver de `localStorage`, y arrancar con él cuando la
+base fallaba parecía prudente. **No lo era.** Si la sesión vencía —cosa que
+pasa— la app caía sin decir nada al repertorio viejo de ese navegador: otro
+repertorio, otras jams, y todo lo que se editaba desde ahí no llegaba a ningún
+lado. Peor que un error, porque parecía que andaba.
 
-En **Datos → Base compartida** están los pasos. Una vez conectada, todo lo que
-edites se guarda ahí y cualquiera con el link ve lo mismo.
+Ahora hay un solo camino, y cuando no se puede la app lo dice y frena:
 
-**Cómo evita que se pisen.** No manda un documento gigante: parte el estado en
-`catalogo` (temas, personas, categorías) y **una jam por vez**. Así dos personas
-editando jams distintas no se tocan, y cada guardado manda solo lo que cambió.
+| Qué pasó | Qué muestra |
+|---|---|
+| La sesión venció | La pantalla de entrada |
+| No hay red, o Supabase está caído | «No llego a la base», con Reintentar |
+| Entraste pero no estás en `miembro` | «Falta que te habiliten» |
+| La base contesta pero está vacía | Cómo sembrarla con los archivos de `db/` |
 
-Para enterarse de lo que hacen los demás hay un websocket contra Supabase
-Realtime que escucha una sola tabla: `revision`, que es una fila con un contador.
-Por el socket **no viaja ni un dato del repertorio** — el aviso dice "algo
-cambió" y la app vuelve a leer por la vía de siempre, que ya pasa por los
-permisos. El aviso llega en unos 100 ms. Si el socket no levanta o se cae, el
-sondeo de siempre sigue ahí como red (cada 8 s sin realtime, cada 60 s con él).
+Ninguno de esos casos muestra datos: mostrar los de otro lado es lo que hizo
+que alguien perdiera trabajo.
 
-Si estás escribiendo en un campo o con un diálogo abierto, la vista no se
-refresca hasta que termines.
-
-**Y cuando igual chocan.** Realtime achica la ventana, no la cierra: si dos
-guardan la misma jam en el mismo segundo, alguien tiene que perder. Por eso cada
-jam tiene un número de `version` que sube en cada guardado. Quien escribe manda
-el que leyó, y si no coincide **la base rechaza la escritura** (HTTP 409) en vez
-de aceptarla y borrar lo del otro en silencio. La app pregunta qué versión queda:
-traer la del otro, o pisarla.
-
-Si la base no responde al arrancar, la app sigue andando con los datos del
-navegador y te lo dice, en vez de quedarse en blanco.
-
-En **Datos** también están el respaldo completo en JSON (exportar e importar), la
-exportación de DBSongs a CSV y el importador de temas por CSV o pegado desde Excel
-/ Google Sheets.
+Sembrar una base vacía se hace corriendo los archivos de `db/`, no desde el
+navegador. La app **nunca** escribe un repertorio inicial: hacerlo fue lo que
+una vez trató de pisar el repertorio de todos.
 
 ## La base
 
