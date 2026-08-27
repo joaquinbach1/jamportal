@@ -1623,6 +1623,51 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
 }
 
 /* ============================================================
+   Hoja de acciones
+   ------------------------------------------------------------
+   Sube desde abajo, que es donde está el pulgar.
+   ============================================================ */
+.hoja-back {
+  position: fixed; inset: 0; z-index: 210;
+  background: rgba(0, 0, 0, .55);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.hoja {
+  width: 100%; max-width: 520px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px 16px 0 0;
+  padding: 8px 8px calc(10px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 2px;
+  max-height: 80vh; overflow-y: auto;
+}
+.hoja-titulo {
+  padding: 12px 14px 10px;
+  font-size: 13px; font-weight: 650; color: var(--txt-2);
+  border-bottom: 1px solid var(--line-soft);
+  margin-bottom: 6px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hoja-item {
+  display: flex; align-items: center; gap: 13px;
+  width: 100%; text-align: left;
+  background: none; border: none; border-radius: 10px;
+  padding: 14px; cursor: pointer;
+  font-size: 15.5px; color: var(--txt);
+}
+.hoja-item:active, .hoja-item:hover { background: var(--panel-2); }
+.hoja-item.peligro { color: var(--err); }
+.hoja-icono { width: 22px; flex: none; font-size: 17px; text-align: center; }
+.hoja-cancelar {
+  justify-content: center; margin-top: 6px;
+  color: var(--txt-2); font-weight: 600;
+  border-top: 1px solid var(--line-soft); border-radius: 0 0 10px 10px;
+}
+
+/* el ⋯ es solo para pantalla chica */
+.icon-btn.mas, .btn.mas-jam { display: none; }
+
+/* ============================================================
    Mobile y iPad: la lista, con el dedo
    ------------------------------------------------------------
    Va al final a propósito: tiene que ganarle a las reglas de la
@@ -1653,7 +1698,7 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
     min-width: 0;
   }
   .setlist.compacta .sl-main,
-  .sl-item > .sl-main { flex: 1 1 60%; }     /* que no se caiga de renglón */
+  .sl-item > .sl-main { flex: 1 1 0; min-width: 0; }
 
   /* la manija y el número, arriba junto al título: centrados contra un
      bloque de tres renglones quedaban a la altura del artista */
@@ -1715,4 +1760,32 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
 
   /* el conmutador de densidad no decide nada acá */
   .card-head .btn.xs.densidad { display: none; }
+
+  /* ---- menos cosas en pantalla ----
+     En una jam de ocho temas había 157 botones. Los de cada fila pasan a
+     un solo ⋯ que abre la hoja, con los nombres escritos. */
+  .sl-item > .sl-actions > .icon-btn { display: none; }
+  .sl-item > .sl-actions > .icon-btn.mas {
+    display: inline-flex;
+    min-width: 44px; min-height: 44px;
+    font-size: 22px; letter-spacing: 1px;
+  }
+  .sl-item > .sl-actions {
+    flex: 0 0 auto;
+    margin: 0 0 0 auto;
+    align-self: center;
+  }
+  /* Con base 0 el bloque toma lo que sobra y se achica; con `auto` el
+     título medía su largo real y se caía de renglón. */
+  .setlist.compacta .sl-main,
+  .sl-item > .sl-main { flex: 1 1 0; min-width: 0; }
+
+  /* del header quedan LIVE VIEW y LYRICS VIEW; el resto, en la hoja */
+  .page-actions .btn.secundaria { display: none; }
+  .page-actions .btn.mas-jam { display: inline-flex; }
+
+  /* ruido que no aporta con el dedo */
+  .card.compacta > .energy, .card > .energy { display: none; }
+  .card-head > .dim { display: none; }
+  .editor-grid .page-head .sub { display: none; }
 }

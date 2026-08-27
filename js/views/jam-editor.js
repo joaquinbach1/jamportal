@@ -9,7 +9,7 @@
 
 import { store, norm, FRANJA_LABEL } from '../store.js';
 import {
-  h, frag, clear, poner, field, input, select, personPicker, toast, modal, confirmar, songAutocomplete,
+  h, frag, clear, poner, field, input, select, personPicker, toast, modal, confirmar, songAutocomplete, hojaAcciones,
   catPill, catCorta, franjaDot, fechaLinda, copiar, debounce,
 } from '../ui.js';
 import { buscarEnWeb, webAResultado, temasDeArtista } from '../lookup.js';
@@ -656,6 +656,30 @@ export function vistaEditor(jamId) {
     setTimeout(() => area.focus(), 60);
   }
 
+  /** Las acciones del tema, con nombre, para el dedo. */
+  function hojaDeTema(s, i) {
+    hojaAcciones(s.titulo, [
+      { icono: '📝', texto: notaDe(jam.id, s.id) ? 'Editar mi nota' : 'Escribir una nota mía',
+        onClick: () => dialogoNota(s, () => pintarTodo()) },
+      { icono: '🎸', texto: s.cifraUrl ? 'Abrir la cifra' : 'Buscar la cifra',
+        onClick: async () => {
+          if (s.cifraUrl) { window.open(s.cifraUrl, '_blank', 'noopener'); return; }
+          const r = await buscarCifra(s.titulo, s.artista).catch(() => null);
+          if (r) {
+            store.updateSong(s.id, { cifraUrl: r.url, cifraArtista: r.artista, cifraConfianza: r.confianza });
+            window.open(r.url, '_blank', 'noopener');
+          } else {
+            store.updateSong(s.id, { cifraUrl: '', cifraConfianza: 'no' });
+            window.open(urlBusqueda(s.titulo, s.artista), '_blank', 'noopener');
+          }
+          pintarTodo();
+        } },
+      { icono: '⛓', texto: 'Unir en medley con el siguiente', onClick: () => unirEnMedley(i) },
+      { icono: '✎', texto: 'Editar el tema', onClick: () => dialogoCancion(s, () => pintarTodo()) },
+      { icono: '✕', texto: 'Sacar de la lista', peligro: true, onClick: () => quitar(i) },
+    ]);
+  }
+
   function filaSong(it, i, numero) {
     const s = store.song(it.songId);
     if (!s) return h('div.sl-item', {}, h('span.sl-num', {}, numero), h('div.sl-main', {}, h('span.dim', {}, 'Tema borrado de DBSongs')),
@@ -696,7 +720,13 @@ export function vistaEditor(jamId) {
         botonCifra(s, () => pintarTodo()),
         h('button.icon-btn', { title: 'Unir en medley con el siguiente', onclick: () => unirEnMedley(i) }, '⛓'),
         h('button.icon-btn', { title: 'Editar el tema en DBSongs', onclick: () => dialogoCancion(s, () => pintarTodo()) }, '✎'),
-        h('button.icon-btn.danger', { title: 'Sacar de la lista', onclick: () => quitar(i) }, '✕')),
+        h('button.icon-btn.danger', { title: 'Sacar de la lista', onclick: () => quitar(i) }, '✕'),
+        /* En pantalla chica se muestra solo este y se esconden los de arriba:
+           cinco íconos por tema eran cuarenta botones en una jam corta. */
+        h('button.icon-btn.mas', {
+          title: 'Más acciones',
+          onclick: e => { e.stopPropagation(); hojaDeTema(s, i); },
+        }, '⋯')),
     );
     return row;
   }
@@ -1484,14 +1514,26 @@ export function vistaEditor(jamId) {
       onclick: () => { location.hash = '#/lyrics/' + jam.id; },
       title: 'Las letras de todos los temas, en orden',
     }, '📖 LYRICS VIEW'),
-    h('button.btn.sm', { onclick: () => copiar(comoTexto()) }, '📋 Copiar lista'),
+    h('button.btn.sm.secundaria', { onclick: () => copiar(comoTexto()) }, '📋 Copiar lista'),
     (jam.historica || bloqueada()) ? null
-      : h('button.btn.sm', {
+      : h('button.btn.sm.secundaria', {
           title: 'Congelar la lista para pasarla en vivo',
           onclick: dialogoCerrar,
         }, '🔒 Cerrar jam'),
-    h('button.btn.sm', { onclick: () => { const j = store.duplicateJam(jam.id); if (j) { toast('Jam duplicada', 'ok'); location.hash = '#/jams/' + j.id; } } }, '⧉ Duplicar'),
-    h('button.btn.sm.danger', { onclick: () => borrarJam(jam) }, 'Borrar'),
+    h('button.btn.sm.secundaria', { onclick: () => { const j = store.duplicateJam(jam.id); if (j) { toast('Jam duplicada', 'ok'); location.hash = '#/jams/' + j.id; } } }, '⧉ Duplicar'),
+    h('button.btn.sm.danger.secundaria', { onclick: () => borrarJam(jam) }, 'Borrar'),
+
+    /* En el celular solo quedan LIVE y LYRICS, que es lo que se usa parado
+       frente a la gente. El resto entra acá. */
+    h('button.btn.sm.mas-jam', {
+      onclick: () => hojaAcciones(jam.nombre || 'Jam', [
+        { icono: '📋', texto: 'Copiar la lista', onClick: () => copiar(comoTexto()) },
+        (jam.historica || bloqueada()) ? null
+          : { icono: '🔒', texto: 'Cerrar la jam', onClick: dialogoCerrar },
+        { icono: '⧉', texto: 'Duplicar', onClick: () => { const j = store.duplicateJam(jam.id); if (j) { toast('Jam duplicada', 'ok'); location.hash = '#/jams/' + j.id; } } },
+        { icono: '✕', texto: 'Borrar la jam', peligro: true, onClick: () => borrarJam(jam) },
+      ]),
+    }, '⋯ Más'),
   );
 
   /* ---------- barra de inserción ---------- */

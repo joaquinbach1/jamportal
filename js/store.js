@@ -664,7 +664,14 @@ export const store = {
     for (const r of rows) {
       if (!r.titulo) continue;
       const found = this.matchSong(r.titulo, r.artista);
-      if (found && norm(found.artista) === norm(r.artista || found.artista)) {
+      /* Si el que está en la base no tiene artista y el que llega sí, es el
+         mismo tema al que le venís a completar el dato — siempre que el
+         título coincida exacto. Sin esto se creaba un duplicado en vez de
+         completarlo, que es justo lo contrario de lo que uno quiere al
+         importar una planilla con los datos que faltaban. */
+      const completaElArtista = found && !norm(found.artista) && norm(r.artista)
+        && norm(found.titulo) === norm(r.titulo);
+      if (found && (completaElArtista || norm(found.artista) === norm(r.artista || found.artista))) {
         Object.assign(found, Object.fromEntries(Object.entries(r).filter(([, v]) => v !== '' && v != null)));
         if (found.bpm) found.franja = found.franja || franjaDeBpm(found.bpm);
         actualizadas++;

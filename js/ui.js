@@ -81,6 +81,29 @@ export function modal({ title, body, footer, wide = false, onClose }) {
   return { close, box };
 }
 
+/**
+ * Hoja de acciones, para el dedo.
+ * En vez de cinco íconos de 40px apretados contra el borde, una lista
+ * con el nombre de cada cosa. Se acierta sin mirar y se entiende qué hace.
+ *   acciones: [{ icono, texto, onClick, peligro? }]
+ */
+export function hojaAcciones(titulo, acciones) {
+  const cerrar = () => { back.remove(); document.removeEventListener('keydown', esc); };
+  const esc = e => { if (e.key === 'Escape') cerrar(); };
+
+  const hoja = h('div.hoja', {},
+    h('div.hoja-titulo', {}, titulo),
+    ...acciones.filter(Boolean).map(a => h('button.hoja-item' + (a.peligro ? '.peligro' : ''), {
+      onclick: () => { cerrar(); a.onClick(); },
+    }, h('span.hoja-icono', {}, a.icono), h('span', {}, a.texto))),
+    h('button.hoja-item.hoja-cancelar', { onclick: cerrar }, 'Cancelar'));
+
+  const back = h('div.hoja-back', { onclick: e => { if (e.target === back) cerrar(); } }, hoja);
+  clear(document.getElementById('modalRoot')).appendChild(back);
+  document.addEventListener('keydown', esc);
+  return { cerrar };
+}
+
 export function confirmar(msg, { titulo = 'Confirmar', danger = true, okText = 'Sí, dale' } = {}) {
   return new Promise(resolve => {
     const m = modal({
