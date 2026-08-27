@@ -254,6 +254,40 @@ export function vistaData() {
       }, `Importar ${objetos.length} temas`));
   }
 
+  /* --- categorías --- */
+  const infoCats = h('div');
+
+  function pintarCategorias() {
+    clear(infoCats);
+    const uso = store.usoDeCategorias();
+    const sobran = uso.filter(u => u.enLaLista && !u.temas);
+
+    poner(infoCats,
+      h('div.paste-result', {}, uso.map(u => h('div.paste-row.' + (u.temas ? 'ok' : 'new'), {},
+        h('div.pr-main', {},
+          h('div.pr-t', {}, u.categoria),
+          h('div.pr-s', {}, u.temas
+            ? `${u.temas} tema${u.temas > 1 ? 's' : ''}`
+            : (u.enLaLista ? 'sin temas — se puede sacar' : 'no está en la lista'))),
+        u.enLaLista && !u.temas
+          ? h('button.btn.xs.danger', {
+              onclick: async () => {
+                const r = store.quitarCategoria(u.categoria);
+                if (!r.ok) { toast('No se pudo: ' + r.motivo, 'err'); return; }
+                toast('Categoría sacada', 'ok');
+                pintarCategorias(); refrescar();
+              },
+            }, '✕ sacar')
+          : h('span.chip', {}, u.temas ? 'en uso' : '—')))),
+
+      sobran.length
+        ? h('div.method-hint', { style: { marginTop: '10px' } },
+            `${sobran.length} categoría${sobran.length > 1 ? 's' : ''} sin ningún tema. `,
+            'Sacarlas no toca ninguna canción.')
+        : h('div.method-hint', { style: { marginTop: '10px' } },
+            'Todas las categorías tienen temas. No hay nada para sacar.'));
+  }
+
   /* --- juntar duplicados --- */
   const infoDup = h('div');
 
@@ -370,6 +404,14 @@ export function vistaData() {
         h('button.btn.ghost', { onclick: () => fileCSV.click() }, '📄 Elegir archivo CSV'),
         fileCSV),
       infoImport),
+
+    h('div.card', {},
+      h('div.card-head', {}, h('h3', {}, 'Categorías')),
+      h('p.muted', { style: { marginTop: 0, fontSize: '13.5px' } },
+        'Las que quedaron sin ningún tema se pueden sacar. Las que tienen temas no: '
+        + 'primero hay que mover esos temas a otra categoría.'),
+      h('button.btn', { onclick: pintarCategorias }, '🏷 Ver categorías'),
+      infoCats),
 
     h('div.card', {},
       h('div.card-head', {}, h('h3', {}, 'Temas repetidos')),

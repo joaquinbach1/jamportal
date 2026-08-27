@@ -526,6 +526,36 @@ export const store = {
     touch();
   },
 
+  /* ---------- categorías ---------- */
+
+  /** Cada categoría con cuántos temas la usan. Incluye las que quedaron vacías. */
+  usoDeCategorias() {
+    const cuenta = new Map(state.categorias.map(c => [c, 0]));
+    for (const s of state.songs) {
+      const c = s.categoria;
+      if (c) cuenta.set(c, (cuenta.get(c) || 0) + 1);
+    }
+    return [...cuenta.entries()].map(([categoria, temas]) => ({
+      categoria, temas, enLaLista: state.categorias.includes(categoria),
+    }));
+  },
+
+  /**
+   * Saca una categoría de la lista. Solo si no la usa ningún tema: si
+   * queda alguno apuntando ahí, se vuelve a colar cuando la base rearme
+   * la lista, y encima ese tema queda sin categoría válida.
+   */
+  quitarCategoria(categoria) {
+    if (state.songs.some(s => s.categoria === categoria)) {
+      return { ok: false, motivo: 'todavía hay temas en esa categoría' };
+    }
+    const antes = state.categorias.length;
+    state.categorias = state.categorias.filter(c => c !== categoria);
+    if (state.categorias.length === antes) return { ok: false, motivo: 'no estaba en la lista' };
+    touch();
+    return { ok: true };
+  },
+
   /* ============================================================
      Duplicados
      ------------------------------------------------------------
