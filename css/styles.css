@@ -2122,3 +2122,44 @@ body.mv-arrastrando-algo { user-select: none; -webkit-user-select: none; }
 }
 .mv-ed-falta { color: var(--warn); }
 .hoja-item.spotify .hoja-icono { color: var(--spotify); }
+
+/* ============================================================
+   Buscador a pantalla completa (celular)
+   ------------------------------------------------------------
+   Adentro de un diálogo no entra: `.modal` tiene alto máximo y
+   `overflow: auto`, y `.ac-menu` va posicionado absoluto, así que
+   el desplegable se cortaba a los tres resultados.
+
+   Acá el desplegable deja de flotar y pasa a ser el cuerpo de la
+   pantalla. `100dvh` y no `100vh` a propósito: cuando sube el
+   teclado, el alto disponible baja y la lista se acomoda sola en
+   lo que queda, en vez de irse abajo del teclado.
+   ============================================================ */
+.buscador-full {
+  position: fixed; top: 0; left: 0; right: 0; height: 100dvh; z-index: 220;
+  display: flex; flex-direction: column;
+  background: var(--bg);
+  padding-top: env(safe-area-inset-top);
+}
+.bf-ayuda {
+  flex: none; padding: 10px 14px 8px;
+  font-size: 12.5px; line-height: 1.45; color: var(--txt-3);
+}
+.buscador-full .ac-wrap {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column;
+}
+.buscador-full .ac-wrap > input {
+  flex: none; margin: 0 12px 10px; font-size: 16px;   /* 16px: menos que eso, iOS hace zoom */
+}
+.buscador-full .ac-menu {
+  position: static; flex: 1 1 auto; min-height: 0;
+  max-height: none; border: 0; border-radius: 0; box-shadow: none;
+  background: transparent;
+  border-top: 1px solid var(--line-soft);
+  padding: 6px 8px calc(10px + env(safe-area-inset-bottom));
+  overflow-y: auto; overscroll-behavior: contain;
+}
+.buscador-full .ac-item { padding: 11px 10px; gap: 10px; }
+.buscador-full .ac-t { font-size: 15px; }
+.buscador-full .ac-head { position: sticky; top: -6px; background: var(--bg); }

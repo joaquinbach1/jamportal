@@ -204,9 +204,17 @@ mirando. Es siempre el mismo lugar, en todas las pantallas.
 Y una jam se abre como **lista para leer**, no como editor: un renglón por tema
 con número, título y quién lo canta entre paréntesis, y nada más. Los medleys
 van agrupados y numerados `15a`, `15b`; el break parte la lista con una banda
-ámbar y la hora a la que cae. El **＋** de abajo a la derecha anota un tema en
-Ideas: busca en el repertorio y en iTunes, y si el tema no está en ninguno de
-los dos lo anota con el texto que escribiste.
+ámbar y la hora a la que cae. El **＋** de abajo a la derecha suma un tema a
+esa jam: busca en el repertorio y en iTunes, y si no está en ninguno de los dos
+entra con el texto que escribiste — frenar la carga para pedir artista y
+categoría, con el dedo, es perder el tema. Para el cuaderno de ideas hay una
+entrada propia en el ⋯.
+
+El buscador va **a pantalla completa**, no en un diálogo: `.modal` tiene alto
+máximo con `overflow: auto` y el desplegable va posicionado absoluto, así que
+adentro se cortaba a los tres resultados. Suelto se lleva todo el alto que
+quede —693px de 844 contra los 340 del tope de antes— y con el teclado abierto
+se acomoda solo, porque mide en `100dvh`.
 
 El artista **no** está en el renglón, a propósito: no entra sin comerse el
 nombre del cantante, que es el dato que se busca de verdad mirando la lista. Se

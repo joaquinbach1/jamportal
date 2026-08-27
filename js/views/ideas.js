@@ -22,6 +22,26 @@ import { refrescar } from '../app.js';
 /* ============================================================
    Alta de una idea: nombre → metadata completa
    ============================================================ */
+
+/**
+ * Anota un tema en Ideas y le busca el tempo sin bloquear.
+ * La usan el diálogo de acá y el buscador del celular.
+ */
+export async function anotarIdea(datos, alGuardar = () => {}) {
+  const song = store.addSong({ ...datos, esIdea: true });
+  alGuardar(song);
+  toast(`«${song.titulo}» anotada en Ideas`, 'ok');
+
+  if (!song.bpm) {                                   // el tempo llega solo, sin bloquear
+    toast('Buscando el tempo…');
+    await asegurarTempo(song, { alTerminar: s => {
+      toast(s.bpm ? `Tempo sugerido para «${s.titulo}»: ${s.bpm} bpm` : `Sin tempo para «${s.titulo}»`,
+        s.bpm ? 'ok' : '');
+      alGuardar(s);
+    } });
+  }
+}
+
 /**
  * @param {function} alGuardar   recibe la idea creada
  * @param {object}  [opts]
@@ -35,20 +55,7 @@ export function dialogoNuevaIdea(alGuardar, { simple = false } = {}) {
     'Escribí el nombre del tema. Lo busco en internet y completo artista, categoría y año; ',
     'el tempo lo traigo aparte y queda marcado como sugerido hasta que lo confirmes vos.');
 
-  async function alta(datos) {
-    const song = store.addSong({ ...datos, esIdea: true });
-    alGuardar && alGuardar(song);
-    toast(`«${song.titulo}» anotada en Ideas`, 'ok');
-
-    if (!song.bpm) {                                   // el tempo llega solo, sin bloquear
-      toast('Buscando el tempo…');
-      await asegurarTempo(song, { alTerminar: s => {
-        toast(s.bpm ? `Tempo sugerido para «${s.titulo}»: ${s.bpm} bpm` : `Sin tempo para «${s.titulo}»`,
-          s.bpm ? 'ok' : '');
-        alGuardar && alGuardar(s);
-      } });
-    }
-  }
+  const alta = datos => anotarIdea(datos, alGuardar);
 
   const ac = songAutocomplete({
     placeholder: 'Nombre del tema…',
