@@ -1,7 +1,10 @@
 /**
- * Ejercita js/store.js en Node, con stubs mínimos de localStorage,
- * fetch y document. No necesita navegador ni base: prueba la lógica
- * de la capa de datos, que es la que más se toca.
+ * Ejercita js/store.js en Node, sin navegador y sin base.
+ *
+ * La app tiene un solo camino de datos —la base compartida—, así que
+ * este archivo lo imita: en vez de saltearlo con un modo local que ya
+ * no existe, contesta las llamadas RPC con el contenido de
+ * data/seed.json. Prueba el camino de verdad, que es lo que importa.
  *
  *   node scripts/probar-store.mjs
  */
@@ -16,20 +19,43 @@ globalThis.localStorage = {
   setItem: (k, v) => mem.set(k, v),
   removeItem: k => mem.delete(k),
 };
-globalThis.fetch = async (u) => {
-  const path = join(RAIZ, String(u).replace(/^.*?(data\/)/, '$1'));
-  try { return { ok: true, json: async () => JSON.parse(readFileSync(path, 'utf8')) }; }
-  catch { return { ok: false, json: async () => null }; }
+
+const seed = JSON.parse(readFileSync(join(RAIZ, 'data/seed.json'), 'utf8'));
+/* la forma que devuelve app_estado(), armada desde el seed */
+const estado = {
+  version: seed.version || 1,
+  esAdmin: false,
+  songs: seed.songs || [],
+  cantantes: seed.cantantes || [],
+  musicos: seed.musicos || [],
+  jams: seed.jamsHistoricas || [],
+  categorias: seed.categorias || [],
+  porConfirmar: seed.porConfirmar || [],
+};
+
+const respuestas = { app_estado: estado, revision_actual: 1 };
+let escrituras = 0;
+
+globalThis.fetch = async (u, opciones = {}) => {
+  const url = String(u);
+  const fn = (url.match(/\/rpc\/(\w+)/) || [])[1];
+  if (fn) {
+    if (fn.startsWith('guardar_')) escrituras++;
+    const cuerpo = fn in respuestas ? respuestas[fn] : 1;
+    return { ok: true, status: 200, text: async () => JSON.stringify(cuerpo) };
+  }
+  return { ok: false, status: 404, text: async () => '' };
 };
 globalThis.document = { hidden: true };
-// forzamos modo local: con base de fábrica, init() saldría a la red
-mem.set('jamportal.nube', JSON.stringify({ local: true }));
+globalThis.WebSocket = undefined;              // sin realtime: no hay navegador
+mem.set('jamportal.nube', JSON.stringify({ url: 'https://prueba.supabase.co', key: 'sb_publishable_x' }));
 
 const { store, franjaDeBpm } = await import(join(RAIZ, 'js/store.js'));
 
 const ok = (c, t) => console.log(`  ${c ? '✓' : '✗'} ${t}`) || (c || process.exit(1));
 
 await store.init();
+ok(store.problema === null, 'init() contra la base, sin problemas');
 ok(store.songs.length === 374, `init(): ${store.songs.length} temas`);
 ok(store.jams.length === 26, `${store.jams.length} jams`);
 ok(store.repertorio.length + store.ideas.length === 374, 'repertorio + ideas = total');
@@ -66,4 +92,12 @@ const { PostgresDriver, PASOS_SQL } = await import(join(RAIZ, 'js/drivers/postgr
 const d = new PostgresDriver({ url: 'https://x.supabase.co/', key: 'k' });
 ok(d.name === 'nube' && d.url === 'https://x.supabase.co', 'PostgresDriver se construye');
 ok(PASOS_SQL.length === 6, `${PASOS_SQL.length} pasos de instalación`);
+
+/* Que ya no exista un driver de localStorage no es un detalle: era el que
+   hacía que la app siguiera andando —con otros datos— cuando la base no
+   contestaba. Si alguien lo trae de vuelta, que se entere acá. */
+const fuente = readFileSync(join(RAIZ, 'js/store.js'), 'utf8');
+ok(!/LocalDriver|loadSeed/.test(fuente), 'no volvió el modo local');
+
 console.log('\n✓ store.js anda\n');
+process.exit(0);       // el sondeo deja un setInterval vivo

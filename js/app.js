@@ -2,7 +2,7 @@
    app.js — arranque + router por hash
    ============================================================ */
 
-import { store, alHaberCambiosAjenos, alFallarNube, alChocarConOtro, realtimeConectado } from './store.js';
+import { store, alHaberCambiosAjenos, alChocarConOtro, realtimeConectado } from './store.js';
 import { h, clear, $, $$, toast, modal } from './ui.js';
 import { iniciarTema, botonTema } from './tema.js';
 
@@ -143,9 +143,6 @@ alHaberCambiosAjenos(() => {
   render(true);
 });
 
-alFallarNube(msg => setTimeout(() =>
-  toast('No pude entrar a la base compartida, sigo con los datos de este navegador. ' + msg, 'err'), 800));
-
 /* Choque: otro guardó la misma jam mientras vos la editabas y la base
    frenó tu escritura. Antes esto abría una ventana a decidir; ahora no
    interrumpe: queda tu versión, que es la que tenés delante y estás
@@ -174,9 +171,8 @@ $('#temaSlot').appendChild(botonTema(h));
     return;
   }
 
-  /* La puerta va antes que todo: si la app está contra la base compartida
-     y no hay sesión, no tiene sentido cargar nada — el RLS no va a
-     devolver ni una fila. En modo local esto no se ejecuta nunca. */
+  /* La puerta va antes que todo: sin sesión no tiene sentido cargar nada,
+     el RLS no va a devolver ni una fila. */
   try {
     if (await hayQueEntrar()) {
       document.body.classList.add('en-login');
@@ -187,14 +183,39 @@ $('#temaSlot').appendChild(botonTema(h));
     console.error('No pude preparar la sesión:', e);
   }
 
-  try {
-    await store.init();
-  } catch (e) {
-    console.error(e);
-    view.appendChild(h('div.empty', {},
-      h('b', {}, 'No se pudo cargar el repertorio'),
-      h('p', {}, 'Revisá que data/seed.json exista y que estés abriendo el sitio por http (no file://).'),
-      h('code.mono', {}, e.message)));
+  await store.init();
+
+  /* Si la base no contestó, la app frena acá y lo dice. Antes caía sin
+     avisar al repertorio guardado en este navegador —otro repertorio,
+     otras jams— y todo lo que se editaba desde ahí se perdía. Mostrar
+     datos que no son los de la banda es peor que no mostrar nada. */
+  if (store.problema) {
+    const { tipo, mensaje } = store.problema;
+    if (tipo === 'sesion') {
+      /* Vencida de verdad: la sesión ya se borró sola. Recargar cae en la
+         pantalla de entrada, que es lo único que puede arreglarlo. */
+      document.body.classList.add('en-login');
+      await vistaLogin(view, () => location.reload());
+      return;
+    }
+    const textos = {
+      red: ['No llego a la base', 'Puede ser tu conexión o que Supabase esté caído. '
+            + 'Nada se perdió: los datos están en la base, no en este teléfono.'],
+      vacia: ['La base está vacía', 'Contesta bien, pero no tiene nada cargado. '
+            + 'Se llena corriendo los archivos de db/ (mirá el README).'],
+      config: ['Falta configurar la base', 'js/config.js no tiene la URL ni la clave del proyecto.'],
+    };
+    const [titulo, detalle] = textos[tipo] || ['Algo salió mal', ''];
+    document.body.classList.add('en-login');
+    view.appendChild(h('div.empty', { style: { maxWidth: '460px', margin: '14vh auto 0' } },
+      h('b', {}, titulo),
+      h('p', {}, detalle),
+      h('code.mono', {}, mensaje),
+      h('div', { style: { display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '14px' } },
+        h('button.btn.sm.primary', { onclick: () => location.reload() }, '↻ Reintentar'),
+        h('button.btn.sm.ghost', {
+          onclick: () => { store.cerrarSesion(); location.reload(); },
+        }, 'Salir'))));
     return;
   }
   /* Entraste bien, pero tu mail no está habilitado. No es un error de
@@ -227,18 +248,16 @@ $('#temaSlot').appendChild(botonTema(h));
     const vivo = realtimeConectado();
     $('#storageBadge').innerHTML = '';
     $('#storageBadge').append(
-      `${store.driverName} · ${store.repertorio.length} temas`
+      `${store.repertorio.length} temas`
       + (store.ideas.length ? ` · ${store.ideas.length} ideas` : ''),
-      store.enLaNube
-        ? h('span.vivo' + (vivo ? '.on' : ''), {
-            title: vivo
-              ? 'En vivo: los cambios de los demás llegan al instante'
-              : 'Sin conexión en vivo: se consulta cada 8 segundos',
-          }, vivo ? ' ●' : ' ○')
-        : '');
+      h('span.vivo' + (vivo ? '.on' : ''), {
+        title: vivo
+          ? 'En vivo: los cambios de los demás llegan al instante'
+          : 'Sin conexión en vivo: se consulta cada 8 segundos',
+      }, vivo ? ' ●' : ' ○'));
   }
   pintarBadge();
-  if (store.enLaNube) setInterval(pintarBadge, 4000);
+  setInterval(pintarBadge, 4000);
   if (!location.hash) location.hash = '#/jams';
   render(true);
 })();

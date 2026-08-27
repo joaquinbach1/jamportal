@@ -2,43 +2,30 @@
    store.js — capa de datos
    ------------------------------------------------------------
    Toda la app habla con `store`, nunca con el almacenamiento
-   directo. Hay dos drivers con la misma interfaz (read / write):
-   `LocalDriver` (este navegador) y `PostgresDriver` (base
-   compartida). Se elige al arrancar y ninguna vista se entera.
+   directo. Del otro lado hay una sola cosa: la base compartida
+   de la banda (`PostgresDriver`).
+
+   Antes había también un driver de localStorage, y arrancar con
+   él cuando la base fallaba parecía prudente. No lo era: si la
+   sesión vencía, la app caía sin decir nada al repertorio viejo
+   de ese navegador —otro repertorio, otras jams— y todo lo que
+   se editaba desde ahí no llegaba a ningún lado. Ahora si la
+   base no contesta, la app lo dice y no inventa datos.
    ============================================================ */
 
-const KEY = 'jamportal.v1';
-const KEY_NUBE = 'jamportal.nube';   // { url, key } de la base compartida
+const KEY_NUBE = 'jamportal.nube';    // { url, key } para apuntar a otro proyecto
 const LUGAR_POR_DEFECTO = 'Portal';   // casi todas las jams son ahí
-const SEED_URL = 'data/seed.json';
 
 import { NUBE } from './config.js';
 
-/* ---------- driver: localStorage ---------- */
-class LocalDriver {
-  constructor(key) { this.key = key; this.name = 'local'; }
-
-  async read() {
-    const raw = localStorage.getItem(this.key);
-    if (!raw) return null;
-    try { return JSON.parse(raw); }
-    catch (e) { console.error('Estado corrupto en localStorage', e); return null; }
-  }
-
-  async write(state) {
-    localStorage.setItem(this.key, JSON.stringify(state));
-  }
-
-  async clear() { localStorage.removeItem(this.key); }
-}
-
-/* ---------- estado ----------
-   El driver se elige al arrancar: si hay una base compartida configurada
-   vamos contra ella, y si no, contra el navegador. */
-let driver = new LocalDriver(KEY);
+/* ---------- estado ---------- */
+let driver = null;       // se arma en init(), contra la base de la banda
 let sondeo = null;
-let auth = null;      // la sesión, solo cuando trabajamos contra la nube
+let auth = null;         // la sesión
 let sinPermiso = false;  // entraste bien, pero tu mail no está en `miembro`
+/* Por qué no se pudo arrancar, si no se pudo. La app lo muestra y frena:
+   { tipo: 'sesion' | 'red' | 'vacia', mensaje } */
+let problema = null;
 
 let state = {
   version: 1,
@@ -60,6 +47,7 @@ function emit() { listeners.forEach(fn => fn()); }
 let aPisar = new Set();
 
 function persist() {
+  if (!driver) return;          // todavía no arrancamos, o la base no contestó
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     const pisar = aPisar;
@@ -86,17 +74,14 @@ const SONDEO_RED = 60_000;      // con realtime, el sondeo es solo una red
 const TIC_MS = 2000;
 
 let alSincronizar = null;
-let alCaerNube = null;
 let alChocar = null;
 let rt = null;                  // el websocket, si levantó
 let ultimoSondeo = 0;
 
 export function alHaberCambiosAjenos(fn) { alSincronizar = fn; }
-export function alFallarNube(fn) { alCaerNube = fn; }
 /** Se llama cuando otro guardó la misma jam mientras vos la editabas. */
 export function alChocarConOtro(fn) { alChocar = fn; }
 export function realtimeConectado() { return !!(rt && rt.conectado); }
-function avisarCaida(msg) { if (alCaerNube) alCaerNube(msg); }
 
 function detenerSondeo() {
   clearInterval(sondeo); sondeo = null;
@@ -186,11 +171,10 @@ export const FRANJA_LABEL = { low: '🔵 Low', mid: '🟢 Mid', high: '🔴 High
    ============================================================ */
 
 export const store = {
-  get driverName() { return driver.name; },
-  get enLaNube() { return driver.name === 'nube'; },
-
-  /** La sesión, si estamos contra la nube. */
+  /** La sesión. */
   get auth() { return auth; },
+  /** Por qué no se pudo arrancar, si no se pudo. La app frena y lo cuenta. */
+  get problema() { return problema; },
   /** Entraste bien, pero tu mail no está habilitado en esta base. */
   get sinPermiso() { return sinPermiso; },
   /** ¿Podés manejar la lista de miembros? Lo dice la base, no el cliente. */
@@ -252,11 +236,6 @@ export const store = {
     try { propia = JSON.parse(localStorage.getItem(KEY_NUBE) || 'null'); }
     catch { /* config corrupta: seguimos con la de fábrica */ }
 
-    // Marca explícita de "quiero trabajar solo en este navegador". Hace
-    // falta porque con una base de fábrica no alcanza con borrar la
-    // config: volvería a caer en ella en el próximo arranque.
-    if (propia && propia.local) return null;
-
     if (propia && propia.url && propia.key) return propia;
     return (NUBE && NUBE.url && NUBE.key) ? NUBE : null;
   },
@@ -268,43 +247,24 @@ export const store = {
   },
 
   /**
-   * Conecta la app a una base compartida. Si `subirLocal`, empuja lo que hay
-   * en este navegador como contenido inicial (para el primero que conecta).
+   * Apunta la app a otra base. No siembra nada: una base vacía se llena
+   * corriendo los archivos de `db/`, que es lo único que garantiza que
+   * el esquema y los datos entren juntos y en orden.
    */
-  async conectarNube({ url, key }, { subirLocal = false } = {}) {
+  async conectarNube({ url, key }) {
     const { PostgresDriver } = await import('./drivers/postgres.js');
     const { Auth } = await import('./auth.js');
     auth = new Auth({ url, key });
     const nuevo = new PostgresDriver({ url, key, auth });
-    const filas = await nuevo.probar();          // valida credenciales y permisos
-
-    if (!filas || subirLocal) {
-      await nuevo.write(state);                  // sembramos la base
-    } else {
-      const remoto = await nuevo.read();
-      if (remoto) state = { ...state, ...remoto };
-    }
+    await nuevo.probar();                        // valida credenciales y permisos
+    const remoto = await nuevo.read();
+    if (remoto) state = { ...state, ...remoto };
 
     localStorage.setItem(KEY_NUBE, JSON.stringify({ url, key }));
     driver = nuevo;
     arrancarSondeo();
     emit();
     return state;
-  },
-
-  /** Vuelve a trabajar solo en este navegador (no borra nada de la nube). */
-  desconectarNube() {
-    localStorage.setItem(KEY_NUBE, JSON.stringify({ local: true }));
-    if (auth) { auth.cerrarSesion(); auth = null; }
-    detenerSondeo();
-    driver = new LocalDriver(KEY);
-    driver.write(state);
-    emit();
-  },
-
-  /** Deshace el "trabajar solo acá" y vuelve a la base de la banda. */
-  volverALaNube() {
-    localStorage.removeItem(KEY_NUBE);
   },
 
   /**
@@ -318,7 +278,7 @@ export const store = {
 
   /** Trae los cambios que hicieron otros. */
   async sincronizar() {
-    if (driver.name !== 'nube') return false;
+    if (!driver) return false;
     const remoto = await driver.read();
     if (!remoto) return false;
     state = { ...state, ...remoto };
@@ -326,112 +286,44 @@ export const store = {
     return true;
   },
 
+  /**
+   * Arranca contra la base de la banda. No hay a dónde caerse: si algo
+   * falla, deja el motivo en `problema` y devuelve el estado vacío, para
+   * que la app lo cuente en pantalla en vez de mostrar datos de otro lado.
+   */
   async init() {
     const nube = this.configNube();
-    if (nube) {
-      try {
-        const { PostgresDriver } = await import('./drivers/postgres.js');
-        const { Auth } = await import('./auth.js');
-        auth = new Auth(nube);
-        driver = new PostgresDriver({ ...nube, auth });
-        const remoto = await driver.read();
-        if (remoto) {
-          state = { ...state, ...remoto };
-          arrancarSondeo();
-          return state;
-        }
-        // la base está vacía: la sembramos con el repertorio base
-        await this.loadSeed();
-        arrancarSondeo();
+    if (!nube) {
+      problema = { tipo: 'config', mensaje: 'Falta configurar la base en js/config.js.' };
+      return state;
+    }
+
+    const { PostgresDriver } = await import('./drivers/postgres.js');
+    const { Auth } = await import('./auth.js');
+    auth = new Auth(nube);
+    driver = new PostgresDriver({ ...nube, auth });
+
+    try {
+      const remoto = await driver.read();
+      if (!remoto) {
+        /* La base contesta y te deja leer, pero no hay nada. Sembrarla desde
+           el navegador es lo que antes pisaba el repertorio de todos: se
+           siembra corriendo los archivos de `db/`, que es lo único que
+           garantiza que el esquema y los datos entren juntos. */
+        problema = { tipo: 'vacia', mensaje: 'La base está creada pero vacía.' };
         return state;
-      } catch (e) {
-        if (e.sinPermiso) {
-          // Acá no hay a qué caer. Los datos de este navegador no son los
-          // de la banda, y sembrarlos pisaría la base compartida. Dejamos
-          // el estado vacío y que la app explique qué pasa.
-          sinPermiso = true;
-          return state;
-        }
-        console.error('No se pudo usar la base compartida, sigo local:', e.message);
-        driver = new LocalDriver(KEY);
-        avisarCaida(e.message);
       }
+      state = { ...state, ...remoto };
+      arrancarSondeo();
+      return state;
+    } catch (e) {
+      if (e.sinPermiso) { sinPermiso = true; return state; }
+      /* La sesión vencida y la falta de red se cuentan distinto: una se
+         arregla entrando de nuevo y la otra esperando. */
+      problema = { tipo: e.sesion ? 'sesion' : 'red', mensaje: e.message };
+      console.error('No se pudo leer la base:', e.message);
+      return state;
     }
-
-    const saved = await driver.read();
-    if (saved && Array.isArray(saved.songs) && saved.songs.length) {
-      state = { ...state, ...saved };
-      const nuevo = await fetch(SEED_URL).then(r => r.ok ? r.json() : null).catch(() => null);
-      if (nuevo && (nuevo.version || 1) > (state.version || 1)) await this.actualizarSeed(nuevo);
-    } else {
-      await this.loadSeed();
-    }
-    return state;
-  },
-
-  /**
-   * Trae un repertorio nuevo sin pisar el trabajo propio: conserva las jams
-   * que armaste, los temas que cargaste a mano y las ideas, y solo reemplaza
-   * la parte que viene del documento original.
-   */
-  async actualizarSeed(seed = null) {
-    if (!seed) {
-      const res = await fetch(SEED_URL);
-      if (!res.ok) throw new Error('No se pudo leer ' + SEED_URL);
-      seed = await res.json();
-    }
-
-    const propias = state.jams.filter(j => !j.historica);
-    const mios = state.songs.filter(s => s.origen !== 'import' || s.esIdea);   // cargados por vos
-    const nuevos = new Map((seed.songs || []).map(s => [s.id, s]));
-
-    // los temas propios que no estén en el seed nuevo se conservan tal cual
-    for (const s of mios) if (!nuevos.has(s.id)) nuevos.set(s.id, s);
-
-    // y los que una jam tuya usa pero el seed nuevo ya no trae, también
-    const usados = new Set(propias.flatMap(j => (j.items || []).flatMap(it =>
-      it.tipo === 'medley' ? (it.songs || []).map(x => x.songId) : [it.songId])));
-    const previos = new Map(state.songs.map(s => [s.id, s]));
-    for (const id of usados) if (id && !nuevos.has(id) && previos.has(id)) nuevos.set(id, previos.get(id));
-
-    // conservamos teléfono, mail y notas de las personas
-    const personasViejas = new Map([...state.cantantes, ...state.musicos].map(p => [p.id, p]));
-    const conservar = p => {
-      const v = personasViejas.get(p.id);
-      return v ? { ...p, telefono: v.telefono || '', email: v.email || '', notas: v.notas || '', activo: v.activo } : p;
-    };
-
-    state = {
-      version: seed.version || 1,
-      songs: [...nuevos.values()].sort((a, b) => a.artista.localeCompare(b.artista) || a.titulo.localeCompare(b.titulo)),
-      cantantes: (seed.cantantes || []).map(conservar),
-      musicos: (seed.musicos || []).map(conservar),
-      jams: [...propias, ...(seed.jamsHistoricas || [])],
-      categorias: seed.categorias || state.categorias,
-      porConfirmar: seed.porConfirmar || [],
-    };
-    await driver.write(state);
-    emit();
-    return state;
-  },
-
-  /** Carga (o recarga) el repertorio base desde data/seed.json */
-  async loadSeed() {
-    const res = await fetch(SEED_URL);
-    if (!res.ok) throw new Error('No se pudo leer ' + SEED_URL);
-    const seed = await res.json();
-    state = {
-      version: seed.version || 1,
-      songs: seed.songs || [],
-      cantantes: seed.cantantes || [],
-      musicos: seed.musicos || [],
-      jams: (seed.jamsHistoricas || []).map(j => ({ ...j })),
-      categorias: seed.categorias || [],
-      porConfirmar: seed.porConfirmar || [],
-    };
-    await driver.write(state);
-    emit();
-    return state;
   },
 
   subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
@@ -827,5 +719,4 @@ export const store = {
     return { nuevas, actualizadas };
   },
 
-  async reset() { await driver.clear(); await this.loadSeed(); },
 };

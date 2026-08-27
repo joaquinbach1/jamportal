@@ -1,8 +1,9 @@
 /* ============================================================
    drivers/postgres.js — la base compartida
    ------------------------------------------------------------
-   Misma interfaz que LocalDriver (read / write / clear), así que
-   el resto de la app no se entera de nada.
+   Es el único driver: la app siempre habla con la base de la banda.
+   La interfaz sigue siendo read / write / clear, así que las vistas
+   no saben nada de lo que pasa acá abajo.
 
    Del otro lado ya no hay documentos JSON sino doce tablas. La
    traducción la hace la base: `app_estado()` devuelve el estado
@@ -49,7 +50,11 @@ export class PostgresDriver {
       method: 'POST', headers: await this.cabeceras(), body: JSON.stringify(args),
     });
     if (!res.ok) {
-      if (res.status === 401) throw new Error('La sesión venció. Entrá de nuevo.');
+      if (res.status === 401) {
+        const e = new Error('La sesión venció. Entrá de nuevo.');
+        e.sesion = true;            // no es un problema de red: hay que entrar
+        throw e;
+      }
       if (res.status === 409) {
         const e = new Error('Alguien más editó esto mientras vos lo editabas.');
         e.conflicto = true;

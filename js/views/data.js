@@ -3,8 +3,7 @@
    ============================================================ */
 
 import { store, norm } from '../store.js';
-import { h, frag, clear, poner, field, toast, confirmar, descargar, copiar } from '../ui.js';
-import { PASOS_SQL } from '../drivers/postgres.js';
+import { h, frag, clear, poner, toast, confirmar, descargar, copiar } from '../ui.js';
 import { dialogoClave } from './usuario.js';
 import { tarjetaMiembros } from './miembros.js';
 import { refrescar } from '../app.js';
@@ -75,123 +74,53 @@ function filasAObjetos(filas) {
 }
 
 /* ============================================================
-   Base compartida — para que entren varios y editen lo mismo
+   La base — con qué cuenta estás y cómo traer cambios
+   ------------------------------------------------------------
+   Ya no hay nada que elegir acá: la app habla siempre con la
+   base de la banda. Antes esta tarjeta servía para conectarse,
+   desconectarse y "trabajar solo en este navegador", y esa
+   última opción era una trampa — el que caía ahí seguía
+   editando, pero contra datos que no eran los de nadie más.
    ============================================================ */
 function tarjetaNube() {
-  const cfg = store.configNube();
-  const estado = h('div');
-
-  const fUrl = h('input', {
-    type: 'text', value: cfg ? cfg.url : '',
-    placeholder: 'https://xxxxxxxx.supabase.co',
-  });
-  const fKey = h('input', {
-    type: 'text', value: cfg ? cfg.key : '',
-    placeholder: 'clave anon (la pública, empieza con eyJ…)',
-  });
-
-  async function conectar(btn, subirLocal) {
-    const url = fUrl.value.trim(), key = fKey.value.trim();
-    if (!url || !key) { toast('Faltan la URL y la clave', 'err'); return; }
-
-    btn.disabled = true; const t = btn.textContent; btn.textContent = 'Conectando…';
-    try {
-      if (store.auth && store.auth.haySesion) {
-        await store.conectarNube({ url, key }, { subirLocal });
-        toast(`Conectado: ${store.repertorio.length} temas en la base compartida`, 'ok');
-        refrescar();
-        return;
-      }
-      // Todavía no hay sesión: guardamos a dónde apuntar y recargamos.
-      // La pantalla de entrada se ocupa del resto.
-      store.guardarConfigNube({ url, key });
-      toast('Ahora entrá con tu mail', 'ok');
-      setTimeout(() => location.reload(), 600);
-      return;
-    } catch (e) {
-      toast('No se pudo conectar: ' + e.message, 'err');
-      console.error(e);
-    }
-    btn.disabled = false; btn.textContent = t;
-  }
-
-  const pasos = h('ol.pasos', {},
-    h('li', {}, 'Creá un proyecto gratis en ',
-      h('a', { href: 'https://supabase.com', target: '_blank', rel: 'noopener' }, 'supabase.com'), '.'),
-    h('li', {}, 'En ', h('b', {}, 'SQL Editor'), ', pegá y corré los archivos de ',
-      h('code.mono', {}, 'db/'), ' en este orden:',
-      h('ol.pasos-sql', {}, ...PASOS_SQL.map(p =>
-        h('li', {}, h('code.mono', {}, p.archivo), ' — ', h('span.dim', {}, p.que)))),
-      h('div.method-hint', {}, 'El último trae el repertorio y las 26 jams históricas. ',
-        'Si ya tenías datos en la app, generá el tuyo con ',
-        h('code.mono', {}, 'python3 scripts/migrar-a-sql.py respaldo.json'),
-        ' a partir de un export de Datos → Respaldo.')),
-    h('li', {}, 'En ', h('b', {}, 'Project Settings → API'), ' copiá la ',
-      h('b', {}, 'Project URL'), ' y la clave publicable (', h('code.mono', {}, 'sb_publishable_…'),
-      ' o la ', h('b', {}, 'anon'), ' vieja), y pegalas acá abajo.'),
-    h('li', {}, 'Listo. Pasale el link de la app a los demás: entran y editan lo mismo.'),
-  );
-
-  if (store.enLaNube) {
-    estado.append(
-      h('div.nube-ok', {}, '● Conectada — todo lo que edites se guarda en la base compartida ',
-        h('span.dim', {}, `· ${cfg.url.replace(/^https?:\/\//, '')}`)),
-      store.email
-        ? h('div.nube-sesion', {},
-            h('span', {}, 'Entraste como ', h('b', {}, store.email)),
-            h('button.btn.xs.ghost', { onclick: dialogoClave }, 'Cambiar contraseña'),
-            h('button.btn.xs.ghost', {
-              onclick: async () => {
-                if (await confirmar('Cerrás la sesión en este navegador. Para volver a entrar vas a necesitar tu contraseña.',
-                  { titulo: 'Salir', okText: 'Salir' })) {
-                  store.cerrarSesion();
-                  location.reload();
-                }
-              },
-            }, 'Salir'))
-        : null,
-      h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' } },
-        h('button.btn', {
-          onclick: async e => {
-            const b = e.currentTarget; b.disabled = true;
-            try { await store.sincronizar(); toast('Sincronizado', 'ok'); refrescar(); }
-            catch (err) { toast('No se pudo sincronizar: ' + err.message, 'err'); }
-            b.disabled = false;
-          },
-        }, '↻ Traer cambios ahora'),
-        h('button.btn.ghost', {
-          onclick: async () => {
-            if (await confirmar('Volvés a trabajar solo en este navegador. La base compartida queda intacta, pero dejás de ver lo que hagan los demás.',
-              { titulo: 'Desconectar', danger: false, okText: 'Desconectar' })) {
-              store.desconectarNube(); toast('Desconectado'); refrescar();
-            }
-          },
-        }, 'Desconectar')));
-  } else {
-    estado.append(
-      pasos,
-      h('div.grid-2', { style: { marginTop: '14px' } },
-        field('Project URL', fUrl),
-        field('Clave anon', fKey)),
-      h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' } },
-        h('button.btn.primary', { onclick: e => conectar(e.currentTarget, false) }, 'Conectar'),
-        h('button.btn', {
-          title: 'Usá esto solo la primera vez, desde la compu que tiene los datos buenos',
-          onclick: async e => {
-            if (await confirmar('Sube lo que tenés en este navegador y pisa lo que haya en la base compartida. Usalo solo la primera vez.',
-              { titulo: 'Subir mis datos', okText: 'Subir y pisar' })) conectar(e.currentTarget, true);
-          },
-        }, '⬆ Conectar y subir lo mío')),
-      h('div.dim', { style: { fontSize: '11.5px', marginTop: '10px', lineHeight: '1.5' } },
-        'La clave anon es pública por diseño, pero con esta configuración cualquiera que tenga el link ',
-        'y la clave puede editar. Sirve para la banda; no lo publiques abierto.'));
-  }
+  const cfg = store.configNube() || {};
 
   return h('div.card', {},
-    h('div.card-head', {}, h('h3', {}, 'Base compartida'),
-      h('span.dim', { style: { fontSize: '12px' } },
-        store.enLaNube ? 'varios editando la misma base' : 'hoy: solo este navegador')),
-    estado);
+    h('div.card-head', {}, h('h3', {}, 'La base'),
+      h('span.dim', { style: { fontSize: '12px' } }, 'todos editan lo mismo')),
+
+    h('div.nube-ok', {}, '● Conectada ',
+      h('span.dim', {}, `· ${(cfg.url || '').replace(/^https?:\/\//, '')}`)),
+
+    store.email
+      ? h('div.nube-sesion', {},
+          h('span', {}, 'Entraste como ', h('b', {}, store.email)),
+          h('button.btn.xs.ghost', { onclick: dialogoClave }, 'Cambiar contraseña'),
+          h('button.btn.xs.ghost', {
+            onclick: async () => {
+              if (await confirmar('Cerrás la sesión en este navegador. Para volver a entrar vas a necesitar tu contraseña.',
+                { titulo: 'Salir', okText: 'Salir' })) {
+                store.cerrarSesion();
+                location.reload();
+              }
+            },
+          }, 'Salir'))
+      : null,
+
+    h('div', { style: { marginTop: '12px' } },
+      h('button.btn', {
+        onclick: async e => {
+          const b = e.currentTarget; b.disabled = true;
+          try { await store.sincronizar(); toast('Sincronizado', 'ok'); refrescar(); }
+          catch (err) { toast('No se pudo sincronizar: ' + err.message, 'err'); }
+          b.disabled = false;
+        },
+      }, '↻ Traer cambios ahora')),
+
+    h('div.dim', { style: { fontSize: '11.5px', marginTop: '12px', lineHeight: '1.5' } },
+      'Para levantar una base propia, los archivos de ', h('code.mono', {}, 'db/'),
+      ' en orden y la URL + clave publicable en ', h('code.mono', {}, 'js/config.js'),
+      '. Está todo en el README.'));
 }
 
 /* ============================================================
@@ -377,24 +306,6 @@ export function vistaData() {
     tarjetaMiembros(),
 
     h('div.card', {},
-      h('div.card-head', {}, h('h3', {}, 'Actualizar el repertorio')),
-      h('p.muted', { style: { marginTop: 0, fontSize: '13.5px' } },
-        'Trae la última versión del repertorio base (temas, cantantes y jams históricas) ',
-        'sin tocar tus jams, tus ideas ni los temas que cargaste a mano.'),
-      h('button.btn', {
-        onclick: async e => {
-          const b = e.currentTarget;
-          b.disabled = true; b.textContent = 'Actualizando…';
-          try {
-            await store.actualizarSeed();
-            toast(`Repertorio actualizado: ${store.repertorio.length} temas`, 'ok');
-            refrescar();
-          } catch (err) { toast('No se pudo actualizar: ' + err.message, 'err'); }
-          b.disabled = false; b.textContent = '↻ Actualizar repertorio';
-        },
-      }, '↻ Actualizar repertorio')),
-
-    h('div.card', {},
       h('div.card-head', {}, h('h3', {}, 'Importar temas (CSV o pegado)')),
       h('p.muted', { style: { marginTop: 0, fontSize: '13.5px' } },
         'Suma temas a DBSongs sin borrar nada: si el tema ya existe, completa los campos vacíos.'),
@@ -423,28 +334,11 @@ export function vistaData() {
       infoDup),
 
     h('div.card', {},
-      h('div.card-head', {}, h('h3', {}, 'Zona peligrosa')),
-      h('p.muted', { style: { marginTop: 0, fontSize: '13.5px' } },
-        store.enLaNube
-          ? 'Ojo: estás en la base compartida, así que esto afecta a todos.'
-          : 'Vuelve al repertorio original y borra las jams que armaste.'),
-      h('button.btn.danger', {
-        onclick: async () => {
-          const aviso = store.enLaNube
-            ? 'Estás conectado a la base compartida: esto borra las jams PARA TODOS y recarga el repertorio original. ¿Seguro?'
-            : 'Esto borra las jams que armaste y recarga el repertorio original. ¿Seguro?';
-          if (await confirmar(aviso, { titulo: 'Reiniciar todo' })) {
-            await store.reset(); toast('Base reiniciada'); refrescar();
-          }
-        },
-      }, 'Reiniciar a la base original')),
-
-    h('div.card', {},
       h('div.card-head', {}, h('h3', {}, 'Sobre el guardado')),
       h('p.muted', { style: { marginTop: 0, fontSize: '13.5px', lineHeight: '1.65' } },
-        'Hoy los datos se guardan en el navegador (localStorage), así que son de este equipo y este navegador. ',
-        'Toda la app habla con una sola capa de datos ', h('code.mono', {}, 'js/store.js'),
-        ': para pasar a una base compartida en la nube alcanza con reemplazar ', h('code.mono', {}, 'LocalDriver'),
-        ' por un driver de Supabase con los mismos métodos ', h('code.mono', {}, 'read/write'), ', sin tocar ninguna pantalla.')),
+        'Todo vive en la base compartida: lo que edita cualquiera lo ven todos, al instante. ',
+        'En este navegador solo quedan tu sesión, el tema claro/oscuro y tus notas privadas. ',
+        'Toda la app habla con una sola capa de datos, ', h('code.mono', {}, 'js/store.js'),
+        ', y del otro lado hay doce tablas: la traducción la hace Postgres.')),
   );
 }

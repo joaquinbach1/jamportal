@@ -26,6 +26,9 @@ import { linkSpotify } from '../spotify.js';
 import { notaDe } from '../notas.js';
 import { dialogoNuevaIdea } from './ideas.js';
 import { dialogoCancion } from './song-form.js';
+import { songAutocomplete } from '../ui.js';
+import { buscarEnWeb, webAResultado } from '../lookup.js';
+import { asegurarTempo } from '../tempo.js';
 import { accionesDePagina } from '../app.js';
 import { setlistDocx } from '../docx.js';
 import { setlistATexto, textoASetlist } from '../setlist-texto.js';
@@ -145,6 +148,53 @@ export function vistaMovil(jamId) {
             onClick: () => { jam.items.splice(indice, 1); guardar(); pintar(); toast('Sacado de la lista'); } }
         : null,
     ], { detalle });
+  }
+
+  /* ============================================================
+     Sumar un tema a esta jam
+     ------------------------------------------------------------
+     El ＋ antes anotaba en Ideas, y adentro de una jam eso es lo
+     que nadie espera: agregás un tema, volvés a la lista y no
+     está. Ahora suma acá, que es lo que se estaba pidiendo. Para
+     el cuaderno de ideas quedó su entrada propia en el ⋯.
+     ============================================================ */
+  function sumarTema(song) {
+    jam.items = [...jam.items, { tipo: 'song', songId: song.id, cantantes: [], notas: '' }];
+    guardar(); pintar();
+    toast(`«${song.titulo}» al final de la lista`, 'ok');
+    /* que baje hasta el tema recién puesto, si no quedó a la vista */
+    const ultima = lista.lastElementChild;
+    if (ultima) ultima.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  function dialogoAgregar() {
+    const ac = songAutocomplete({
+      placeholder: 'Buscar un tema…',
+      buscar: q => store.searchSongs(q, 8),
+      onPick: s => { m.close(); sumarTema(s); },
+      buscarWeb: buscarEnWeb,
+      onPickWeb: async r => {
+        m.close();
+        const s = store.addSong(webAResultado(r));
+        sumarTema(s);
+        if (!s.bpm) asegurarTempo(s, { alTerminar: pintar });   // el tempo llega solo
+      },
+      /* Si no está en ningún lado, entra igual con lo que escribiste: en el
+         celular, frenar la carga para pedir artista y categoría es perder el
+         tema. Los datos que falten se completan después. */
+      onNew: q => { m.close(); sumarTema(store.addSong({ titulo: q, artista: '' })); },
+    });
+
+    const m = modal({
+      title: 'Sumar a ' + (jam.nombre || 'la jam'),
+      body: [
+        h('div.method-hint', {}, 'Busco primero en el repertorio y después en internet. ',
+          'Si no aparece, se agrega con el nombre que escribas.'),
+        ac,
+      ],
+      footer: [h('button.btn.ghost', { onclick: () => m.close() }, 'Cerrar')],
+    });
+    setTimeout(() => ac.focusInput && ac.focusInput(), 80);
   }
 
   /* ============================================================
@@ -368,6 +418,8 @@ export function vistaMovil(jamId) {
         : { icono: '🔒', texto: 'Está cerrada — abrirla en el editor',
             onClick: () => { location.hash = `#/jams/${jam.id}/editar`; } },
       { icono: '🕘', texto: 'Fecha, hora y lugar', onClick: dialogoHorario },
+      { icono: '💡', texto: 'Anotar un tema en Ideas (sin sumarlo acá)',
+        onClick: () => dialogoNuevaIdea(() => {}, { simple: true }) },
       { icono: '▤', texto: 'Tamaño de la lista: ' + DENSIDADES.find(d => d.v === densidad()).label.toLowerCase(),
         onClick: hojaDensidad },
       { icono: '▶', texto: 'LIVE VIEW — pasarla en la jam', onClick: () => { location.hash = '#/live/' + jam.id; } },
@@ -525,8 +577,12 @@ export function vistaMovil(jamId) {
 
   return frag(
     cont,
-    h('button.fab', {
-      title: 'Anotar un tema en Ideas',
-      onclick: () => dialogoNuevaIdea(() => {}, { simple: true }),
-    }, '＋'));
+    /* En una jam cerrada no hay nada que sumar; el ＋ sería un botón que
+       miente. El cuaderno de ideas sigue estando en el ⋯. */
+    editable()
+      ? h('button.fab', {
+          title: 'Sumar un tema a esta jam',
+          onclick: dialogoAgregar,
+        }, '＋')
+      : null);
 }

@@ -201,7 +201,9 @@ export class Auth {
     });
     if (!res.ok) {
       this.cerrarSesion();
-      throw new Error('La sesión venció. Entrá de nuevo.');
+      const e = new Error('La sesión venció. Entrá de nuevo.');
+      e.sesion = true;              // no es un problema de red: hay que entrar
+      throw e;
     }
     const d = await res.json();
     guardar(this.sesion = {
