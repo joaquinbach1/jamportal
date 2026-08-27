@@ -433,17 +433,29 @@ export const store = {
   },
 
   /**
-   * Saca una categoría de la lista. Solo si no la usa ningún tema: si
-   * queda alguno apuntando ahí, se vuelve a colar cuando la base rearme
-   * la lista, y encima ese tema queda sin categoría válida.
+   * Saca una categoría de la lista. Solo si no la usa ningún tema.
+   *
+   * Hay que borrarla en la base explícitamente: `guardar_catalogo` solo
+   * agrega categorías, nunca saca las que faltan, así que sacarla del
+   * array local no alcanza — al refrescar volvía.
    */
-  quitarCategoria(categoria) {
+  async quitarCategoria(categoria) {
     if (state.songs.some(s => s.categoria === categoria)) {
       return { ok: false, motivo: 'todavía hay temas en esa categoría' };
     }
-    const antes = state.categorias.length;
+    if (!state.categorias.includes(categoria)) {
+      return { ok: false, motivo: 'no estaba en la lista' };
+    }
+
+    if (driver.borrarCategoria) {
+      try {
+        await driver.borrarCategoria(categoria);
+      } catch (e) {
+        return { ok: false, motivo: e.message };
+      }
+    }
+
     state.categorias = state.categorias.filter(c => c !== categoria);
-    if (state.categorias.length === antes) return { ok: false, motivo: 'no estaba en la lista' };
     touch();
     return { ok: true };
   },

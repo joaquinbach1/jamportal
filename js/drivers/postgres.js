@@ -175,6 +175,28 @@ export class PostgresDriver {
   /* ---------- administrar la lista ----------
      La base decide si quien llama puede: estas funciones comprueban por
      su cuenta y devuelven 403 si no. El cliente no gana nada mintiendo. */
+  /**
+   * Borra una categoría de la tabla.
+   *
+   * No hace falta una función nueva en la base: los permisos ya dejan
+   * borrar filas a quien esté en la banda. Y si algún tema todavía la
+   * usa, la clave foránea frena el borrado — que es exactamente lo que
+   * queremos, así no queda ningún tema apuntando al vacío.
+   */
+  async borrarCategoria(nombre) {
+    const res = await fetch(
+      `${this.url}/rest/v1/categoria?nombre=eq.${encodeURIComponent(nombre)}`,
+      { method: 'DELETE', headers: await this.cabeceras() });
+
+    if (!res.ok) {
+      const detalle = await res.text().catch(() => '');
+      if (res.status === 409 || /foreign key/i.test(detalle)) {
+        throw new Error('todavía hay temas en esa categoría');
+      }
+      throw new Error(`Supabase ${res.status}: ${detalle.slice(0, 160) || res.statusText}`);
+    }
+  }
+
   /* notas privadas: el email lo pone la base desde el JWT, no el cliente */
   misNotas()                   { return this.rpc('mis_notas'); }
   guardarNota(jam, song, txt)  { return this.rpc('guardar_nota', { p_jam: jam, p_song: song, p_texto: txt }); }

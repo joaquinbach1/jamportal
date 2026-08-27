@@ -201,7 +201,7 @@ export function vistaData() {
         u.enLaLista && !u.temas
           ? h('button.btn.xs.danger', {
               onclick: async () => {
-                const r = store.quitarCategoria(u.categoria);
+                const r = await store.quitarCategoria(u.categoria);
                 if (!r.ok) { toast('No se pudo: ' + r.motivo, 'err'); return; }
                 toast('Categoría sacada', 'ok');
                 pintarCategorias(); refrescar();
