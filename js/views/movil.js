@@ -32,6 +32,25 @@ import { setlistATexto, textoASetlist } from '../setlist-texto.js';
 import { buscarCifra, urlBusqueda } from '../cifra.js';
 
 /* ============================================================
+   Qué tan apretada va la lista
+   ------------------------------------------------------------
+   Arranca compacta porque el uso real es mirar la jam entera de
+   un vistazo, no leer un tema. Quien prefiera renglones grandes
+   lo cambia una vez desde el ⋯ y queda así en ese teléfono.
+   ============================================================ */
+const CLAVE_D = 'jamportal.movil.densidad';
+const DENSIDADES = [
+  { v: 'comoda',   label: 'Cómoda',   hint: 'renglones grandes, para leer de lejos' },
+  { v: 'normal',   label: 'Normal',   hint: 'el punto medio' },
+  { v: 'compacta', label: 'Compacta', hint: 'entra toda la jam de una' },
+];
+
+function densidad() {
+  const v = localStorage.getItem(CLAVE_D);
+  return DENSIDADES.some(d => d.v === v) ? v : 'compacta';
+}
+
+/* ============================================================
    El horario: de qué hora a qué hora, y el break en el medio
    ============================================================ */
 function tira(plan, alTocar) {
@@ -79,7 +98,7 @@ export function vistaMovil(jamId) {
      que es donde vive esa decisión y pide confirmación. */
   const editable = () => !(jam.historica || jam.cerrada);
 
-  const cont = h('div.movil');
+  const cont = h('div.movil', { dataset: { d: densidad() } });
   const lista = h('div.mv-lista');
 
   function guardar() { store.commit(); }
@@ -349,6 +368,8 @@ export function vistaMovil(jamId) {
         : { icono: '🔒', texto: 'Está cerrada — abrirla en el editor',
             onClick: () => { location.hash = `#/jams/${jam.id}/editar`; } },
       { icono: '🕘', texto: 'Fecha, hora y lugar', onClick: dialogoHorario },
+      { icono: '▤', texto: 'Tamaño de la lista: ' + DENSIDADES.find(d => d.v === densidad()).label.toLowerCase(),
+        onClick: hojaDensidad },
       { icono: '▶', texto: 'LIVE VIEW — pasarla en la jam', onClick: () => { location.hash = '#/live/' + jam.id; } },
       { icono: '📖', texto: 'Las letras, en orden', onClick: () => { location.hash = '#/lyrics/' + jam.id; } },
       { icono: '⛶', texto: 'Abrir el editor completo', onClick: () => { location.hash = `#/jams/${jam.id}/editar`; } },
@@ -364,6 +385,18 @@ export function vistaMovil(jamId) {
           }
         } },
     ]);
+  }
+
+  function hojaDensidad() {
+    const actual = densidad();
+    hojaAcciones('Tamaño de la lista', DENSIDADES.map(d => ({
+      icono: d.v === actual ? '✓' : ' ',
+      texto: `${d.label} — ${d.hint}`,
+      onClick: () => {
+        localStorage.setItem(CLAVE_D, d.v);
+        cont.dataset.d = d.v;
+      },
+    })));
   }
 
   /** La lista en texto plano, numerada, como se pega en el WhatsApp. */

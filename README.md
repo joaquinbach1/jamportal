@@ -230,6 +230,16 @@ Tres cosas se hacen desde la lista misma:
   Con el dedo, escribir de una es más rápido que pelear con veinte controles
   chiquitos. Guardar vuelve a la lista.
 
+### Qué tan apretada
+
+La lista arranca **compacta**: mirar la jam entera de un vistazo es lo que se
+hace de verdad con el teléfono en la mano, y leer un tema es la excepción —
+para eso está el detalle. Desde el ⋯ → *Tamaño de la lista* se cambia a
+**normal** o **cómoda**, y queda guardado en ese teléfono. Son tres juegos de
+medidas en variables CSS sobre `.movil[data-d]`, así que todo lo demás —el
+alto de la fila, la manija, el break, el bloque, el encabezado— se acomoda
+solo. En una pantalla de 844px entran 17 ítems en compacta y 12 en cómoda.
+
 Las jams **históricas o cerradas** no se editan desde acá: no hay manijas ni
 modo texto, y el ⋯ manda al editor completo, que es donde vive el candado y
 pide confirmación. La fecha y la hora sí se pueden tocar siempre.

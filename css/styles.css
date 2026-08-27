@@ -1895,9 +1895,30 @@ body.modo-compartido .topbar { display: none; }
    ============================================================ */
 .movil { max-width: 720px; margin: 0 auto; }
 
-.mv-cab { padding: 4px 2px 14px; }
-.mv-cab h1 { margin: 0; font-size: 21px; line-height: 1.25; letter-spacing: -.01em; }
-.mv-cab-sub { margin-top: 4px; font-size: 13px; color: var(--txt-3); }
+/* ---------- qué tan apretada ----------
+   Un solo juego de medidas por nivel, y todo lo de abajo las lee. Arranca
+   en compacta: mirar la jam entera de un vistazo es lo que se hace de
+   verdad con el teléfono en la mano; leer un tema es la excepción, y para
+   eso está el detalle. El nivel se elige desde el ⋯ y queda guardado. */
+.movil {
+  --f-alto: 31px; --f-pady: 2px; --f-gap: 7px; --f-tit: 13.5px;
+  --f-num: 22px;  --f-asa: 28px; --sep: 7px;   --blq: 9px;
+  --med: 29px;    --cab: 18px;   --tl: 8px;
+}
+.movil[data-d="normal"] {
+  --f-alto: 40px; --f-pady: 4px; --f-gap: 8px; --f-tit: 14.5px;
+  --f-num: 24px;  --f-asa: 32px; --sep: 11px;  --blq: 12px;
+  --med: 36px;    --cab: 19px;   --tl: 10px;
+}
+.movil[data-d="comoda"] {
+  --f-alto: 48px; --f-pady: 6px; --f-gap: 9px; --f-tit: 15px;
+  --f-num: 26px;  --f-asa: 34px; --sep: 15px;  --blq: 15px;
+  --med: 42px;    --cab: 21px;   --tl: 11px;
+}
+
+.mv-cab { padding: 2px 2px calc(var(--tl) + 2px); }
+.mv-cab h1 { margin: 0; font-size: var(--cab); line-height: 1.25; letter-spacing: -.01em; }
+.mv-cab-sub { margin-top: 3px; font-size: 12.5px; color: var(--txt-3); }
 
 /* ---------- de qué hora a qué hora ----------
    Es un botón: tocarlo abre fecha, hora de arranque y lugar. La hora de
@@ -1905,7 +1926,7 @@ body.modo-compartido .topbar { display: none; }
    todo el horario de abajo, así que se pone donde se lee. */
 .mv-timeline {
   display: block; width: 100%; text-align: left;
-  padding: 11px 12px 12px;
+  padding: var(--tl) 12px calc(var(--tl) + 1px);
   background: var(--panel); border: 1px solid var(--line-soft);
   border-radius: var(--r);
   font: inherit; color: inherit; cursor: pointer;
@@ -1916,17 +1937,17 @@ body.modo-compartido .topbar { display: none; }
 .mv-tl-hora { font-family: var(--mono); font-size: 17px; color: var(--txt); }
 .mv-tl-largo { font-family: var(--mono); font-size: 11.5px; color: var(--txt-3); }
 .mv-tl-barra {
-  display: flex; gap: 1px; height: 8px; margin-top: 9px;
+  display: flex; gap: 1px; height: 7px; margin-top: 7px;
   border-radius: 5px; overflow: hidden; background: var(--rayado-a);
 }
 .mv-tl-seg { background: var(--acc); min-width: 1px; }
 .mv-tl-seg.brk { background: var(--rayado); }
-.mv-tl-pie { margin-top: 7px; font-size: 12px; color: var(--txt-3); }
+.mv-tl-pie { margin-top: 6px; font-size: 11.5px; color: var(--txt-3); }
 .mv-tl-aprox { color: var(--txt-3); border-bottom: 1px dotted var(--linea-fuerte); cursor: help; }
 
 /* ---------- la lista ---------- */
 .mv-lista {
-  margin-top: 14px;
+  margin-top: calc(var(--tl) + 3px);
   border: 1px solid var(--line-soft); border-radius: var(--r);
   background: var(--panel); overflow: hidden;
 }
@@ -1935,19 +1956,19 @@ body.modo-compartido .topbar { display: none; }
    partido en varios flex, el navegador recorta el título antes que el
    artista, y el título es lo único que no se puede perder. */
 .mv-fila {
-  display: flex; align-items: center; gap: 9px;
-  min-height: 46px; padding: 4px 8px 4px 10px;
+  display: flex; align-items: center; gap: var(--f-gap);
+  min-height: var(--f-alto); padding: var(--f-pady) 8px var(--f-pady) 10px;
   border-bottom: 1px solid var(--line-soft);
 }
 .mv-fila:last-child { border-bottom: 0; }
 .mv-n {
-  flex: 0 0 26px; text-align: right;
-  font-family: var(--mono); font-size: 12px; color: var(--txt-3);
+  flex: 0 0 var(--f-num); text-align: right;
+  font-family: var(--mono); font-size: 11.5px; color: var(--txt-3);
 }
 .mv-txt {
   flex: 1 1 auto; min-width: 0;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  font-size: 15px; line-height: 1.35;
+  font-size: var(--f-tit); line-height: 1.3;
 }
 .mv-txt b { font-weight: 600; color: var(--txt); }
 .mv-art { color: var(--txt-3); }
@@ -1958,13 +1979,14 @@ body.modo-compartido .topbar { display: none; }
 
 /* ---------- la manija ----------
    `touch-action: none` va SOLO acá: si estuviera en la fila, arrastrar
-   para scrollear la lista dejaría de funcionar. 34px de ancho es lo que
-   se acierta sin mirar. */
+   para scrollear la lista dejaría de funcionar. El ancho lo pone el nivel
+   de densidad, pero el alto siempre es el de la fila entera: aunque el
+   renglón sea de 31px, la manija se agarra por todo su alto. */
 .mv-handle {
-  flex: none; width: 34px; align-self: stretch;
+  flex: none; width: var(--f-asa); align-self: stretch;
   display: flex; align-items: center; justify-content: center;
-  margin: -4px 0 -4px -6px;
-  font-size: 17px; letter-spacing: -3px; color: var(--txt-3);
+  margin: calc(var(--f-pady) * -1) 0 calc(var(--f-pady) * -1) -6px;
+  font-size: 16px; letter-spacing: -3px; color: var(--txt-3);
   cursor: grab; touch-action: none; user-select: none;
 }
 .mv-handle:active { color: var(--txt); cursor: grabbing; }
@@ -1985,14 +2007,16 @@ body.mv-arrastrando-algo { user-select: none; -webkit-user-select: none; }
   box-shadow: inset 3px 0 0 var(--medley-linea);
 }
 .mv-medley:last-child { border-bottom: 0; }
-.mv-medley-cab { display: flex; align-items: center; gap: 9px; min-height: 40px; padding: 4px 10px; }
+.mv-medley-cab {
+  display: flex; align-items: center; gap: var(--f-gap);
+  min-height: var(--med); padding: var(--f-pady) 10px;
+}
 .mv-medley-cab .mv-txt b {
   font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em;
   color: var(--acc-2); font-weight: 500;
 }
 .mv-medley .mv-fila { border-bottom: 1px solid var(--medley-song-linea); padding-left: 18px; }
 .mv-medley .mv-fila:last-child { border-bottom: 0; }
-.mv-medley .mv-txt { font-size: 14.5px; }
 
 /* ---------- break: parte la lista en dos ----------
    Tiene que verse de lejos y de un vistazo: es lo que separa la primera
@@ -2000,20 +2024,20 @@ body.mv-arrastrando-algo { user-select: none; -webkit-user-select: none; }
    atención. Por eso va tintado y en el color de acento, no en gris. */
 .mv-break {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 15px 12px;
+  padding: var(--sep) 12px;
   background: var(--break-fondo);
   border-top: 1px solid var(--break-linea); border-bottom: 1px solid var(--break-linea);
-  font-family: var(--mono); font-size: 12px;
+  font-family: var(--mono); font-size: 11.5px;
   letter-spacing: .18em; text-transform: uppercase; color: var(--acc);
 }
-.mv-break-hora { font-size: 13.5px; letter-spacing: .04em; color: var(--acc); }
+.mv-break-hora { font-size: 13px; letter-spacing: .04em; color: var(--acc); }
 
 /* El bloque es un rótulo de sección, no un aviso: va en gris. El ámbar
    queda reservado para las dos cosas que sí hay que ver sin buscarlas —
    quién canta y dónde está el break. */
 .mv-bloque {
   display: flex; align-items: center; gap: 4px;
-  padding: 15px 12px 6px;
+  padding: var(--blq) 12px 4px;
   font-family: var(--mono); font-size: 10.5px;
   letter-spacing: .18em; text-transform: uppercase; color: var(--txt-3);
   background: var(--panel);
