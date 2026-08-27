@@ -187,6 +187,8 @@ export function vistaMovil(jamId) {
       buscarWeb: buscarEnWeb,
       onPickWeb: r => { cerrar(); alCrearWeb(r); },
       onNew: q => { cerrar(); alEscribir(q); },
+      /* acá el desplegable es la pantalla: bajar el teclado no la cierra */
+      cerrarAlSalir: false,
     });
 
     const panel = h('div.buscador-full', {},

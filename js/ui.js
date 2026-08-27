@@ -190,6 +190,11 @@ export function songAutocomplete(opts) {
     placeholder = 'Escribí el nombre del tema…',
     buscar, onPick, onNew, buscarWeb, onPickWeb,
     clearOnPick = true, autofocus = false,
+    /* Cerrar al perder el foco es lo correcto cuando el desplegable flota
+       sobre otra cosa. Cuando el desplegable ES la pantalla, no: en iOS,
+       el ✓ que baja el teclado también saca el foco, y se llevaba puesta
+       la lista de resultados que la persona estaba por tocar. */
+    cerrarAlSalir = true,
   } = opts;
 
   let items = [];      // [{kind:'db'|'web'|'new', ...}]
@@ -298,7 +303,7 @@ export function songAutocomplete(opts) {
     else if (e.key === 'Escape') { cerrar(); inp.blur(); }
   });
 
-  inp.addEventListener('blur', () => setTimeout(cerrar, 120));
+  if (cerrarAlSalir) inp.addEventListener('blur', () => setTimeout(cerrar, 120));
   inp.addEventListener('focus', () => { if (inp.value.trim()) construir(inp.value); });
   if (autofocus) setTimeout(() => inp.focus(), 60);
 

@@ -28,6 +28,7 @@
   --r:   10px;
   --r-s: 7px;
   --sb:  248px;
+  --tb:  52px;   /* alto de la barra de arriba, solo en pantalla chica */
 
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
@@ -357,7 +358,13 @@ label.field > span {
   border: 1px solid var(--line);
   border-radius: 20px;
   font-size: 11.5px; color: var(--txt-2);
+  /* El nowrap es lo que le da forma de pastilla, pero sin techo un texto
+     largo la estira más allá de la pantalla y lo que arrastra es la
+     página entera: un chip de "Por confirmar" con cuatro títulos medía
+     543px en un celular de 380 y ponía scroll horizontal en toda la
+     vista. El texto se corta; la pastilla se queda adentro. */
   white-space: nowrap;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis;
 }
 .chip.sel { background: var(--acc); color: var(--acc-ink); border-color: var(--acc); font-weight: 600; }
 .chip button { background: none; border: none; cursor: pointer; color: inherit; opacity: .6; padding: 0 0 0 2px; font-size: 13px; line-height: 1; }
@@ -365,7 +372,7 @@ label.field > span {
 .chip.clickable { cursor: pointer; }
 .chip.clickable:hover { border-color: var(--linea-fuerte); color: var(--txt); }
 
-.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; min-width: 0; }
 
 /* tempo estimado de internet, no medido a mano */
 .bpm-sug { color: var(--txt-3) !important; font-style: italic; }
@@ -1904,11 +1911,19 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
 
 @media (max-width: 820px) {
 
+  /* La barra va ARRIBA de #app, en el flujo. Sin descontarla, el
+     `min-height: 100vh` de #app hacía que la página midiera siempre 52px
+     más que la pantalla: scroll vertical en todas las vistas, incluso en
+     las que entraban enteras. En `dvh` porque en iOS `vh` es el alto con
+     la barra del navegador escondida, que es otro puñado de píxeles de
+     más. */
+  #app { min-height: calc(100dvh - var(--tb) - env(safe-area-inset-top)); }
+
   /* ---------- barra de arriba ---------- */
   .topbar {
     display: flex; align-items: center; gap: 4px;
     position: sticky; top: 0; z-index: 120;
-    height: calc(52px + env(safe-area-inset-top));
+    height: calc(var(--tb) + env(safe-area-inset-top));
     padding: env(safe-area-inset-top) 6px 0;
     background: var(--bg);
     border-bottom: 1px solid var(--line-soft);
