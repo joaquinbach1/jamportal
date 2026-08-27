@@ -3,6 +3,9 @@
    ============================================================ */
 
 import { store, norm, FRANJA_LABEL } from '../store.js';
+import { asegurarAlbum, porAlbum } from '../album.js';
+import { temasDelAlbum } from '../lookup.js';
+import { hojaAcciones } from '../ui.js';
 import { h, frag, clear, poner, select, catPill, catCorta, franjaDot, toast, debounce, modal, songAutocomplete } from '../ui.js';
 import { dialogoCancion } from './song-form.js';
 import { botonCifra } from './jam-editor.js';
@@ -18,6 +21,45 @@ export function vistaSongs() {
 
 
   const cuerpo = h('tbody');
+  const grilla = h('div.discos');
+  let vista = localStorage.getItem('jamportal.songs.vista') === 'discos' ? 'discos' : 'lista';
+
+  const btnVista = h('button.btn', {
+    onclick: () => {
+      vista = vista === 'discos' ? 'lista' : 'discos';
+      localStorage.setItem('jamportal.songs.vista', vista);
+      pintarVista(); pintar();
+    },
+  });
+  function pintarVista() {
+    btnVista.textContent = vista === 'discos' ? '☰ Ver como lista' : '▦ Ver como discos';
+    btnVista.title = vista === 'discos'
+      ? 'La tabla de siempre'
+      : 'Los temas agrupados por disco, con la tapa';
+  }
+  pintarVista();
+
+  /* Trae disco y tapa de los que no los tienen. Es una consulta por tema,
+     así que va de a uno y avisa cómo viene. */
+  const btnTapas = h('button.btn', {
+    title: 'Busca en internet el disco y la tapa de los temas que no los tienen',
+    onclick: async () => {
+      const faltan = store.repertorio.filter(x => !x.cover && x.albumFuente !== 'sin');
+      if (!faltan.length) { toast('Todos los temas ya tienen tapa', 'ok'); return; }
+
+      btnTapas.disabled = true;
+      let ok = 0;
+      for (const [i, x] of faltan.entries()) {
+        btnTapas.textContent = `▦ ${i + 1}/${faltan.length}…`;
+        if (await asegurarAlbum(x)) ok++;
+        if (i % 12 === 0) pintar();
+        await new Promise(r => setTimeout(r, 150));
+      }
+      btnTapas.textContent = '▦ Traer tapas'; btnTapas.disabled = false;
+      pintar();
+      toast(`${ok} tapas encontradas` + (faltan.length - ok ? ` · ${faltan.length - ok} sin dato` : ''), 'ok');
+    },
+  }, '▦ Traer tapas');
   const contador = h('span.count');
   const barraEnvio = h('div.enviar');
   const seleccion = new Set();
@@ -101,13 +143,150 @@ export function vistaSongs() {
     });
   }
 
+  /* ---------- vista de discos ---------- */
+
+  /* La lista de temas de cada disco se pide una vez y queda; los discos
+     que abriste quedan abiertos aunque se redibuje la grilla (pasa cada
+     vez que sumás un tema). */
+  const pistas = new Map();
+  const abiertos = new Set();
+
+  function pintarDiscos(res) {
+    clear(grilla);
+    const grupos = porAlbum(res);
+
+    for (const g of grupos) grilla.appendChild(tarjetaDisco(g));
+    if (!grupos.length) grilla.appendChild(h('div.empty', {}, 'Nada con esos filtros'));
+  }
+
+  function tarjetaDisco(g) {
+    const tapa = g.cover
+      ? h('img.disco-tapa', { src: g.cover, alt: '', loading: 'lazy' })
+      : h('div.disco-tapa.sin', {}, '♪');
+
+    const listado = h('div.disco-temas');
+    const barra = h('div.disco-barra', {}, h('div.disco-avance'));
+    const cuenta = h('span.disco-cuenta');
+
+    /* Sin el disco entero solo podemos mostrar los nuestros. Con él, se ve
+       cuánto falta: es la diferencia entre "tenemos tres" y "tenemos tres
+       de diez". */
+    function pintarListado(delDisco) {
+      clear(listado);
+      const nuestrosPorTitulo = new Map(g.temas.map(t => [norm(t.titulo), t]));
+
+      const filas = delDisco.length
+        ? delDisco.map(p => ({ titulo: p.titulo, nro: p.nro, nuestro: nuestrosPorTitulo.get(norm(p.titulo)) }))
+        : g.temas.map(t => ({ titulo: t.titulo, nro: null, nuestro: t }));
+
+      /* los nuestros que el disco no lista (otra edición, otro nombre) */
+      if (delDisco.length) {
+        const enDisco = new Set(delDisco.map(p => norm(p.titulo)));
+        for (const t of g.temas) {
+          if (!enDisco.has(norm(t.titulo))) filas.push({ titulo: t.titulo, nro: null, nuestro: t });
+        }
+      }
+
+      const tenemos = filas.filter(f => f.nuestro).length;
+      const total = filas.length;
+      barra.querySelector('.disco-avance').style.width = total ? `${(tenemos / total) * 100}%` : '0%';
+      cuenta.textContent = `${tenemos}/${total}`;
+
+      for (const f of filas) {
+        if (f.nuestro) {
+          listado.appendChild(h('button.disco-tema.tenemos', {
+            onclick: () => dialogoCancion(f.nuestro, () => pintar()),
+            title: 'Lo tocamos — clic para ver el tema',
+          }, f.titulo));
+          continue;
+        }
+        /* puede estar en Ideas: no es del repertorio, pero ya lo anotaste */
+        const idea = store.ideas.find(x => norm(x.titulo) === norm(f.titulo)
+          && norm(x.artista) === norm(g.artista));
+        listado.appendChild(idea
+          ? h('button.disco-tema.idea', {
+              onclick: () => dialogoCancion(idea, () => pintar()),
+              title: 'Ya está en Ideas',
+            }, f.titulo, h('span.disco-mas', {}, '💡'))
+          : h('button.disco-tema.falta', {
+              onclick: () => hojaSumar(f.titulo, g),
+              title: 'No lo tocamos — clic para sumarlo',
+            }, f.titulo, h('span.disco-mas', {}, '＋')));
+      }
+    }
+
+    const yaAbierto = g.albumId && abiertos.has(g.albumId);
+    pintarListado(yaAbierto ? (pistas.get(g.albumId) || []) : []);
+
+    /* el disco completo se pide al abrirlo, no de entrada: son 200 tarjetas */
+    const btnVer = h('button.btn.xs.ghost', {
+      onclick: async () => {
+        if (!g.albumId) { toast('De este disco no tengo la lista', 'err'); return; }
+        btnVer.disabled = true; btnVer.textContent = 'Trayendo…';
+        const t = pistas.get(g.albumId) || await temasDelAlbum(g.albumId);
+        pistas.set(g.albumId, t);
+        abiertos.add(g.albumId);
+        btnVer.remove();
+        pintarListado(t);
+      },
+    }, 'Ver el disco entero');
+
+    return h('div.disco', {},
+      tapa,
+      h('div.disco-datos', {},
+        h('div.disco-album', { title: g.album || 'Sin disco' }, g.album || 'Sin disco'),
+        h('div.disco-artista', {}, g.artista),
+        h('div.disco-progreso', {}, barra, cuenta),
+        listado,
+        (g.albumId && !yaAbierto) ? btnVer : null));
+  }
+
+  /** Qué hacer con un tema del disco que todavía no tocamos. */
+  function hojaSumar(titulo, g) {
+    const proximas = store.jams.filter(j => !j.historica && !j.cerrada);
+    const datos = { titulo, artista: g.artista, album: g.album, cover: g.cover, albumId: g.albumId };
+
+    hojaAcciones(titulo, [
+      ...proximas.slice(0, 3).map(j => ({
+        icono: '🎵', texto: `Sumarlo a « ${j.nombre || 'jam'} »`,
+        onClick: () => {
+          const s = store.matchSong(titulo, g.artista) || store.addSong(datos);
+          j.items = [...(j.items || []), { tipo: 'song', songId: s.id, cantantes: [], notas: '' }];
+          store.commit();
+          toast(`«${titulo}» sumado a ${j.nombre || 'la jam'}`, 'ok');
+          pintar();
+        },
+      })),
+      { icono: '💡', texto: 'Guardarlo en Ideas',
+        onClick: () => {
+          if (store.matchSong(titulo, g.artista)) { toast('Ese tema ya está cargado'); return; }
+          store.addSong({ ...datos, esIdea: true });
+          toast(`«${titulo}» guardado en Ideas`, 'ok');
+          pintar();
+        } },
+      { icono: '🎼', texto: 'Sumarlo al repertorio',
+        onClick: () => {
+          if (store.matchSong(titulo, g.artista)) { toast('Ese tema ya está cargado'); return; }
+          store.addSong(datos);
+          toast(`«${titulo}» sumado al repertorio`, 'ok');
+          pintar();
+        } },
+    ]);
+  }
+
   function pintar() {
     const res = filtrar();
-    clear(cuerpo);
     contador.textContent = `${res.length} / ${store.repertorio.length}`;
 
+    grilla.style.display = vista === 'discos' ? '' : 'none';
+    const tabla = grilla.parentElement && grilla.parentElement.querySelector('.tbl-wrap');
+    if (tabla) tabla.style.display = vista === 'discos' ? 'none' : '';
+    if (vista === 'discos') { pintarDiscos(res); return; }
+
+    clear(cuerpo);
+
     if (!res.length) {
-      cuerpo.appendChild(h('tr', {}, h('td', { colspan: 10 },
+      cuerpo.appendChild(h('tr', {}, h('td', { colspan: 11 },
         h('div.empty', { style: { border: 'none' } }, h('b', {}, 'Nada con esos filtros')))));
       pintarBarra();
       return;
@@ -123,6 +302,9 @@ export function vistaSongs() {
         h('td', {}, h('div.t-title', {}, s.titulo),
           (s.notas || '') ? h('div.dim', { style: { fontSize: '11px' } }, s.notas) : null),
         h('td.t-art', {}, s.artista),
+        h('td.t-album', { title: s.album || '' },
+          s.cover ? h('img.t-tapa', { src: s.cover, alt: '', loading: 'lazy' }) : null,
+          h('span', {}, s.album || '—')),
         h('td', {}, catPill(s.categoria)),
         h('td', { onclick: e => e.stopPropagation() },
           chipTempo(s, pintar),
@@ -180,6 +362,8 @@ export function vistaSongs() {
         h('p.sub', {}, `${store.repertorio.length} temas tocados · ${store.artistas().length} artistas · ${store.repertorio.filter(s => s.bpm).length} con tempo` + (store.ideas.length ? ` · ${store.ideas.length} ideas sin tocar` : ''))),
       h('div.page-actions', {},
         h('button.btn.primary', { onclick: altaRapida }, '＋ Agregar tema'),
+        btnVista,
+        btnTapas,
         h('a.btn.ghost', { href: '#/data' }, 'Importar / exportar'))),
 
     h('div.filters', {},
@@ -197,10 +381,12 @@ export function vistaSongs() {
 
     barraEnvio,
 
+    grilla,
+
     h('div.tbl-wrap', {},
       h('table.tbl', {},
         h('thead', {}, h('tr', {},
-          h('th.col-check', {}), th('Tema', 'titulo'), th('Artista', 'artista'), th('Cat.', 'categoria'),
+          h('th.col-check', {}), th('Tema', 'titulo'), th('Artista', 'artista'), th('Disco', 'album'), th('Cat.', 'categoria'),
           th('BPM', 'bpm'), th('Franja'), th('Cantantes'), th('Jams', 'jams'), th('Cifra', 'cifra'), h('th', {}))),
         cuerpo)),
 

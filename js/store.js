@@ -386,7 +386,7 @@ export const store = {
       id: uid('song'),
       titulo: '', artista: '', categoria: state.categorias[0] || 'Internacional (rock / pop / funk / soul)',
       bpm: null, bpmRaw: '', franja: null,
-      cantantes: [], patches: [], invitados: [], jams: [], anio: null,
+      cantantes: [], patches: [], invitados: [], jams: [], anio: null, album: '', albumId: null, cover: '',
       notas: '', origen: 'manual',
       ...data,
     };
@@ -719,7 +719,7 @@ export const store = {
       } else {
         state.songs.push({
           id: uid('song'), titulo: '', artista: '', categoria: state.categorias[0],
-          bpm: null, bpmRaw: '', franja: null, cantantes: [], patches: [], invitados: [], jams: [], anio: null,
+          bpm: null, bpmRaw: '', franja: null, cantantes: [], patches: [], invitados: [], jams: [], anio: null, album: '', albumId: null, cover: '',
           notas: '', origen: 'import', ...r,
           franja: r.franja || franjaDeBpm(r.bpm),
         });

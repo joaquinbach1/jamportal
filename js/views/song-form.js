@@ -34,6 +34,7 @@ export function dialogoCancion(pre = {}, onOk) {
      { value: 'high', label: FRANJA_LABEL.high + ' (125+)' }],
     { value: d.franja || '' });
   const fAnio    = input({ value: d.anio || '', placeholder: '—' });
+  const fAlbum   = input({ value: d.album || '', placeholder: 'Disco al que pertenece' });
   const fPatches = input({ value: (d.patches || []).join(', '), placeholder: 'a13, g52…' });
   const fCifra   = input({ value: d.cifraUrl || '', placeholder: 'https://www.cifraclub.com/…' });
   const fSpotify = input({ value: d.spotifyUrl || '', placeholder: 'https://open.spotify.com/track/…' });
@@ -96,6 +97,10 @@ export function dialogoCancion(pre = {}, onOk) {
       bpm: fBpm.value ? parseInt(fBpm.value, 10) : null,
       franja: fFranja.value || franjaDeBpm(fBpm.value),
       anio: fAnio.value.trim(),
+      album: fAlbum.value.trim(),
+      /* si le cambiás el disco a mano, la tapa y el id de antes ya no
+         corresponden: se limpian para que se vuelvan a buscar */
+      ...(fAlbum.value.trim() !== (d.album || '') ? { cover: '', albumId: null, albumFuente: '' } : {}),
       generoWeb: d.generoWeb || '',
       cantantes,
       patches: fPatches.value.split(',').map(s => s.trim()).filter(Boolean),
@@ -141,6 +146,12 @@ export function dialogoCancion(pre = {}, onOk) {
         field('Duración', fDur)),
       previewFranja,
       field('Cantantes habituales', pick),
+      field('Disco', h('div', { style: { display: 'flex', gap: '8px', alignItems: 'center' } },
+        d.cover
+          ? h('img', { src: d.cover, alt: '', style: {
+              width: '44px', height: '44px', borderRadius: '5px', objectFit: 'cover', flex: 'none' } })
+          : null,
+        fAlbum)),
       h('div.grid-2', {}, field('Patch de teclado', fPatches)),
       field('Cifra / acordes', h('div', { style: { display: 'flex', gap: '8px' } },
         fCifra,

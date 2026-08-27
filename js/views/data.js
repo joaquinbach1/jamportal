@@ -40,6 +40,9 @@ const ALIAS = {
   cifraUrl: ['cifra', 'cifraurl', 'acordes', 'partitura', 'cifra club', 'cifraclub'],
   notas: ['notas', 'nota', 'comentarios', 'obs'],
   anio: ['anio', 'año', 'year'],
+  album: ['album', 'álbum', 'disco'],
+  albumId: ['albumid', 'album id', 'id album'],
+  cover: ['cover', 'tapa', 'portada', 'caratula', 'carátula'],
 };
 
 function mapearColumnas(cabecera) {
@@ -65,6 +68,7 @@ function filasAObjetos(filas) {
       const v = (f[i] || '').trim();
       if (!v) return;
       if (campo === 'bpm') { const m = v.match(/\d+/); if (m) o.bpm = parseInt(m[0], 10); }
+      else if (campo === 'albumId') { const n = parseInt(v, 10); if (Number.isFinite(n)) o.albumId = n; }
       else if (campo === 'franja') { const k = norm(v).replace(/[^a-z]/g, ''); o.franja = FRANJA_ALIAS[k] || null; }
       else if (campo === 'cantantes' || campo === 'patches') o[campo] = v.split(/[,;·]/).map(s => s.trim()).filter(Boolean);
       else o[campo] = v;

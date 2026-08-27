@@ -47,6 +47,7 @@ async function buscarItunes(q, limit = 8) {
       anio: r.releaseDate ? r.releaseDate.slice(0, 4) : '',
       duracionSec: r.trackTimeMillis ? Math.round(r.trackTimeMillis / 1000) : null,
       album: r.collectionName || '',
+      albumId: r.collectionId || null,
       artwork: r.artworkUrl100 || '',
       fuente: 'itunes',
     }))
@@ -57,6 +58,32 @@ async function buscarItunes(q, limit = 8) {
       vistos.add(k);
       return true;
     });
+}
+
+/**
+ * Todos los temas de un disco, en orden.
+ * iTunes los devuelve con `lookup` pidiendo las canciones de la colección:
+ * el primer resultado es el disco y el resto son los temas.
+ */
+export async function temasDelAlbum(albumId) {
+  if (!albumId) return [];
+  try {
+    const data = await jsonp(`https://itunes.apple.com/lookup?id=${encodeURIComponent(albumId)}&entity=song&limit=200`);
+    return (data.results || [])
+      .filter(r => r.wrapperType === 'track' && r.trackName)
+      .sort((a, b) => (a.discNumber - b.discNumber) || (a.trackNumber - b.trackNumber))
+      .map(r => ({
+        titulo: r.trackName,
+        artista: r.artistName || '',
+        nro: r.trackNumber || null,
+        duracionSec: r.trackTimeMillis ? Math.round(r.trackTimeMillis / 1000) : null,
+        genero: r.primaryGenreName || '',
+        anio: r.releaseDate ? r.releaseDate.slice(0, 4) : '',
+      }));
+  } catch (e) {
+    console.warn('No pude traer el disco', albumId, e.message);
+    return [];
+  }
 }
 
 /* ---------- MusicBrainz (respaldo) ---------- */
@@ -191,6 +218,14 @@ export async function buscarBpm(titulo, artista) {
 }
 
 /** Convierte un resultado web en los campos de una canción de DBSongs. */
+/**
+ * iTunes devuelve la tapa en 100x100, que en pantalla se ve borrosa.
+ * La URL trae el tamaño adentro, así que se pide más grande cambiándolo.
+ */
+export function portadaGrande(url, px = 300) {
+  return (url || '').replace(/\/\d+x\d+bb\./, `/${px}x${px}bb.`);
+}
+
 export function webAResultado(r) {
   return {
     titulo: r.titulo,
@@ -198,6 +233,9 @@ export function webAResultado(r) {
     categoria: sugerirCategoria(r.genero, r.artista),
     bpm: null,
     franja: null,
+    album: r.album || '',
+    albumId: r.albumId || null,
+    cover: portadaGrande(r.artwork),
     generoWeb: r.genero || '',
     anio: r.anio || '',
     duracionSec: r.duracionSec || null,

@@ -1626,6 +1626,96 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
   .miembro-acciones { margin-left: 0; width: 100%; }
 }
 
+/* la columna de disco en la tabla, con su tapita */
+.t-album {
+  display: flex; align-items: center; gap: 7px;
+  max-width: 210px; min-width: 0;
+  font-size: 12.5px; color: var(--txt-2);
+}
+.t-album > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t-tapa {
+  width: 26px; height: 26px; border-radius: 4px; object-fit: cover;
+  flex: none; background: var(--panel-2);
+}
+@media (max-width: 1100px) { .t-album { display: none; } }
+
+/* ============================================================
+   Discos
+   ------------------------------------------------------------
+   Los temas agrupados por álbum, con la tapa. La tapa es un link
+   al servidor de Apple: no se guarda la imagen, así que sin
+   internet queda el cuadrado con la nota.
+   ============================================================ */
+.discos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+  margin-top: 4px;
+}
+.disco {
+  display: flex; flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.disco-tapa {
+  width: 100%; aspect-ratio: 1; object-fit: cover;
+  display: block; background: var(--panel-2);
+}
+.disco-tapa.sin {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--txt-3); font-size: 38px;
+}
+.disco-datos { padding: 11px 13px 13px; min-width: 0; }
+.disco-album {
+  font-size: 14px; font-weight: 650;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.disco-artista {
+  font-size: 12px; color: var(--txt-2); margin-top: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* cuánto del disco tocamos */
+.disco-progreso { display: flex; align-items: center; gap: 8px; margin-top: 9px; }
+.disco-barra {
+  flex: 1; height: 5px; border-radius: 3px;
+  background: var(--rayado-a); border: 1px solid var(--line-soft);
+  overflow: hidden;
+}
+.disco-avance { height: 100%; background: var(--acc); transition: width .25s; }
+.disco-cuenta {
+  font-family: var(--mono); font-size: 11px; color: var(--txt-3); flex: none;
+}
+
+.disco-temas { display: flex; flex-direction: column; gap: 1px; margin-top: 9px; }
+.disco-tema {
+  display: flex; align-items: center; gap: 6px;
+  background: none; border: none; border-radius: 5px;
+  text-align: left; padding: 4px 6px; cursor: pointer;
+  font-size: 12.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.disco-tema > :first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* los que tocamos, encendidos; los que faltan, apagados */
+.disco-tema.tenemos { color: var(--txt); font-weight: 550; }
+.disco-tema.tenemos::before { content: '●'; color: var(--acc); font-size: 8px; flex: none; }
+.disco-tema.falta { color: var(--txt-3); }
+.disco-tema.falta::before { content: '○'; font-size: 8px; flex: none; }
+/* anotado en Ideas: ni tocado ni pendiente de anotar */
+.disco-tema.idea { color: var(--txt-2); }
+.disco-tema.idea::before { content: '◐'; color: var(--acc-2); font-size: 8px; flex: none; }
+.disco-tema.idea .disco-mas { opacity: .7; font-size: 11px; }
+.disco-tema:hover { background: var(--panel-2); }
+.disco-tema.falta:hover { color: var(--txt-2); }
+.disco-mas { margin-left: auto; flex: none; opacity: 0; font-size: 13px; }
+.disco-tema.falta:hover .disco-mas { opacity: .8; }
+
+@media (max-width: 620px) {
+  .discos { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .disco-datos { padding: 9px 10px 11px; }
+}
+
 /* ============================================================
    Hoja de acciones
    ------------------------------------------------------------
