@@ -562,17 +562,30 @@ export const store = {
     for (const candidatos of porTitulo.values()) {
       if (candidatos.length < 2) continue;
 
-      /* dentro del mismo título, agrupamos por artista compatible */
-      const usados = new Set();
-      for (const a of candidatos) {
-        if (usados.has(a.id)) continue;
-        const grupo = [a];
-        usados.add(a.id);
-        for (const b of candidatos) {
-          if (usados.has(b.id)) continue;
-          const na = norm(a.artista), nb = norm(b.artista);
-          if (na === nb || !na || !nb) { grupo.push(b); usados.add(b.id); }
-        }
+      /* Los que tienen artista se agrupan por artista, y nada más.
+         Los que no tienen se suman SOLO si para ese título hay un único
+         artista posible: con dos o más no hay forma de saber a cuál
+         pertenecen, y meterlos en cualquiera arrastraba a los otros.
+         Ese era el bug: un tema sin artista hacía de puente y fusionaba
+         "Crazy" de Aerosmith con "Crazy" de Gnarls Barkley. */
+      const conArtista = candidatos.filter(x => norm(x.artista));
+      const sinArtista = candidatos.filter(x => !norm(x.artista));
+      const artistas = [...new Set(conArtista.map(x => norm(x.artista)))];
+
+      const porArtista = new Map();
+      for (const x of conArtista) {
+        const k = norm(x.artista);
+        if (!porArtista.has(k)) porArtista.set(k, []);
+        porArtista.get(k).push(x);
+      }
+      /* los huérfanos solo se enganchan si no hay ambigüedad */
+      if (artistas.length === 1 && sinArtista.length) {
+        porArtista.get(artistas[0]).push(...sinArtista);
+      } else if (!artistas.length && sinArtista.length > 1) {
+        porArtista.set('', sinArtista);          // todos sin artista: son el mismo
+      }
+
+      for (const grupo of porArtista.values()) {
         if (grupo.length > 1) {
           /* se queda el que más historia tiene; a igualdad, el más completo */
           grupo.sort((x, y) =>
