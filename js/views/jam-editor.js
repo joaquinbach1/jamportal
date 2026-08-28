@@ -1164,15 +1164,14 @@ export function vistaEditor(jamId) {
       });
 
       acciones.append(
-        h('button.btn.primary.sm', { onclick: () => volcar(false) }, `Agregar los ${propuesta.length} al final`),
-        h('button.btn.sm', { onclick: () => volcar(true) }, 'Reemplazar la lista'),
+        h('button.btn.primary.sm', { onclick: () => volcar() }, `Agregar los ${propuesta.length} al final`),
         h('button.btn.sm.ghost', { onclick: () => btnGenerar.click() }, '↻ Otra vuelta'));
     }
     repintarPropuesta = pintarPropuesta;
 
-    function volcar(reemplazar) {
+    function volcar() {
       const nuevos = propuestaAItems(propuesta);
-      jam.items = reemplazar ? nuevos : [...items(), ...nuevos];
+      jam.items = [...items(), ...nuevos];
       propuesta = [];
       guardar(); pintarTodo(); pintarSide();
       toast(`${nuevos.length} temas en la lista`, 'ok');
