@@ -11,7 +11,7 @@
    ============================================================ */
 
 import { store } from '../store.js';
-import { h, clear, frag, poner, modal, field, input, toast, copiar } from '../ui.js';
+import { h, clear, frag, poner, modal, field, input, toast, copiar, avatar } from '../ui.js';
 import { buscarLetra, urlBusquedaLetra, precargar, letraDesdeUrl, guardarEnCache } from '../letras.js';
 import { filas as filasDelSetlist } from './live.js';
 import { empaquetar, linkDeLetras, sePuedeComprimir } from '../compartir.js';
@@ -30,13 +30,19 @@ const tamGuardado = () => {
    traer: (fila) => Promise<{ ok, texto }>
    ============================================================ */
 export function pantallaLetras({ titulo, sub, filas, volverA, traer, extras = [], alFaltar = null }) {
-  const cantables = filas.filter(f => f.tipo === 'song');
+  const cantables = [...filas.filter(f => f.tipo === 'song')];
 
   let tam = tamGuardado();
   let abierta = -1;
 
   const listaCont = h('div.ly-lista');
   const pantalla = h('div.ly-full', { style: { display: 'none' } });
+
+  /* Filtrar por cantante: arriba de todo, uno por persona. Sirve para
+     "mostrame solo lo que canto yo" antes de subir al escenario. */
+  const cantantes = [...new Set(filas.flatMap(f => f.cantantes || []))].sort((a, b) => a.localeCompare(b));
+  let filtro = '';
+  const barraCantantes = h('div.ly-cantantes');
 
   async function abrir(i) {
     if (i < 0 || i >= cantables.length) return;
@@ -110,8 +116,45 @@ export function pantallaLetras({ titulo, sub, filas, volverA, traer, extras = []
     if (t) t.style.fontSize = tam + 'rem';
   }
 
+  function visibles() {
+    if (!filtro) return filas;
+    const quedan = filas.filter(f => f.tipo !== 'song' || (f.cantantes || []).includes(filtro));
+
+    /* Un bloque o un medley sin ningún tema debajo es un título suelto:
+       si al filtrar se quedó sin contenido, se va con él. */
+    return quedan.filter((f, i) => {
+      if (f.tipo === 'song') return true;
+      const siguiente = quedan.slice(i + 1).find(x => x.tipo === 'song' || x.tipo === 'bloque' || x.tipo === 'medley');
+      return siguiente && siguiente.tipo === 'song';
+    });
+  }
+
+  function pintarBarra() {
+    clear(barraCantantes);
+    if (!cantantes.length) return;
+    poner(barraCantantes,
+      h('span.ly-cant-rotulo', {}, 'quién canta'),
+      ...cantantes.map(n => {
+        const cuantas = filas.filter(f => (f.cantantes || []).includes(n)).length;
+        const b = h('button.ly-cant' + (filtro === n ? '.on' : ''), {
+          title: filtro === n ? 'Ver todos de nuevo' : `Solo las ${cuantas} de ${n}`,
+          onclick: () => { filtro = filtro === n ? '' : n; pintarBarra(); pintarLista(); },
+        }, avatar(n), h('span', {}, n), h('span.ly-cant-n', {}, String(cuantas)));
+        return b;
+      }),
+      filtro ? h('button.btn.xs.ghost', { onclick: () => { filtro = ''; pintarBarra(); pintarLista(); } }, 'Ver todos') : null);
+  }
+
+  function pintarLista() {
+    clear(listaCont);
+    cantables.length = 0;
+    for (const f of visibles()) if (f.tipo === 'song') cantables.push(f);
+    dibujarFilas();
+  }
+
+  function dibujarFilas() {
   let iCantable = 0;
-  for (const f of filas) {
+  for (const f of visibles()) {
     if (f.tipo === 'bloque') { listaCont.appendChild(h('div.ly-bloque', {}, (f.label || '').toUpperCase())); continue; }
     if (f.tipo === 'break') { listaCont.appendChild(h('div.ly-break', {}, f.label || 'BREAK')); continue; }
     if (f.tipo === 'medley') { listaCont.appendChild(h('div.ly-medley', {}, f.label || 'Medley')); continue; }
@@ -123,7 +166,11 @@ export function pantallaLetras({ titulo, sub, filas, volverA, traer, extras = []
       h('span.ly-t', {}, f.titulo),
       h('span.ly-a', {}, f.artista || '')));
   }
-  if (!cantables.length) listaCont.appendChild(h('div.empty', {}, 'Esta jam no tiene temas todavía'));
+  if (!cantables.length) {
+    listaCont.appendChild(h('div.empty', {},
+      filtro ? `${filtro} no tiene temas asignados en esta jam` : 'Esta jam no tiene temas todavía'));
+  }
+  }
 
   const alTeclado = e => {
     if (abierta < 0) {
@@ -141,6 +188,9 @@ export function pantallaLetras({ titulo, sub, filas, volverA, traer, extras = []
     document.body.classList.remove('letra-abierta');
   });
 
+  pintarBarra();
+  pintarLista();
+
   return frag(
     h('div.page-head', {},
       h('div', {},
@@ -149,6 +199,7 @@ export function pantallaLetras({ titulo, sub, filas, volverA, traer, extras = []
           h('h1', {}, titulo)),
         h('p.sub', {}, sub)),
       extras.length ? h('div.page-actions', {}, extras) : null),
+    barraCantantes,
     listaCont,
     pantalla,
   );
@@ -170,10 +221,10 @@ export function vistaLyrics(jamId) {
     if (f.tipo === 'break') { filas.push({ tipo: 'break', label: f.label }); continue; }
     if (f.tipo === 'medley') {
       filas.push({ tipo: 'medley', label: `${f.n} · ${f.titulo || 'Medley'}` });
-      for (const ms of f.songs) if (ms.song) filas.push({ tipo: 'song', song: ms.song, titulo: ms.song.titulo, artista: ms.song.artista, dentro: true });
+      for (const ms of f.songs) if (ms.song) filas.push({ tipo: 'song', song: ms.song, titulo: ms.song.titulo, artista: ms.song.artista, dentro: true, cantantes: ms.cantantes || [] });
       continue;
     }
-    if (f.tipo === 'song' && f.song) filas.push({ tipo: 'song', song: f.song, titulo: f.song.titulo, artista: f.song.artista, n: f.n });
+    if (f.tipo === 'song' && f.song) filas.push({ tipo: 'song', song: f.song, titulo: f.song.titulo, artista: f.song.artista, n: f.n, cantantes: f.cantantes || [] });
   }
 
   const cantidad = filas.filter(f => f.tipo === 'song').length;
@@ -296,7 +347,8 @@ function botonCompartir(jam, filas) {
         n: jam.nombre || 'Jam',
         f: jam.fecha || '',
         i: filas.map(f => f.tipo === 'song'
-          ? { k: 's', t: f.titulo, a: f.artista || '', y: letras.get(f.song.id) || '', d: f.dentro ? 1 : 0, n: f.n }
+          ? { k: 's', t: f.titulo, a: f.artista || '', y: letras.get(f.song.id) || '',
+              d: f.dentro ? 1 : 0, n: f.n, c: f.cantantes || [] }
           : { k: f.tipo === 'bloque' ? 'b' : f.tipo === 'break' ? 'r' : 'm', l: f.label || '' }),
       };
 
@@ -351,7 +403,7 @@ export function vistaLetrasCompartidas(datos) {
   }
 
   const filas = datos.i.map(x => x.k === 's'
-    ? { tipo: 'song', titulo: x.t, artista: x.a, dentro: !!x.d, n: x.n, letra: x.y }
+    ? { tipo: 'song', titulo: x.t, artista: x.a, dentro: !!x.d, n: x.n, letra: x.y, cantantes: x.c || [] }
     : { tipo: x.k === 'b' ? 'bloque' : x.k === 'r' ? 'break' : 'medley', label: x.l });
 
   const cantidad = filas.filter(f => f.tipo === 'song').length;

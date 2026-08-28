@@ -808,6 +808,28 @@ body.lista-compacta .editor-grid .card + .card { margin-top: 10px; }
 /* ============================================================
    Letras — el setlist a la izquierda, la letra a la derecha
    ============================================================ */
+/* filtrar las letras por quién canta */
+.ly-cantantes {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+.ly-cant-rotulo {
+  font-size: 10.5px; letter-spacing: 1.4px; text-transform: uppercase;
+  color: var(--txt-3); margin-right: 4px;
+}
+.ly-cant {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: none; border: 1px solid var(--line-soft); border-radius: 999px;
+  padding: 4px 11px 4px 4px; cursor: pointer;
+  color: var(--txt-2); font-size: 13px;
+  transition: border-color .12s, background .12s, color .12s;
+}
+.ly-cant:hover { border-color: var(--line); color: var(--txt); }
+.ly-cant.on { border-color: var(--acc); background: var(--acc-tinte); color: var(--txt); }
+.ly-cant .avatar { width: 24px; height: 24px; font-size: 10px; }
+.ly-cant-n { font-family: var(--mono); font-size: 11px; color: var(--txt-3); }
+.ly-cant.on .ly-cant-n { color: var(--acc); }
+
 .ly-lista {
   display: flex; flex-direction: column; gap: 2px;
   max-width: 900px;
