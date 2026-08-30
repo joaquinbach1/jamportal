@@ -173,6 +173,8 @@ export const FRANJA_LABEL = { low: '🔵 Low', mid: '🟢 Mid', high: '🔴 High
 export const store = {
   /** La sesión. */
   get auth() { return auth; },
+  /** ¿Entramos por un link compartido y no con cuenta? */
+  get publico() { return !!state.publico; },
   /** Por qué no se pudo arrancar, si no se pudo. La app frena y lo cuenta. */
   get problema() { return problema; },
   /** Entraste bien, pero tu mail no está habilitado en esta base. */
@@ -284,6 +286,32 @@ export const store = {
     state = { ...state, ...remoto };
     emit();
     return true;
+  },
+
+  /**
+   * Arranca desde un link compartido, sin cuenta.
+   *
+   * La base devuelve UNA jam y el repertorio, y nada de lo que es de la
+   * banda: teléfonos, mails, ensayos, las otras jams. Lo que se puede
+   * escribir lo decide la base, no esto.
+   */
+  async initPublico(token) {
+    const nube = this.configNube();
+    if (!nube) {
+      problema = { tipo: 'config', mensaje: 'Falta configurar la base en js/config.js.' };
+      return state;
+    }
+    const { PublicoDriver } = await import('./drivers/publico.js');
+    driver = new PublicoDriver({ ...nube, token });
+    try {
+      state = { ...state, ...(await driver.read()) };
+      arrancarSondeo();
+      return state;
+    } catch (e) {
+      problema = { tipo: e.linkMuerto ? 'link' : 'red', mensaje: e.message };
+      console.error('No se pudo abrir el link:', e.message);
+      return state;
+    }
   },
 
   /**

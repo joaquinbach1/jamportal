@@ -2290,3 +2290,34 @@ body.mv-arrastrando-algo { user-select: none; -webkit-user-select: none; }
 .buscador-full .ac-item { padding: 11px 10px; gap: 10px; }
 .buscador-full .ac-t { font-size: 15px; }
 .buscador-full .ac-head { position: sticky; top: -6px; background: var(--bg); }
+
+/* ============================================================
+   Entrar por el link de una jam
+   ------------------------------------------------------------
+   No hay navegación que ofrecer —el link abre una jam y nada
+   más— así que el ☰ se va y la barra queda con el nombre y el
+   ⋯. Y va a cualquier ancho, no solo en el celular: el link se
+   abre también desde una compu.
+   ============================================================ */
+body.modo-link .sidebar,
+body.modo-link .menu-back,
+body.modo-link #btnMenu { display: none; }
+
+body.modo-link .topbar {
+  display: flex; align-items: center; gap: 4px;
+  position: sticky; top: 0; z-index: 120;
+  height: calc(var(--tb) + env(safe-area-inset-top));
+  padding: env(safe-area-inset-top) 6px 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line-soft);
+}
+body.modo-link .tb-titulo { text-align: left; padding-left: 10px; }
+body.modo-link #app { min-height: calc(100dvh - var(--tb) - env(safe-area-inset-top)); }
+body.modo-link .view { padding: 20px 16px calc(96px + env(safe-area-inset-bottom)); }
+
+/* una fila de "versiones anteriores" */
+.respaldo {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--line-soft);
+}
+.respaldo:last-child { border-bottom: 0; }

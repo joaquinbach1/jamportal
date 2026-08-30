@@ -19,7 +19,7 @@
 import { store } from '../store.js';
 import {
   h, frag, clear, toast, fechaLinda, copiar, hojaAcciones, confirmar,
-  descargarBlob, modal, field, input,
+  descargarBlob, modal, field, input, poner,
 } from '../ui.js';
 import { agenda, duracionLinda, largoLindo } from '../duracion.js';
 import { linkSpotify } from '../spotify.js';
@@ -29,9 +29,10 @@ import { dialogoCancion } from './song-form.js';
 import { songAutocomplete } from '../ui.js';
 import { buscarEnWeb, webAResultado } from '../lookup.js';
 import { asegurarTempo } from '../tempo.js';
-import { accionesDePagina } from '../app.js';
+import { accionesDePagina, refrescar } from '../app.js';
 import { setlistDocx } from '../docx.js';
 import { setlistATexto, textoASetlist } from '../setlist-texto.js';
+import { dialogoLink, dialogoRespaldos } from './compartir-jam.js';
 import { buscarCifra, urlBusqueda } from '../cifra.js';
 
 /* ============================================================
@@ -142,7 +143,10 @@ export function vistaMovil(jamId) {
             window.open(urlBusqueda(s.titulo, s.artista), '_blank', 'noopener');
           }
         } },
-      editable() ? { icono: '✎', texto: 'Editar el tema', onClick: () => dialogoCancion(s, pintar) } : null,
+      /* Editar el tema toca el catálogo de la banda, y por el link eso no
+         viaja: crear_song_publica solo da de alta, nunca renombra. */
+      editable() && !store.publico
+        ? { icono: '✎', texto: 'Editar el tema', onClick: () => dialogoCancion(s, pintar) } : null,
       editable() && indice != null
         ? { icono: '✕', texto: 'Sacar de la lista', peligro: true,
             onClick: () => { jam.items.splice(indice, 1); guardar(); pintar(); toast('Sacado de la lista'); } }
@@ -446,29 +450,42 @@ export function vistaMovil(jamId) {
      El ⋯ de la barra de arriba
      ============================================================ */
   function menu() {
+    const conCuenta = !store.publico;
     hojaAcciones(jam.nombre || 'Jam', [
       editable()
         ? { icono: '✎', texto: 'Editar la lista como texto', onClick: editorTexto }
         : { icono: '🔒', texto: 'Está cerrada — abrirla en el editor',
             onClick: () => { location.hash = `#/jams/${jam.id}/editar`; } },
       { icono: '🕘', texto: 'Fecha, hora y lugar', onClick: dialogoHorario },
-      { icono: '💡', texto: 'Anotar un tema en Ideas (sin sumarlo acá)', onClick: dialogoIdea },
       { icono: '▤', texto: 'Tamaño de la lista: ' + DENSIDADES.find(d => d.v === densidad()).label.toLowerCase(),
         onClick: hojaDensidad },
-      { icono: '▶', texto: 'LIVE VIEW — pasarla en la jam', onClick: () => { location.hash = '#/live/' + jam.id; } },
-      { icono: '📖', texto: 'Las letras, en orden', onClick: () => { location.hash = '#/lyrics/' + jam.id; } },
-      { icono: '⛶', texto: 'Abrir el editor completo', onClick: () => { location.hash = `#/jams/${jam.id}/editar`; } },
       { icono: '📋', texto: 'Copiar la lista como texto', onClick: () => copiar(comoTexto()) },
       { icono: '⬇', texto: 'Bajar el setlist en Word', onClick: bajarDocx },
-      { icono: '⧉', texto: 'Duplicar la jam', onClick: () => {
-          const j = store.duplicateJam(jam.id);
-          if (j) { toast('Jam duplicada', 'ok'); location.hash = '#/jams/' + j.id; }
-        } },
-      { icono: '✕', texto: 'Borrar la jam', peligro: true, onClick: async () => {
-          if (await confirmar(`¿Borrar «${jam.nombre || 'esta jam'}»?`, { titulo: 'Borrar jam' })) {
-            store.removeJam(jam.id); toast('Jam borrada'); location.hash = '#/jams';
-          }
-        } },
+
+      /* Lo de abajo es de la banda. Por el link no aparece: LIVE VIEW y las
+         letras van por rutas normales, que sin sesión no devuelven nada, y
+         duplicar o borrar la jam entera no es algo que deba poder hacer
+         cualquiera que reciba el link por WhatsApp. */
+      ...(conCuenta ? [
+        { icono: '💡', texto: 'Anotar un tema en Ideas (sin sumarlo acá)', onClick: dialogoIdea },
+        { icono: '🔗', texto: 'Link para compartir esta jam', onClick: () => dialogoLink(jam) },
+        /* refrescar() y no pintar(): sincronizar() reemplaza los objetos del
+           estado y la `jam` de esta vista queda apuntando a la versión vieja. */
+        { icono: '↩', texto: 'Versiones anteriores de la lista',
+          onClick: () => dialogoRespaldos(jam, refrescar) },
+        { icono: '▶', texto: 'LIVE VIEW — pasarla en la jam', onClick: () => { location.hash = '#/live/' + jam.id; } },
+        { icono: '📖', texto: 'Las letras, en orden', onClick: () => { location.hash = '#/lyrics/' + jam.id; } },
+        { icono: '⛶', texto: 'Abrir el editor completo', onClick: () => { location.hash = `#/jams/${jam.id}/editar`; } },
+        { icono: '⧉', texto: 'Duplicar la jam', onClick: () => {
+            const j = store.duplicateJam(jam.id);
+            if (j) { toast('Jam duplicada', 'ok'); location.hash = '#/jams/' + j.id; }
+          } },
+        { icono: '✕', texto: 'Borrar la jam', peligro: true, onClick: async () => {
+            if (await confirmar(`¿Borrar «${jam.nombre || 'esta jam'}»?`, { titulo: 'Borrar jam' })) {
+              store.removeJam(jam.id); toast('Jam borrada'); location.hash = '#/jams';
+            }
+          } },
+      ] : []),
     ]);
   }
 
