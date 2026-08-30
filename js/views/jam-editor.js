@@ -22,6 +22,7 @@ import { seccionEnsayos } from './ensayos.js';
 import { borrarJam } from './jams.js';
 import { setlistATexto, textoASetlist } from '../setlist-texto.js';
 import { refrescar, accionesDePagina } from '../app.js';
+import { dialogoLink, dialogoRespaldos } from './compartir-jam.js';
 import { estadoInicial, filtrosMagicList, generarPropuesta, propuestaAItems } from '../magiclist.js';
 
 /* ============================================================
@@ -1532,6 +1533,12 @@ export function vistaEditor(jamId) {
     hojaAcciones(jam.nombre || 'Jam', [
       { icono: '☰', texto: 'Verla como lista', onClick: () => { location.hash = '#/jams/' + jam.id; } },
       { icono: '📋', texto: 'Copiar la lista', onClick: () => copiar(comoTexto()) },
+      { icono: '🔗', texto: 'Link para compartir esta jam', onClick: () => dialogoLink(jam) },
+      /* refrescar() y no pintarTodo(): sincronizar() reemplaza los objetos del
+         estado, así que la `jam` que esta vista capturó al construirse queda
+         apuntando a la versión vieja y redibujarla no muestra nada nuevo. */
+      { icono: '↩', texto: 'Versiones anteriores de la lista',
+        onClick: () => dialogoRespaldos(jam, refrescar) },
       (jam.historica || bloqueada()) ? null
         : { icono: '🔒', texto: 'Cerrar la jam', onClick: dialogoCerrar },
       { icono: '⧉', texto: 'Duplicar', onClick: () => { const j = store.duplicateJam(jam.id); if (j) { toast('Jam duplicada', 'ok'); location.hash = '#/jams/' + j.id; } } },

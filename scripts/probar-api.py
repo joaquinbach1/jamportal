@@ -199,6 +199,67 @@ def main():
         st, _ = pedir('/rest/v1/rpc/guardar_jam', {'j': jam, 'version_esperada': None}, jwt)
         check(st == 200, 'sin versión, pisa a propósito', f'HTTP {st}')
 
+        print('\n── el link público ─────────────────────────────────────')
+        # Todo esto va SIN jwt: es exactamente lo que hace el que recibe el
+        # link. Que la lógica esté bien en psql no alcanza — lo que decide
+        # es qué deja pasar PostgREST con el rol `anon`.
+        jid = estado['jams'][0]['id']
+        st, tok = pedir('/rest/v1/rpc/crear_token', {'p_jam': jid}, jwt)
+        check(st == 200 and isinstance(tok, str) and len(tok) >= 12,
+              'un miembro saca el token', f'HTTP {st}, {tok!r}')
+
+        st, sin = pedir('/rest/v1/rpc/crear_token', {'p_jam': jid})
+        check(st in (401, 403), 'sin sesión no se puede sacar un token', f'HTTP {st}')
+
+        st, pub = pedir('/rest/v1/rpc/estado_publico', {'t': tok})
+        check(st == 200 and pub and len(pub.get('jams') or []) == 1,
+              'con el token se lee, sin cuenta', f"HTTP {st}, {len(pub.get('jams') or []) if pub else 0} jams")
+        check((pub['jams'][0] or {}).get('id') == jid, 'y es la jam del token')
+
+        # Lo que el link NO tiene que traer. Son datos de gente real, y el
+        # link se manda por WhatsApp: si estuvieran acá, se regalan con él.
+        gente = (pub.get('cantantes') or []) + (pub.get('musicos') or [])
+        check(all(not p.get('telefono') and not p.get('email') for p in gente),
+              f'ninguna de las {len(gente)} personas trae teléfono ni mail')
+        check(pub['jams'][0].get('ensayos') == [], 'no trae los ensayos')
+        check(pub['jams'][0].get('notas') == '', 'no trae las notas de la jam')
+        check(pub.get('esAdmin') is False, 'el link nunca es admin')
+
+        st, nada = pedir('/rest/v1/rpc/estado_publico', {'t': 'inventado123'})
+        check(st == 200 and nada is None, 'un token inventado no devuelve nada', f'HTTP {st}')
+
+        # Escribir: solo la jam del token, y solo por sus funciones.
+        pjam = dict(pub['jams'][0])
+        st, _ = pedir('/rest/v1/rpc/guardar_jam_publica',
+                      {'t': tok, 'j': pjam, 'version_esperada': pjam['version']})
+        check(st == 200, 'con el token se escribe esa jam', f'HTTP {st}')
+
+        otra = next((j for j in estado['jams'] if j['id'] != jid), None)
+        if otra:
+            st, _ = pedir('/rest/v1/rpc/guardar_jam_publica', {'t': tok, 'j': otra})
+            check(st >= 400, 'el token NO abre otra jam', f'HTTP {st}')
+
+        for fn, args in [('guardar_catalogo', {'c': {}}), ('vaciar_todo', {}),
+                         ('app_estado', {}), ('borrar_jam', {'jid': jid}),
+                         ('guardar_jam', {'j': pjam}), ('restaurar_respaldo', {'p_id': 1}),
+                         ('respaldos_de', {'p_jam': jid}), ('quitar_token', {'p_jam': jid})]:
+            st, _ = pedir(f'/rest/v1/rpc/{fn}', args)
+            check(st in (401, 403, 404), f'anon no puede llamar a {fn}()', f'HTTP {st}')
+
+        # Los respaldos: es lo que hace que un link que edita no dé miedo.
+        st, resp = pedir('/rest/v1/rpc/respaldos_de', {'p_jam': jid}, jwt)
+        check(st == 200 and isinstance(resp, list) and len(resp) >= 1,
+              'el guardado dejó respaldo', f'HTTP {st}, {len(resp or [])}')
+        check(any(r.get('quien') == 'link público' for r in resp),
+              'y dice que lo tocó el link, no una persona')
+
+        st, _ = pedir('/rest/v1/rpc/quitar_token', {'p_jam': jid}, jwt)
+        # 204 y no 200: quitar_token() devuelve void, y PostgREST traduce eso
+        # a "sin contenido".
+        check(st in (200, 204), 'un miembro corta el link', f'HTTP {st}')
+        st, muerto = pedir('/rest/v1/rpc/estado_publico', {'t': tok})
+        check(muerto is None, 'y el link cortado deja de servir')
+
         print('\n── permisos ────────────────────────────────────────────')
         st, _ = pedir('/rest/v1/rpc/app_estado', {})          # sin token
         check(st in (401, 403), 'sin sesión no se lee', f'HTTP {st}')

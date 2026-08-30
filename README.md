@@ -283,6 +283,53 @@ artista, que en el celular abre la app de Spotify con el tema arriba de todo. Si
 cover equivocado, se fija el link bueno a mano en el tema (campo *Spotify* del
 formulario) y la app lo respeta.
 
+## El link para compartir una jam
+
+Desde el ⋯ de una jam, **🔗 Link para compartir**. Quien lo reciba entra sin
+cuenta y **puede editar esa jam**: sumar temas, reordenar, sacar, cambiar quién
+canta. Es para mandar por WhatsApp antes de la jam y que cada uno acomode lo
+suyo.
+
+El link es `#/v/<token>`, con 12 caracteres al azar (72 bits). No es el id de la
+jam, que es adivinable — `hist-jam-nostalgia-15-8`. Se corta desde el mismo
+diálogo: borrar el token mata el link para todos en el momento.
+
+### Qué ve y qué no
+
+Ve el setlist de esa jam y el repertorio, que hace falta para poder buscar un
+tema y sumarlo. **No** ve las otras jams, ni los teléfonos y mails de las
+personas, ni los ensayos y a quién convocaron, ni las notas de la jam. Los
+cantantes van solo con el nombre.
+
+Del otro lado, `anon` sigue sin poder tocar ninguna tabla: lo único que puede
+ejecutar son cuatro funciones, y las cuatro piden token. Las de la banda
+—`app_estado`, `guardar_catalogo`, `vaciar_todo`, `borrar_jam`— le siguen
+devolviendo 401. `scripts/probar-api.py` lo comprueba una por una, sin sesión,
+que es lo único que vale: lo que decide no es la lógica en SQL sino qué deja
+pasar PostgREST con el rol `anon`.
+
+Los temas nuevos entran de a uno por `crear_song_publica()`, que solo inserta.
+El camino normal es `guardar_catalogo()`, que recibe el catálogo entero y
+**borra** lo que no venga en el paquete: por un link, eso sería regalar la
+posibilidad de vaciar el repertorio.
+
+### Vuelta atrás
+
+Si cualquiera con el link puede vaciar la lista, tiene que haber cómo volverla.
+Antes no había: `jam.version` subía pero no guardaba nada.
+
+Ahora la base guarda una copia de la lista **antes de cada guardado** —venga de
+un miembro, del link o de `psql`— y se queda con las últimas 20 por jam. Se ven
+y se restauran desde el ⋯ → **↩ Versiones anteriores**, que dice quién tocó cada
+una (un mail, o «link público»). Restaurar cambia solo los temas: la fecha, la
+hora y el lugar quedan como están. Y deja su propia copia, así que también se
+deshace.
+
+El truco para no duplicar las 90 líneas de `guardar_jam()`: esa función
+actualiza la fila de `jam` **antes** de borrar los ítems, así que un trigger
+sobre la fila los ve todavía enteros. De paso cubre todos los caminos de
+escritura sin que ninguno tenga que acordarse.
+
 ## LIVE VIEW
 
 **▶ LIVE VIEW** abre la lista a pantalla completa para seguirla durante la jam:
@@ -497,6 +544,8 @@ db/08-admin.sql        administrar la lista desde la app
 db/10-datos.sql        el repertorio y las jams históricas, generado
 db/12-notas.sql        las notas privadas de cada quien
 db/13-duracion-spotify.sql  cuánto dura cada tema, y su link de Spotify
+db/14-album.sql        el disco y la tapa
+db/15-link-publico.sql el link para compartir una jam, y los respaldos
 ```
 
 **La regla que ordena el esquema: nada que se pueda calcular se guarda.** El

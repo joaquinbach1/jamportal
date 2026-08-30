@@ -154,6 +154,38 @@ alChocarConOtro(e => {
   toast(`Guardé lo tuyo en ${e.jamNombre || 'esa jam'} — pisó lo que había guardado otra persona`);
 });
 
+/**
+ * La pantalla de "no se pudo". Dice qué pasó y no inventa datos: mostrar
+ * un repertorio que no es el de la banda es peor que no mostrar nada.
+ */
+function pintarProblema(tipo = null) {
+  const p = store.problema || {};
+  const textos = {
+    red: ['No llego a la base', 'Puede ser tu conexión o que Supabase esté caído. '
+          + 'Nada se perdió: los datos están en la base, no en este teléfono.'],
+    vacia: ['La base está vacía', 'Contesta bien, pero no tiene nada cargado. '
+          + 'Se llena corriendo los archivos de db/ (mirá el README).'],
+    config: ['Falta configurar la base', 'js/config.js no tiene la URL ni la clave del proyecto.'],
+    link: ['Este link ya no sirve', 'O lo revocaron, o está mal copiado. '
+          + 'Pedile uno nuevo a alguien de la banda.'],
+  };
+  const cual = tipo || p.tipo;
+  const [titulo, detalle] = textos[cual] || ['Algo salió mal', ''];
+  document.body.classList.add('en-login');
+  clear(view);
+  view.appendChild(h('div.empty', { style: { maxWidth: '460px', margin: '14vh auto 0' } },
+    h('b', {}, titulo),
+    h('p', {}, detalle),
+    p.mensaje ? h('code.mono', {}, p.mensaje) : null,
+    h('div', { style: { display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '14px' } },
+      h('button.btn.sm.primary', { onclick: () => location.reload() }, '↻ Reintentar'),
+      /* "Salir" solo tiene sentido si hay sesión de la que salir. Al que
+         entró por un link no le sobra nada que cerrar. */
+      (store.publico || cual === 'link') ? null : h('button.btn.sm.ghost', {
+        onclick: () => { store.cerrarSesion(); location.reload(); },
+      }, 'Salir'))));
+}
+
 iniciarTema();
 $('#temaSlot').appendChild(botonTema(h));
 
@@ -168,6 +200,33 @@ $('#temaSlot').appendChild(botonTema(h));
   if (compartido) {
     rutaActual = location.hash.slice(1);
     await pintarCompartido(compartido[1]);
+    return;
+  }
+
+  /* ============================================================
+     El link de una jam. Va antes de la puerta a propósito: el
+     punto entero es que se abra sin cuenta. La base decide qué
+     se ve y qué se puede tocar; acá solo se dibuja.
+     ============================================================ */
+  const link = location.hash.match(/^#\/v\/([^/]+)/);
+  if (link) {
+    document.body.classList.add('modo-link');
+    await store.initPublico(link[1]);
+    if (store.problema) { pintarProblema(); return; }
+    const jam = store.jams[0];
+    if (!jam) { pintarProblema('link'); return; }
+    /* Siempre la vista de lista, ancha o angosta: es lo que un invitado
+       necesita, y el editor completo trae media app que no le toca. */
+    $('#tbTitulo').textContent = jam.nombre || 'Jam';
+    clear(view);
+    view.appendChild(vistaMovil(jam.id));
+    alHaberCambiosAjenos(() => {
+      const escribiendo = document.activeElement &&
+        /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+      if (escribiendo || document.querySelector('.modal-back, .hoja-back')) return;
+      clear(view);
+      view.appendChild(vistaMovil(jam.id));
+    });
     return;
   }
 
@@ -190,32 +249,14 @@ $('#temaSlot').appendChild(botonTema(h));
      otras jams— y todo lo que se editaba desde ahí se perdía. Mostrar
      datos que no son los de la banda es peor que no mostrar nada. */
   if (store.problema) {
-    const { tipo, mensaje } = store.problema;
-    if (tipo === 'sesion') {
+    if (store.problema.tipo === 'sesion') {
       /* Vencida de verdad: la sesión ya se borró sola. Recargar cae en la
          pantalla de entrada, que es lo único que puede arreglarlo. */
       document.body.classList.add('en-login');
       await vistaLogin(view, () => location.reload());
       return;
     }
-    const textos = {
-      red: ['No llego a la base', 'Puede ser tu conexión o que Supabase esté caído. '
-            + 'Nada se perdió: los datos están en la base, no en este teléfono.'],
-      vacia: ['La base está vacía', 'Contesta bien, pero no tiene nada cargado. '
-            + 'Se llena corriendo los archivos de db/ (mirá el README).'],
-      config: ['Falta configurar la base', 'js/config.js no tiene la URL ni la clave del proyecto.'],
-    };
-    const [titulo, detalle] = textos[tipo] || ['Algo salió mal', ''];
-    document.body.classList.add('en-login');
-    view.appendChild(h('div.empty', { style: { maxWidth: '460px', margin: '14vh auto 0' } },
-      h('b', {}, titulo),
-      h('p', {}, detalle),
-      h('code.mono', {}, mensaje),
-      h('div', { style: { display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '14px' } },
-        h('button.btn.sm.primary', { onclick: () => location.reload() }, '↻ Reintentar'),
-        h('button.btn.sm.ghost', {
-          onclick: () => { store.cerrarSesion(); location.reload(); },
-        }, 'Salir'))));
+    pintarProblema();
     return;
   }
   /* Entraste bien, pero tu mail no está habilitado. No es un error de
