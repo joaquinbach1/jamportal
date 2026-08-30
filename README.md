@@ -285,7 +285,10 @@ formulario) y la app lo respeta.
 
 ## El link para compartir una jam
 
-Desde el ⋯ de una jam, **🔗 Link para compartir**. Quien lo reciba entra sin
+Desde la jam: en la compu, los botones **🔗 Compartir** y **↩ Versiones** de la
+barra de acciones; en el celular, las mismas dos entradas en el ⋯. (La barra de
+arriba con el ⋯ solo existe abajo de 820px, así que en la compu tienen que estar
+en la barra de acciones o no están en ningún lado.) Quien lo reciba entra sin
 cuenta y **puede editar esa jam**: sumar temas, reordenar, sacar, cambiar quién
 canta. Es para mandar por WhatsApp antes de la jam y que cada uno acomode lo
 suyo.

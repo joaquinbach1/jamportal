@@ -1515,6 +1515,16 @@ export function vistaEditor(jamId) {
       title: 'Las letras de todos los temas, en orden',
     }, '📖 LYRICS VIEW'),
     h('button.btn.sm.secundaria', { onclick: () => copiar(comoTexto()) }, '📋 Copiar lista'),
+    /* En el celular estos dos están en el ⋯, que arriba de 820px no existe:
+       la barra de acciones es el único lugar donde se los ve con el mouse. */
+    h('button.btn.sm.secundaria', {
+      title: 'Un link para que entren sin cuenta y editen esta jam',
+      onclick: () => dialogoLink(jam),
+    }, '🔗 Compartir'),
+    h('button.btn.sm.secundaria', {
+      title: 'Volver la lista a como estaba antes de un cambio',
+      onclick: () => dialogoRespaldos(jam, refrescar),
+    }, '↩ Versiones'),
     (jam.historica || bloqueada()) ? null
       : h('button.btn.sm.secundaria', {
           title: 'Congelar la lista para pasarla en vivo',
