@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "name": "jamportal",
+  "type": "module",
+  "description": "El sitio sigue siendo estático y sin build. Esta dependencia es solo para la función que dibuja la tarjeta del link (api/og.js): Vercel la instala para las funciones y no toca nada de lo que se sirve al navegador. El `type: module` no es decorativo: sin él, Node avisa que api/*.js no se sabe si es ESM o CommonJS, y el empaquetador de Vercel lo trataba como CommonJS y la función no cargaba.",
+  "dependencies": {
+    "@vercel/og": "^0.6.2"
+  }
+}
