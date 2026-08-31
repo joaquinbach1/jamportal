@@ -222,7 +222,20 @@ Los medleys no son una tabla: viven adentro del setlist de cada jam, así que se
 juntan de todas, se deduplican por qué temas tienen (dos medleys con los mismos
 temas son el mismo, se llame como se llame) y se ordenan por cuántas veces se
 usaron. No se esconden los de la jam que estás editando: repetir uno es una
-decisión tuya. El filtro mira también los temas de adentro: casi todos se llaman
+decisión tuya.
+
+**Por el link también.** `estado_publico()` devuelve una sola jam —el link no
+tiene por qué mostrar el resto— así que los medleys llegan por
+`medleys_publicos()`, ya deduplicados y sin decir de qué jam salió cada uno. No
+agrega nada que el link no muestre ya: el repertorio entero se ve igual, esto
+solo dice qué temas suelen ir juntos.
+
+**Los que no tenían nombre.** Siete se llamaban «Medley» a secas, que es lo que
+la app pone por defecto. `db/17` les puso uno derivado de los temas: si son todos
+del mismo artista, ese («Medley The Rolling Stones»); si no, los dos primeros
+títulos («Medley: Black Hole Sun / Zombie», con un «+2» si quedaron más afuera).
+Los que ya tenían nombre puesto a mano no se tocan, y las versiones anteriores
+quedan en `medley_titulo_previo` por si hay que volver. El filtro mira también los temas de adentro: casi todos se llaman
 «Medley», así que por título no encontrarías ninguno.
 
 Los temas que **la banda nunca tocó** van con fondo rojo clarito, para verlos de
@@ -615,6 +628,8 @@ db/13-duracion-spotify.sql  cuánto dura cada tema, y su link de Spotify
 db/14-album.sql        el disco y la tapa
 db/15-link-publico.sql el link para compartir una jam, y los respaldos
 db/16-resumen-og.sql   el resumen chico para la tarjeta del link
+db/17-nombrar-medleys.sql  nombre a los medleys que no tenían
+db/18-medleys-publicos.sql los medleys, también por el link
 ```
 
 **La regla que ordena el esquema: nada que se pueda calcular se guarda.** El

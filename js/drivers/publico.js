@@ -74,6 +74,12 @@ export class PublicoDriver {
     this.version = jam ? (jam.version ?? null) : null;
     this.ultimaJam = jam ? JSON.stringify(jam) : null;
     this.songs = new Set((estado.songs || []).map(s => s.id));
+
+    /* Los medleys vienen aparte: viven adentro del setlist de las otras
+       jams, y por el link llega una sola. Sin esto, la pastilla de Medleys
+       se abría vacía. */
+    estado.medleys = await this.rpc('medleys_publicos', { t: this.token });
+
     this.revision = await this.rpc('revision_publica', { t: this.token });
     return estado;
   }
