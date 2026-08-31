@@ -2330,17 +2330,22 @@ body.modo-link .view { padding: 20px 16px calc(96px + env(safe-area-inset-bottom
   padding: 9px 10px; border-radius: 5px; cursor: pointer;
   box-shadow: inset 3px 0 0 var(--medley-linea);
 }
-.ac-medley .ac-t {
-  color: var(--acc-2);
-  /* Los títulos largos —"Medley Bruno Mars/Sting/Marley Rabaquino doc 🎥"—
-     se partían en tres renglones y empujaban los chips fuera de lugar. */
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.ac-medley .ac-t { color: var(--acc-2); }
+/* El título también entero. Se cortaba para que los chips no se corrieran de
+   lugar, pero eso se arregló anclándolos arriba (align-self: flex-start), y
+   cortar "Medley Bruno Mars/Sting/Marley Rabaquino" en "Medley Bruno
+   Mars/Sting/…" tira justo la parte que dice de qué es. */
+.buscador-full .ac-medley .ac-t { white-space: normal; line-height: 1.3; }
+.ac-medley .ac-s { max-width: 100%; }
+/* La lista de temas va entera, envuelta en varios renglones. Cortarla con
+   puntos suspensivos escondía justo lo que distingue un medley de otro:
+   casi todos se llaman "Medley" a secas. */
+.ac-medley .ac-s.entera {
+  white-space: normal; overflow: visible; text-overflow: clip;
+  line-height: 1.45; margin-top: 3px;
 }
-.ac-medley .ac-s {
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  max-width: 100%;
-}
-.ac-medley .ac-r { margin-left: auto; flex: none; display: flex; gap: 5px; align-self: center; }
+.ac-medley { align-items: flex-start; }
+.ac-medley .ac-r { margin-left: auto; flex: none; display: flex; gap: 5px; align-self: flex-start; }
 .ac-medley > div:first-child { flex: 1 1 auto; min-width: 0; }
 .buscador-full .ac-medley { padding: 11px 10px; }
 
