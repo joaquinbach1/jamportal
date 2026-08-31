@@ -104,6 +104,12 @@ window.addEventListener('hashchange', () => {
   document.body.classList.remove('lista-full');
 });
 
+/* Medleys plegados. Va por objeto y no por índice: al reordenar la lista
+   los índices se corren, pero el medley sigue siendo el mismo. Un WeakSet
+   además no deja rastro — esto es cómo estás mirando la lista, no un dato
+   de la jam, así que no tiene por qué viajar a la base. */
+const medleysPlegados = new WeakSet();
+
 /* Jams históricas que abriste a mano en esta sesión. Vive fuera de la vista
    porque la vista se redibuja sola (cambios de la nube, refrescar) y si no,
    el candado se volvía a cerrar solo. */
@@ -873,16 +879,29 @@ export function vistaEditor(jamId) {
       },
     });
 
+    const plegado = medleysPlegados.has(it);
+    const cuantos = (it.songs || []).length;
+
     poner(cont,
       h('div.med-head', {},
         bloqueada() ? null : manija(),
         h('span.sl-num', {}, numero),
+        h('button.med-plegar', {
+          title: plegado ? 'Mostrar los temas' : 'Contraer el medley',
+          onclick: e => {
+            e.stopPropagation();
+            if (plegado) medleysPlegados.delete(it); else medleysPlegados.add(it);
+            pintarTodo();
+          },
+        }, plegado ? '▸' : '▾'),
         h('span.med-badge', {}, 'MEDLEY'),
         h('input', { value: it.titulo || 'Medley', disabled: bloqueada(), oninput: e => { it.titulo = e.target.value; guardar(); } }),
+        /* plegado, el medley tiene que seguir diciendo qué hay adentro */
+        plegado ? h('span.med-cuantos', {}, `${cuantos} tema${cuantos === 1 ? '' : 's'}`) : null,
         bloqueada() ? null : h('div.sl-actions', {},
           h('button.icon-btn', { title: 'Desarmar el medley', onclick: () => desarmarMedley(i) }, '⊟'),
           h('button.icon-btn.danger', { title: 'Quitar', onclick: () => quitar(i) }, '✕'))),
-      h('div.med-songs', {},
+      plegado ? null : h('div.med-songs', {},
         (it.songs || []).map((ms, k) => {
           const s = store.song(ms.songId);
           return h('div.med-song' + (s && !(s.jams || []).length ? '.nueva' : ''), {},
