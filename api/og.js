@@ -16,10 +16,12 @@
 
 import { ImageResponse } from '@vercel/og';
 
-/* Runtime de Node y no edge: con edge, `vercel dev` no puede resolver las
-   fuentes que @vercel/og carga y la función no se puede probar local. El
-   handler recibe una Request y devuelve una Response, que es la forma web
-   que el runtime de Node también entiende. */
+/* Edge y no Node, aunque en edge `vercel dev` no la pueda arrancar local
+   ("not implemented... yet" resolviendo las fuentes). En Node el trazado de
+   archivos de Vercel se pierde el wasm y las tipografías que esto necesita, y
+   la función revienta en producción con FUNCTION_INVOCATION_FAILED. Edge es
+   para lo que @vercel/og está hecha: se verifica desplegada. */
+export const config = { runtime: 'edge' };
 
 const SUPABASE_URL = 'https://qvqrwjzbfenupkqjrhli.supabase.co';
 const SUPABASE_KEY = 'sb_publishable__uhmgdmoIAqP6ar_oJqXFQ_b9GnG_JH';
