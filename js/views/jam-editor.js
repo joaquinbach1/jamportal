@@ -127,7 +127,7 @@ function manija(titulo = 'Arrastrar para reordenar') {
   const sp = h('span.handle', {
     title: titulo,
     onmousedown: () => {
-      const fila = sp.closest('.sl-item, .preview-row');   // la busca sola al apretarla
+      const fila = sp.closest('.med-song, .sl-item, .preview-row');   // la busca sola al apretarla
       if (!fila) return;
       fila.draggable = true;
       document.addEventListener('mouseup', () => { fila.draggable = false; }, { once: true });
@@ -862,6 +862,30 @@ export function vistaEditor(jamId) {
     return row;
   }
 
+  /* ---------- reordenar adentro del medley ---------- */
+
+  /** En qué posición cae el cursor, comparando contra la mitad de cada fila. */
+  function indiceEnMedley(cont, y) {
+    const filas = [...cont.querySelectorAll('.med-song')];
+    for (let k = 0; k < filas.length; k++) {
+      const r = filas[k].getBoundingClientRect();
+      if (y < r.top + r.height / 2) return k;
+    }
+    return filas.length;
+  }
+
+  function limpiarHuecoMedley(cont) {
+    cont.querySelectorAll('.med-song').forEach(f => f.classList.remove('hueco-antes', 'hueco-despues'));
+  }
+
+  function marcarHuecoMedley(cont, y) {
+    limpiarHuecoMedley(cont);
+    const filas = [...cont.querySelectorAll('.med-song')];
+    const k = indiceEnMedley(cont, y);
+    if (k < filas.length) filas[k].classList.add('hueco-antes');
+    else if (filas.length) filas[filas.length - 1].classList.add('hueco-despues');
+  }
+
   function filaMedley(it, i, numero) {
     const cont = h('div.sl-item.sl-medley', {
       ondragstart: e => { arrastre = { tipo: 'item', index: i }; cont.classList.add('dragging'); e.dataTransfer.setData('text/plain', it.titulo || 'Medley'); },
@@ -927,10 +951,43 @@ export function vistaEditor(jamId) {
         bloqueada() ? null : h('div.sl-actions', {},
           h('button.icon-btn', { title: 'Desarmar el medley', onclick: () => desarmarMedley(i) }, '⊟'),
           h('button.icon-btn.danger', { title: 'Quitar', onclick: () => quitar(i) }, '✕'))),
-      plegado ? null : h('div.med-songs', {},
+      plegado ? null : h('div.med-songs', {
+        /* Reordenar adentro del medley. El contenedor es quien escucha:
+           con franjas finas entre filas había que apuntar al milímetro,
+           igual que pasaba en la lista grande. */
+        ondragover: e => {
+          if (!arrastre || arrastre.tipo !== 'medleySong' || arrastre.medley !== i) return;
+          e.preventDefault(); e.stopPropagation();
+          marcarHuecoMedley(e.currentTarget, e.clientY);
+        },
+        ondragleave: e => { if (!e.currentTarget.contains(e.relatedTarget)) limpiarHuecoMedley(e.currentTarget); },
+        ondrop: e => {
+          if (!arrastre || arrastre.tipo !== 'medleySong' || arrastre.medley !== i) return;
+          e.preventDefault(); e.stopPropagation();
+          const destino = indiceEnMedley(e.currentTarget, e.clientY);
+          limpiarHuecoMedley(e.currentTarget);
+          const desde = arrastre.indice;
+          arrastre = null;
+          if (destino === desde || destino === desde + 1) { pintarTodo(); return; }
+          const [x] = it.songs.splice(desde, 1);
+          it.songs.splice(desde < destino ? destino - 1 : destino, 0, x);
+          guardar(); pintarTodo();
+        },
+      },
         (it.songs || []).map((ms, k) => {
           const s = store.song(ms.songId);
-          return h('div.med-song' + (s && !(s.jams || []).length ? '.nueva' : ''), {},
+          const fila = h('div.med-song' + (s && !(s.jams || []).length ? '.nueva' : ''), {
+            ondragstart: e => {
+              arrastre = { tipo: 'medleySong', medley: i, indice: k };
+              fila.classList.add('dragging');
+              e.dataTransfer.effectAllowed = 'move';
+              e.dataTransfer.setData('text/plain', s ? s.titulo : 'tema');
+              e.stopPropagation();
+            },
+            ondragend: () => { fila.classList.remove('dragging'); fila.draggable = false; arrastre = null; },
+          });
+          poner(fila,
+            bloqueada() ? null : manija('Arrastrar para reordenar dentro del medley'),
             franjaDot(s && s.franja),
             h('span', {}, s ? s.titulo : '—'),
             h('span.dim', { style: { fontSize: '11px' } }, s ? s.artista : ''),
@@ -957,6 +1014,7 @@ export function vistaEditor(jamId) {
                 title: 'Borrarlo de la lista',
                 onclick: () => { it.songs.splice(k, 1); if (!it.songs.length) quitar(i); else { guardar(); pintarTodo(); } },
               }, '✕')));
+          return fila;
         }),
         bloqueada() ? null : h('div', { style: { marginTop: '6px' } },
           h('button.btn.xs.ghost', {

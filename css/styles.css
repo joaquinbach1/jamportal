@@ -702,6 +702,13 @@ table.tbl tr.elegida td:first-child { box-shadow: inset 2px 0 0 var(--acc); }
   background: var(--medley-song); border-radius: 5px;
   border: 1px solid var(--medley-song-linea);
 }
+/* arrastrando adentro del medley: el hueco se abre donde va a caer */
+.med-song.dragging { opacity: .35; }
+.med-song.hueco-antes { box-shadow: 0 -3px 0 var(--acc); margin-top: 9px; }
+.med-song.hueco-despues { box-shadow: 0 3px 0 var(--acc); margin-bottom: 9px; }
+.med-song .handle { cursor: grab; color: var(--txt-3); font-size: 13px; letter-spacing: -2px; padding: 0 2px; }
+.med-song .handle:active { cursor: grabbing; }
+
 .med-song .sl-actions { opacity: .5; }
 .med-song:hover .sl-actions { opacity: 1; }
 
