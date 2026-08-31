@@ -1678,13 +1678,29 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
 /* la trompeta: apagada en gris, encendida cuando el tema lleva vientos */
 .icon-btn.vientos {
   filter: grayscale(1); opacity: .35;
-  padding: 1px 4px; font-size: 13px; flex: none;
-  transition: filter .12s, opacity .12s;
+  padding: 1px 5px; font-size: 13px; flex: none;
+  border: 1px solid transparent; border-radius: 999px;
+  transition: filter .12s, opacity .12s, background .12s, border-color .12s;
 }
 .sl-item:hover .icon-btn.vientos, .med-song:hover .icon-btn.vientos { opacity: .55; }
 .icon-btn.vientos:hover { filter: none; opacity: 1; background: none; }
-.icon-btn.vientos.tiene { filter: none; opacity: 1; }
-.vientos-fijo { font-size: 13px; flex: none; }
+
+/* Encendida no alcanza con quitarle el gris: al lado de los cantantes y
+   del bpm, un emoji suelto se pierde. Va en una pastilla, que es como se
+   lee el resto de los estados de la fila. */
+.icon-btn.vientos.tiene {
+  filter: none; opacity: 1;
+  background: var(--acc-tinte);
+  border-color: var(--acc);
+  box-shadow: 0 0 0 1px var(--acc-tinte), 0 0 8px rgba(255, 201, 77, .3);
+}
+.icon-btn.vientos.tiene:hover { background: var(--acc-tinte-2); }
+
+.vientos-fijo {
+  font-size: 13px; flex: none;
+  padding: 1px 5px; border-radius: 999px;
+  background: var(--acc-tinte); border: 1px solid var(--acc);
+}
 
 /* plegar el medley: cuando tiene ocho temas, ocupa media pantalla y
    tapa el resto de la lista */
