@@ -2357,6 +2357,12 @@ body.modo-link .view { padding: 20px 16px calc(96px + env(safe-area-inset-bottom
 .mv-fila.nueva:active { background: var(--nueva-linea); }
 .mv-medley .mv-fila.nueva { background: var(--nueva-fondo); }
 
+/* Lo mismo en el editor de la compu: ahí el texto "nunca tocada" ya estaba,
+   pero hay que leerlo tema por tema. El color se ve de un vistazo. */
+.sl-item.nueva { background: var(--nueva-fondo); }
+.sl-item.nueva:hover { background: var(--nueva-linea); }
+.med-song.nueva { background: var(--nueva-fondo); border-radius: 4px; }
+
 /* ---------- los dos modos del buscador: temas o medleys ---------- */
 .bf-pills { flex: none; display: flex; gap: 8px; padding: 0 12px 10px; }
 .bf-pill {

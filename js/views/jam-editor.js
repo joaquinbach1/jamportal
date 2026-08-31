@@ -686,7 +686,10 @@ export function vistaEditor(jamId) {
     if (!s) return h('div.sl-item', {}, h('span.sl-num', {}, numero), h('div.sl-main', {}, h('span.dim', {}, 'Tema borrado de DBSongs')),
       h('button.icon-btn.danger', { onclick: () => quitar(i) }, '✕'));
 
-    const row = h('div.sl-item', {
+    /* Nunca tocada: fondo rojo clarito, igual que en la lista del celular.
+       El texto "nunca tocada" ya estaba, pero hay que leerlo tema por tema;
+       el color deja ver de un vistazo cuánto de la lista hay que ensayar. */
+    const row = h('div.sl-item' + ((s.jams || []).length ? '' : '.nueva'), {
       ondragstart: e => { arrastre = { tipo: 'item', index: i }; row.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', s.titulo); },
       ondragend: () => { row.classList.remove('dragging'); arrastre = null; },
     },
@@ -818,7 +821,7 @@ export function vistaEditor(jamId) {
       h('div.med-songs', {},
         (it.songs || []).map((ms, k) => {
           const s = store.song(ms.songId);
-          return h('div.med-song', {},
+          return h('div.med-song' + (s && !(s.jams || []).length ? '.nueva' : ''), {},
             franjaDot(s && s.franja),
             h('span', {}, s ? s.titulo : '—'),
             h('span.dim', { style: { fontSize: '11px' } }, s ? s.artista : ''),
