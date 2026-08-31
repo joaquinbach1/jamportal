@@ -254,6 +254,12 @@ adentro se cortaba a los tres resultados. Suelto se lleva todo el alto que
 quede —693px de 844 contra los 340 del tope de antes— y con el teclado abierto
 se acomoda solo, porque mide en `100dvh`.
 
+Todo lo que está en la lista se toca y abre su hoja: un tema, el medley entero
+(desarmarlo o sacarlo), el break (cambiarle los minutos) y el bloque (cambiarle
+el nombre). Los temas de adentro de un medley también, para sacarlos de ahí —
+y si queda uno solo, el medley se deshace, porque un medley de un tema no es un
+medley.
+
 El artista **no** está en el renglón, a propósito: no entra sin comerse el
 nombre del cantante, que es el dato que se busca de verdad mirando la lista. Se
 toca el tema y ahí están artista, cuánto dura, quién canta, el tempo y el link

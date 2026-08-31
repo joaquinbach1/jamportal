@@ -110,7 +110,7 @@ export function vistaMovil(jamId) {
   /* ============================================================
      Detalle de un tema — lo que no entra en el renglón
      ============================================================ */
-  function hojaTema(f, indice) {
+  function hojaTema(f, sacar) {
     const s = f.song;
     if (!s) return;
     const cantantes = (f.cantantes || []).join(', ');
@@ -151,11 +151,86 @@ export function vistaMovil(jamId) {
          viaja: crear_song_publica solo da de alta, nunca renombra. */
       editable() && !store.publico
         ? { icono: '✎', texto: 'Editar el tema', onClick: () => dialogoCancion(s, pintar) } : null,
-      editable() && indice != null
-        ? { icono: '✕', texto: 'Sacar de la lista', peligro: true,
-            onClick: () => { jam.items.splice(indice, 1); guardar(); pintar(); toast('Sacado de la lista'); } }
+      editable() && sacar
+        ? { icono: '✕', texto: sacar.texto, peligro: true, onClick: sacar.hacer }
         : null,
     ], { detalle });
+  }
+
+  /* ============================================================
+     Lo que no es un tema suelto: medley, break y bloque
+     ------------------------------------------------------------
+     Los tres se podían agregar y no se podían sacar: la fila no
+     tenía dónde tocar. Ahora cada uno abre su propia hoja, con lo
+     poco que hay para hacerle y el sacar al final.
+     ============================================================ */
+  function hojaMedley(f, pos, quitar) {
+    const detalle = h('div.hoja-detalle', {},
+      ...f.songs.map((x, k) => h('div.hd-fila', {},
+        h('span', {}, String.fromCharCode(97 + k)),
+        h('b', {}, x.song ? x.song.titulo : '—'),
+        (x.cantantes || []).length ? h('em', {}, ' ' + x.cantantes.join(', ')) : null)),
+      h('div.hd-fila', {}, h('span', {}, 'Dura'), h('b', {}, duracionLinda(f.seg))));
+
+    hojaAcciones(f.titulo || 'Medley', [
+      { icono: '⊟', texto: 'Desarmarlo y dejar los temas sueltos', onClick: () => {
+          jam.items.splice(pos, 1, ...f.songs.map(x => ({
+            tipo: 'song', songId: x.songId, cantantes: x.cantantes || [], notas: '' })));
+          guardar(); pintar();
+          toast(`${f.songs.length} temas sueltos`, 'ok');
+        } },
+      { icono: '✕', texto: 'Sacar el medley de la lista', peligro: true, onClick: quitar },
+    ], { detalle });
+  }
+
+  function hojaBreak(f, pos, quitar) {
+    hojaAcciones(f.label || 'BREAK', [
+      { icono: '⏱', texto: 'Cambiar los minutos', onClick: () => dialogoBreak(pos) },
+      { icono: '✕', texto: 'Sacar el break de la lista', peligro: true, onClick: quitar },
+    ], { detalle: h('div.hoja-detalle', {},
+      h('div.hd-fila', {}, h('span', {}, 'Dura'), h('b', {}, `${f.minutos} minutos`)),
+      f.hora ? h('div.hd-fila', {}, h('span', {}, 'Cae'), h('b', {}, f.hora)) : null) });
+  }
+
+  function dialogoBreak(pos) {
+    const it = jam.items[pos];
+    const fMin = h('input', { type: 'number', min: 1, max: 90, value: it.minutos || 15 });
+    const fNom = input({ value: it.label || 'BREAK' });
+    const m = modal({
+      title: 'El break',
+      body: [field('Nombre', fNom), field('Minutos', fMin)],
+      footer: [
+        h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
+        h('button.btn.primary', { onclick: () => {
+            it.label = fNom.value.trim() || 'BREAK';
+            it.minutos = parseInt(fMin.value, 10) || 0;
+            guardar(); m.close(); pintar(); toast('Break actualizado', 'ok');
+          } }, 'Guardar'),
+      ],
+    });
+    setTimeout(() => fMin.focus(), 80);
+  }
+
+  function hojaBloque(f, pos, quitar) {
+    hojaAcciones(f.label || 'Bloque', [
+      { icono: '✎', texto: 'Cambiarle el nombre', onClick: () => {
+          const it = jam.items[pos];
+          const fNom = input({ value: it.label || '', placeholder: 'ROCK NACIONAL, 2000s, PIANO BAR…' });
+          const m = modal({
+            title: 'El bloque',
+            body: [field('Nombre', fNom)],
+            footer: [
+              h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
+              h('button.btn.primary', { onclick: () => {
+                  it.label = fNom.value.trim();
+                  guardar(); m.close(); pintar(); toast('Bloque actualizado', 'ok');
+                } }, 'Guardar'),
+            ],
+          });
+          setTimeout(() => { fNom.focus(); fNom.select(); }, 80);
+        } },
+      { icono: '✕', texto: 'Sacar el bloque de la lista', peligro: true, onClick: quitar },
+    ]);
   }
 
   /* ============================================================
@@ -634,7 +709,14 @@ export function vistaMovil(jamId) {
      cantante, y con el cantante puesto a mano en esa jam, el que
      no puede faltar es él.
      ============================================================ */
-  function renglon(f, num, indice) {
+  /**
+   * @param {object} f       la fila que devolvió agenda()
+   * @param {string|number} num
+   * @param {object} [opts]
+   * @param {function} [opts.alTocar]  qué abre el toque
+   * @param {boolean} [opts.conManija] si se puede arrastrar (solo el 1er nivel)
+   */
+  function renglon(f, num, { alTocar, conManija = false } = {}) {
     const s = f.song;
     const cantantes = (f.cantantes || []).join(', ');
     /* Nunca tocada: va en rojo clarito. `jams` es la lista de jams en las que
@@ -645,10 +727,10 @@ export function vistaMovil(jamId) {
       onclick: e => {
         if (e.target.closest('.mv-handle')) return;
         if (performance.now() - finArrastre < 300) return;
-        hojaTema(f, indice);
+        alTocar && alTocar();
       },
     },
-      editable() && indice != null ? manija() : null,
+      editable() && conManija ? manija() : null,
       h('span.mv-n', {}, num),
       h('span.mv-txt', {},
         h('b', {}, s ? s.titulo : 'Tema borrado'),
@@ -681,32 +763,81 @@ export function vistaMovil(jamId) {
     clear(lista);
     plan.filas.forEach((f, pos) => {
       const marcar = el => { el.dataset.i = pos; return el; };
+      /* Sacar cualquier cosa de la lista es lo mismo: correr un ítem del
+         arreglo. Antes solo los temas sueltos tenían cómo, así que un
+         medley, un break o un bloque entraban y no salían más. */
+      const quitar = () => {
+        jam.items.splice(pos, 1);
+        guardar(); pintar();
+        toast('Sacado de la lista');
+      };
 
       if (f.tipo === 'bloque') {
-        lista.appendChild(marcar(h('div.mv-bloque', {},
+        lista.appendChild(marcar(h('div.mv-bloque', {
+          onclick: e => {
+            if (e.target.closest('.mv-handle') || !editable()) return;
+            if (performance.now() - finArrastre < 300) return;
+            hojaBloque(f, pos, quitar);
+          },
+        },
           editable() ? manija() : null,
           h('span', {}, f.label || 'BLOQUE'))));
         return;
       }
+
       if (f.tipo === 'break') {
-        lista.appendChild(marcar(h('div.mv-break', {},
+        lista.appendChild(marcar(h('div.mv-break', {
+          onclick: e => {
+            if (e.target.closest('.mv-handle') || !editable()) return;
+            if (performance.now() - finArrastre < 300) return;
+            hojaBreak(f, pos, quitar);
+          },
+        },
           editable() ? manija() : null,
           h('span.mv-break-txt', {}, `${f.label} · ${f.minutos}′`),
           f.hora ? h('span.mv-break-hora', {}, f.hora) : null)));
         return;
       }
+
       if (f.tipo === 'medley') {
         lista.appendChild(marcar(h('div.mv-medley', {},
-          h('div.mv-medley-cab', {},
+          h('div.mv-medley-cab', {
+            onclick: e => {
+              if (e.target.closest('.mv-handle') || !editable()) return;
+              if (performance.now() - finArrastre < 300) return;
+              hojaMedley(f, pos, quitar);
+            },
+          },
             editable() ? manija() : null,
             h('span.mv-n', {}, f.n),
             h('span.mv-txt', {}, h('b', {}, 'MEDLEY'),
               /^medley$/i.test(f.titulo.trim()) ? null : h('span.mv-art', {}, ' ' + f.titulo)),
             h('span.mv-dur', {}, duracionLinda(f.seg))),
-          ...f.songs.map((x, k) => renglon(x, `${f.n}${String.fromCharCode(97 + k)}`, null)))));
+          ...f.songs.map((x, k) => renglon(x, `${f.n}${String.fromCharCode(97 + k)}`, {
+            alTocar: () => hojaTema(x, editable() ? {
+              texto: 'Sacar del medley',
+              hacer: () => {
+                const m = jam.items[pos];
+                m.songs.splice(k, 1);
+                /* un medley de un solo tema no es un medley: se deshace */
+                if (m.songs.length === 1) {
+                  jam.items.splice(pos, 1, { tipo: 'song', songId: m.songs[0].songId,
+                    cantantes: m.songs[0].cantantes || [], notas: '' });
+                } else if (!m.songs.length) {
+                  jam.items.splice(pos, 1);
+                }
+                guardar(); pintar(); toast('Sacado del medley');
+              },
+            } : null),
+          })))));
         return;
       }
-      lista.appendChild(marcar(renglon(f, f.n, pos)));
+
+      lista.appendChild(marcar(renglon(f, f.n, {
+        conManija: true,
+        alTocar: () => hojaTema(f, editable()
+          ? { texto: 'Sacar de la lista', hacer: quitar } : null),
+      })));
     });
     cont.appendChild(lista);
   }
