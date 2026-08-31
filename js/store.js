@@ -409,6 +409,11 @@ export const store = {
   medleys(q = '', salvo = null) {
     const n = norm(q);
     const vistos = new Map();
+
+    /* Por el link llega una sola jam, así que los medleys no se pueden
+       juntar de los setlists: los manda la base ya deduplicados. */
+    for (const m of state.medleys || []) vistos.set(m.clave, { ...m });
+
     for (const j of state.jams) {
       if (salvo && j.id === salvo) continue;
       for (const it of j.items || []) {
