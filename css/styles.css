@@ -2321,3 +2321,17 @@ body.modo-link .view { padding: 20px 16px calc(96px + env(safe-area-inset-bottom
   padding: 10px 0; border-bottom: 1px solid var(--line-soft);
 }
 .respaldo:last-child { border-bottom: 0; }
+
+/* una fila de medley en el buscador: dos líneas, con los temas de adentro */
+.ac-medley {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 10px; border-radius: 5px; cursor: pointer;
+  box-shadow: inset 3px 0 0 var(--medley-linea);
+}
+.ac-medley .ac-t { color: var(--acc-2); }
+.ac-medley .ac-s {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 100%;
+}
+.ac-medley .ac-r { margin-left: auto; flex: none; display: flex; gap: 5px; }
+.buscador-full .ac-medley { padding: 11px 10px; }

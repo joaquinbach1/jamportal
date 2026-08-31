@@ -394,6 +394,47 @@ export const store = {
         : it.songId === id));
   },
 
+  /**
+   * Los medleys que ya se armaron alguna vez, para volver a usarlos enteros.
+   *
+   * No son una tabla: viven adentro del setlist de cada jam. Se juntan de
+   * todas, se deduplican por qué temas tienen —dos medleys con los mismos
+   * temas son el mismo, se llame como se llame— y se ordenan por cuántas
+   * veces se tocaron.
+   *
+   * @param {string} [q]     filtra por título o por los temas de adentro
+   * @param {string} [salvo] id de una jam a ignorar (la que estás editando:
+   *                         sus propios medleys ya están en la lista)
+   */
+  medleys(q = '', salvo = null) {
+    const n = norm(q);
+    const vistos = new Map();
+    for (const j of state.jams) {
+      if (salvo && j.id === salvo) continue;
+      for (const it of j.items || []) {
+        if (it.tipo !== 'medley' || !(it.songs || []).length) continue;
+        const clave = (it.songs || []).map(x => x.songId).join('|');
+        const previo = vistos.get(clave);
+        if (previo) { previo.veces++; continue; }
+        vistos.set(clave, {
+          clave,
+          titulo: it.titulo || 'Medley',
+          songs: (it.songs || []).map(x => ({ songId: x.songId, cantantes: [...(x.cantantes || [])] })),
+          veces: 1,
+        });
+      }
+    }
+    const salida = [...vistos.values()].map(m => ({
+      ...m,
+      temas: m.songs.map(x => this.song(x.songId)).filter(Boolean),
+    })).filter(m => m.temas.length);
+
+    return salida
+      .filter(m => !n || norm(m.titulo).includes(n)
+                || m.temas.some(t => norm(t.titulo).includes(n) || norm(t.artista).includes(n)))
+      .sort((a, b) => b.veces - a.veces || a.titulo.localeCompare(b.titulo));
+  },
+
   song(id)   { return state.songs.find(s => s.id === id); },
   jam(id)    { return state.jams.find(j => j.id === id); },
   cantante(id) { return state.cantantes.find(c => c.id === id); },
