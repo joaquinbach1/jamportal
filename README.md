@@ -225,7 +225,12 @@ usaron. El filtro mira también los temas de adentro: casi todos se llaman
 Los temas que **la banda nunca tocó** van con fondo rojo clarito, para verlos de
 un vistazo: son los que hay que ensayar. «Nueva» es no haber sonado en ninguna
 jam, no haberse cargado hace poco — es lo que importa parado frente a la lista.
-El detalle de cada tema lo dice con letras: «Tocada — nunca, es nueva».
+El detalle de cada tema lo dice con letras: «Tocada — nunca, es nueva». En el
+editor de la compu va igual, en las filas y adentro de los medleys: ahí el texto
+«nunca tocada» ya estaba, pero hay que leerlo tema por tema.
+
+En una jam histórica no se marca nada, y está bien: esa jam ya se tocó, así que
+todos sus temas cuentan como tocados.
 
 El buscador va **a pantalla completa**, no en un diálogo: `.modal` tiene alto
 máximo con `overflow: auto` y el desplegable va posicionado absoluto, así que
