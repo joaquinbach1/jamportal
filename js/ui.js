@@ -189,6 +189,10 @@ export function songAutocomplete(opts) {
   const {
     placeholder = 'Escribí el nombre del tema…',
     buscar, onPick, onNew, buscarWeb, onPickWeb,
+    /* Una fuente extra, opcional, que va PRIMERA: son pocos y más
+       específicos que un tema suelto, así que enterrarlos abajo de veinte
+       resultados sería esconderlos. Hoy la usan los medleys. */
+    buscarExtra, onPickExtra, nodoExtra, seccionExtra = '',
     clearOnPick = true, autofocus = false,
     /* Cerrar al perder el foco es lo correcto cuando el desplegable flota
        sobre otra cosa. Cuando el desplegable ES la pantalla, no: en iOS,
@@ -233,7 +237,22 @@ export function songAutocomplete(opts) {
 
   function construir(q) {
     const found = buscar(q);
-    items = found.map(s => ({
+    items = (buscarExtra ? buscarExtra(q) : []).map(x => ({
+      seccion: seccionExtra,
+      node: (on) => {
+        const nodo = nodoExtra(x);
+        nodo.classList.add('ac-item');
+        if (on) nodo.classList.add('hl');
+        nodo.addEventListener('mousedown', e => e.preventDefault());
+        nodo.addEventListener('click', () => {
+          onPickExtra(x); if (clearOnPick) inp.value = ''; cerrar();
+        });
+        return nodo;
+      },
+      pick: () => onPickExtra(x),
+    }));
+
+    items.push(...found.map(s => ({
       seccion: 'En DBSongs',
       node: (on) => h('div.ac-item' + (on ? '.hl' : ''), { onmousedown: e => e.preventDefault(), onclick: () => { onPick(s); if (clearOnPick) inp.value = ''; cerrar(); } },
         franjaDot(s.franja),
@@ -243,7 +262,7 @@ export function songAutocomplete(opts) {
           (s.jams || []).length ? h('span.chip', {}, (s.jams || []).length + '×') : null,
           catPill(s.categoria))),
       pick: () => onPick(s),
-    }));
+    })));
 
     webResultados.forEach(r => items.push({
       seccion: 'Encontrado en internet',

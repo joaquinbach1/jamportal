@@ -162,14 +162,24 @@ export function vistaMovil(jamId) {
      está. Ahora suma acá, que es lo que se estaba pidiendo. Para
      el cuaderno de ideas quedó su entrada propia en el ⋯.
      ============================================================ */
-  function sumarTema(song) {
-    jam.items = [...jam.items, { tipo: 'song', songId: song.id, cantantes: [], notas: '' }];
+  function sumarAlFinal(item, aviso) {
+    jam.items = [...jam.items, item];
     guardar(); pintar();
-    toast(`«${song.titulo}» al final de la lista`, 'ok');
-    /* que baje hasta el tema recién puesto, si no quedó a la vista */
+    toast(aviso, 'ok');
+    /* que baje hasta lo recién puesto, si no quedó a la vista */
     const ultima = lista.lastElementChild;
     if (ultima) ultima.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
+
+  const sumarTema = song => sumarAlFinal(
+    { tipo: 'song', songId: song.id, cantantes: [], notas: '' },
+    `«${song.titulo}» al final de la lista`);
+
+  /** Un medley que ya se armó antes, entero: sus temas y sus cantantes. */
+  const sumarMedley = m => sumarAlFinal(
+    { tipo: 'medley', titulo: m.titulo, notas: '',
+      songs: m.songs.map(x => ({ songId: x.songId, cantantes: [...(x.cantantes || [])] })) },
+    `Medley de ${m.temas.length} temas al final de la lista`);
 
   /**
    * Buscador a pantalla completa.
@@ -180,7 +190,7 @@ export function vistaMovil(jamId) {
    * y pasa a ser el cuerpo de la pantalla: se lleva todo el alto que
    * quede libre, que con el teclado abierto es justo el que hay.
    */
-  function panelBuscar({ titulo, ayuda, alElegir, alCrearWeb, alEscribir }) {
+  function panelBuscar({ titulo, ayuda, alElegir, alCrearWeb, alEscribir, alElegirMedley }) {
     const cerrar = () => { panel.remove(); document.removeEventListener('keydown', esc); };
     const esc = e => { if (e.key === 'Escape') cerrar(); };
 
@@ -193,6 +203,22 @@ export function vistaMovil(jamId) {
       onNew: q => { cerrar(); alEscribir(q); },
       /* acá el desplegable es la pantalla: bajar el teclado no la cierra */
       cerrarAlSalir: false,
+
+      /* Los medleys que ya se armaron alguna vez. Van arriba de los temas
+         sueltos: son pocos, y el que busca "stones" para meter el medley de
+         los Stones no debería tener que pasar veinte canciones primero. */
+      ...(alElegirMedley ? {
+        seccionExtra: 'Medleys que ya tocaron',
+        buscarExtra: q => store.medleys(q, jam.id).slice(0, 6),
+        onPickExtra: alElegirMedley,
+        nodoExtra: m => h('div.ac-medley', {},
+          h('div', { style: { minWidth: 0 } },
+            h('div.ac-t', {}, '⛓ ' + m.titulo),
+            h('div.ac-s', {}, m.temas.map(t => t.titulo).join(' · '))),
+          h('div.ac-r', {},
+            h('span.chip', {}, m.temas.length + ' temas'),
+            m.veces > 1 ? h('span.chip', {}, m.veces + '×') : null)),
+      } : {}),
     });
 
     const panel = h('div.buscador-full', {},
@@ -210,8 +236,10 @@ export function vistaMovil(jamId) {
   function dialogoAgregar() {
     panelBuscar({
       titulo: 'Sumar a ' + (jam.nombre || 'la jam'),
-      ayuda: 'Busco en el repertorio y después en internet. Si no aparece, se agrega con lo que escribas.',
+      ayuda: 'Un tema o un medley entero. Busco en el repertorio y después en '
+           + 'internet; si no aparece, se agrega con lo que escribas.',
       alElegir: sumarTema,
+      alElegirMedley: sumarMedley,
       alCrearWeb: r => {
         const s = store.addSong(webAResultado(r));
         sumarTema(s);

@@ -210,6 +210,14 @@ entra con el texto que escribiste — frenar la carga para pedir artista y
 categoría, con el dedo, es perder el tema. Para el cuaderno de ideas hay una
 entrada propia en el ⋯.
 
+Arriba de los temas sueltos aparecen los **medleys que ya se tocaron alguna
+vez**, y elegir uno lo suma entero: sus temas, en orden, con los cantantes que
+tenían. No son una tabla — viven adentro del setlist de cada jam, así que se
+juntan de todas, se deduplican por qué temas tienen (dos medleys con los mismos
+temas son el mismo, se llame como se llame) y se ordenan por cuántas veces se
+usaron. Van primero porque son pocos: el que busca «stones» para meter el medley
+de los Stones no debería pasar veinte canciones antes.
+
 El buscador va **a pantalla completa**, no en un diálogo: `.modal` tiene alto
 máximo con `overflow: auto` y el desplegable va posicionado absoluto, así que
 adentro se cortaba a los tres resultados. Suelto se lleva todo el alto que
