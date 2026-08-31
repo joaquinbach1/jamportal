@@ -21,7 +21,7 @@ import { ImageResponse } from '@vercel/og';
    archivos de Vercel se pierde el wasm y las tipografías que esto necesita, y
    la función revienta en producción con FUNCTION_INVOCATION_FAILED. Edge es
    para lo que @vercel/og está hecha: se verifica desplegada. */
-export const config = { runtime: 'edge' };
+export const config = { runtime: 'nodejs' };
 
 const SUPABASE_URL = 'https://qvqrwjzbfenupkqjrhli.supabase.co';
 const SUPABASE_KEY = 'sb_publishable__uhmgdmoIAqP6ar_oJqXFQ_b9GnG_JH';
@@ -75,6 +75,14 @@ function columna(lineas, desde) {
 }
 
 export default async function handler(req) {
+  try { return await dibujar(req); }
+  catch (e) {
+    return new Response('DEBUG ' + (e && e.stack || e), { status: 200,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+  }
+}
+
+async function dibujar(req) {
   const url = new URL(req.url, 'http://localhost');
   const token = (url.searchParams.get('token') || '').slice(0, 64);
 
