@@ -53,6 +53,7 @@
   --live-fondo: #000;         --live-hover: #101018;
   --live-proximo: #0f1016;    --live-pista: #16161d;
   --spotify: #1db954;         --sombra-fab: rgba(0, 0, 0, .45);
+  --nueva-fondo: #35181c;     --nueva-linea: #4a2226;
   --break-fondo: #2a2109;     --break-linea: #4d3d10;
 
   --cat-intl-bg: #1e2b3d;     --cat-intl-fg: #7fb4ff;
@@ -112,6 +113,7 @@
   --live-fondo: #ffffff;      --live-hover: #f4f4f0;
   --live-proximo: #f7f7f3;    --live-pista: #e6e6e0;
   --spotify: #128a3e;         --sombra-fab: rgba(0, 0, 0, .22);
+  --nueva-fondo: #fdeaea;     --nueva-linea: #f3cccc;
   --break-fondo: #f8ecd0;     --break-linea: #ddc48a;
 
   --cat-intl-bg: #e3edfb;     --cat-intl-fg: #1f5fa8;
@@ -2328,10 +2330,50 @@ body.modo-link .view { padding: 20px 16px calc(96px + env(safe-area-inset-bottom
   padding: 9px 10px; border-radius: 5px; cursor: pointer;
   box-shadow: inset 3px 0 0 var(--medley-linea);
 }
-.ac-medley .ac-t { color: var(--acc-2); }
+.ac-medley .ac-t {
+  color: var(--acc-2);
+  /* Los títulos largos —"Medley Bruno Mars/Sting/Marley Rabaquino doc 🎥"—
+     se partían en tres renglones y empujaban los chips fuera de lugar. */
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .ac-medley .ac-s {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   max-width: 100%;
 }
-.ac-medley .ac-r { margin-left: auto; flex: none; display: flex; gap: 5px; }
+.ac-medley .ac-r { margin-left: auto; flex: none; display: flex; gap: 5px; align-self: center; }
+.ac-medley > div:first-child { flex: 1 1 auto; min-width: 0; }
 .buscador-full .ac-medley { padding: 11px 10px; }
+
+/* ============================================================
+   Los temas que la banda nunca tocó
+   ------------------------------------------------------------
+   En rojo clarito, para verlos de un vistazo: son los que hay
+   que ensayar. "Nueva" es no haberla tocado en ninguna jam, no
+   haberla cargado hace poco — es lo que importa parado frente
+   a la lista.
+   ============================================================ */
+.mv-fila.nueva { background: var(--nueva-fondo); }
+.mv-fila.nueva + .mv-fila.nueva { border-top-color: var(--nueva-linea); }
+.mv-fila.nueva:active { background: var(--nueva-linea); }
+.mv-medley .mv-fila.nueva { background: var(--nueva-fondo); }
+
+/* ---------- los dos modos del buscador: temas o medleys ---------- */
+.bf-pills { flex: none; display: flex; gap: 8px; padding: 0 12px 10px; }
+.bf-pill {
+  flex: 1; padding: 9px 12px;
+  background: var(--panel); color: var(--txt-2);
+  border: 1px solid var(--line); border-radius: 20px;
+  font: inherit; font-size: 13.5px; cursor: pointer;
+}
+.bf-pill.on {
+  background: var(--acc-tinte); color: var(--acc);
+  border-color: var(--acc-linea); font-weight: 600;
+}
+.bf-cuerpo { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.buscador-full .bf-lista {
+  position: static; flex: 1 1 auto; min-height: 0;
+  max-height: none; border: 0; border-radius: 0; box-shadow: none;
+  background: transparent; border-top: 1px solid var(--line-soft);
+  padding: 6px 8px calc(10px + env(safe-area-inset-bottom));
+  overflow-y: auto; overscroll-behavior: contain; display: block;
+}
