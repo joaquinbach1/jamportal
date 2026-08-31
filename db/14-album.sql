@@ -1,5 +1,5 @@
 -- ============================================================
--- JAM PORTAL — el disco de cada tema y su tapa
+-- JAM PORTAL — el disco de cada tema, su tapa, y si lleva vientos
 -- ------------------------------------------------------------
 -- Sirve para ver el repertorio agrupado por álbum, con la
 -- portada y cuánto de cada disco toca la banda.
@@ -15,6 +15,8 @@
 -- Mismo movimiento que db/13 para duración y Spotify: las
 -- columnas, y después las dos funciones que las mueven.
 --
+-- Es idempotente: correrlo dos veces no rompe nada.
+--
 -- Las funciones van completas, copiadas de db/04-escritura.sql y
 -- db/03-app-estado.sql tal como están hoy, con las líneas nuevas
 -- sumadas. Si alguna cambió después de esto, rehacer el diff
@@ -25,9 +27,12 @@ alter table song add column if not exists album    text   not null default '';
 alter table song add column if not exists album_id bigint;
 alter table song add column if not exists cover    text   not null default '';
 
+-- Si el tema lleva vientos. Se marca con la trompeta en el playlist.
+alter table song add column if not exists vientos  boolean not null default false;
+
 
 -- ── escritura ───────────────────────────────────────────────
--- Las tres entran también al WHERE del final: es lo que decide si la
+-- Las cuatro entran también al WHERE del final: es lo que decide si la
 -- fila cambió. Sin eso, cargar una tapa no marca el tema como
 -- actualizado y el resto de la banda no se entera.
 
@@ -83,7 +88,7 @@ begin
                       bpm_fuente, anio, notas, origen, genero_web,
                       cifra_url, cifra_artista, cifra_confianza,
                       duracion_sec, spotify_url,
-                      album, album_id, cover, patches, actualizada)
+                      album, album_id, cover, vientos, patches, actualizada)
     values (e->>'id', e->>'titulo', e->>'artista', cid,
             case when coalesce((e->>'esIdea')::boolean, false)
                  then 'idea'::estado_song else 'repertorio'::estado_song end,
@@ -95,6 +100,7 @@ begin
             nullif(e->>'duracionSec', '')::smallint, coalesce(e->>'spotifyUrl', ''),
             coalesce(e->>'album', ''), nullif(e->>'albumId', '')::bigint,
             coalesce(e->>'cover', ''),
+            coalesce((e->>'vientos')::boolean, false),
             coalesce((select array_agg(x#>>'{}')
                         from jsonb_array_elements(e->'patches') x), '{}'),
             now())
@@ -109,6 +115,7 @@ begin
       cifra_confianza = excluded.cifra_confianza,
       duracion_sec = excluded.duracion_sec, spotify_url = excluded.spotify_url,
       album = excluded.album, album_id = excluded.album_id, cover = excluded.cover,
+      vientos = excluded.vientos,
       patches = excluded.patches, actualizada = now()
     -- El WHERE es lo que hace que `actualizada` signifique algo. Sin él,
     -- cambiar un título marcaba los 551 temas como actualizados y no
@@ -133,6 +140,7 @@ begin
        or song.album           is distinct from excluded.album
        or song.album_id        is distinct from excluded.album_id
        or song.cover           is distinct from excluded.cover
+       or song.vientos         is distinct from excluded.vientos
        or song.patches         is distinct from excluded.patches;
 
     delete from song_cantante where song_id = e->>'id';
@@ -218,6 +226,7 @@ select jsonb_build_object(
              'album',           s.album,
              'albumId',         s.album_id,
              'cover',           s.cover,
+             'vientos',         s.vientos,
              'esIdea',    s.estado = 'idea',
              'cantantes', (select coalesce(jsonb_agg(p.nombre order by sc.orden, p.nombre), '[]'::jsonb)
                              from song_cantante sc

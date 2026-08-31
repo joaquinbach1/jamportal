@@ -594,9 +594,14 @@ table.tbl tr.elegida td:first-child { box-shadow: inset 2px 0 0 var(--acc); }
   transition: background .1s, height .1s, margin .1s;
   pointer-events: none;            /* el que escucha es el contenedor */
 }
+/* Al arrastrar, el hueco se abre de verdad: con 5px había que apuntar
+   fino para saber entre qué dos temas iba a caer. */
 .drop-line.over {
-  height: 5px; margin: 3px 0;
-  background: var(--acc); box-shadow: 0 0 10px rgba(255,201,77,.65);
+  height: 14px; margin: 5px 0;
+  border-radius: 4px;
+  background: var(--acc-tinte);
+  border: 2px dashed var(--acc);
+  box-shadow: 0 0 14px rgba(255, 201, 77, .35);
 }
 /* mientras se arrastra, la lista entera es zona de drop */
 .setlist { min-height: 40px; }
@@ -798,7 +803,7 @@ body.lista-compacta .editor-grid .card + .card { margin-top: 10px; }
 /* la franja de drop se cobra 5px por tema; acá se paga caro.
    Queda de 1px y al arrastrar se agranda igual (.over manda). */
 .setlist.compacta .drop-line { height: 1px; margin: 0; }
-.setlist.compacta .drop-line.over { height: 5px; margin: 3px 0; }
+.setlist.compacta .drop-line.over { height: 12px; margin: 4px 0; }
 .setlist.compacta .sl-bloque { margin: 6px 0 0; padding: 0 6px 2px; }
 .setlist.compacta .sl-bloque input { font-size: 11px; }
 .setlist.compacta .sl-break { padding: 0 8px; min-height: 20px; }
@@ -1669,6 +1674,17 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
   flex: none; background: var(--panel-2);
 }
 @media (max-width: 1100px) { .t-album { display: none; } }
+
+/* la trompeta: apagada en gris, encendida cuando el tema lleva vientos */
+.icon-btn.vientos {
+  filter: grayscale(1); opacity: .35;
+  padding: 1px 4px; font-size: 13px; flex: none;
+  transition: filter .12s, opacity .12s;
+}
+.sl-item:hover .icon-btn.vientos, .med-song:hover .icon-btn.vientos { opacity: .55; }
+.icon-btn.vientos:hover { filter: none; opacity: 1; background: none; }
+.icon-btn.vientos.tiene { filter: none; opacity: 1; }
+.vientos-fijo { font-size: 13px; flex: none; }
 
 /* plegar el medley: cuando tiene ocho temas, ocupa media pantalla y
    tapa el resto de la lista */

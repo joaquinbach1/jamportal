@@ -645,6 +645,29 @@ export function vistaEditor(jamId) {
     arrastre = null;
   });
 
+  /**
+   * La trompeta: marca si el tema lleva vientos. Apagada es gris; al
+   * tocarla se enciende. Es del tema, no de la jam — igual que el tempo
+   * o el patch —, así que una vez marcado aparece en todas.
+   */
+  function botonVientos(s) {
+    const btn = h('button.icon-btn.vientos', {
+      onclick: e => {
+        e.stopPropagation();
+        const fresco = store.song(s.id) || s;
+        store.updateSong(fresco.id, { vientos: !fresco.vientos });
+        pintarTodo();
+      },
+    }, '🎺');
+    const pintar = () => {
+      const hay = !!(store.song(s.id) || s).vientos;
+      btn.classList.toggle('tiene', hay);
+      btn.title = hay ? 'Lleva vientos — clic para sacarlo' : 'Marcar que lleva vientos';
+    };
+    pintar();
+    return btn;
+  }
+
   /* ---------- nota privada ----------
      Es tuya y de esta máquina: no va a la base compartida. Se escribe
      acá y se lee en el LIVE VIEW, que es cuando hace falta. */
@@ -774,6 +797,9 @@ export function vistaEditor(jamId) {
           bloqueada()
             ? (s.bpm ? h('span.mono.dim', {}, (s.bpmFuente === 'sugerido' ? '≈ ' : '') + s.bpm + ' bpm') : null)
             : chipTempo(s, () => pintarTodo()),
+          bloqueada()
+            ? (s.vientos ? h('span.vientos-fijo', { title: 'Lleva vientos' }, '🎺') : null)
+            : botonVientos(s),
           s.esIdea
             ? h('span.chip.idea', { title: 'Sigue en Ideas: pasa al repertorio cuando la fecha de esta jam quede atrás' }, '💡 idea')
             : ((s.jams || []).length
@@ -911,6 +937,9 @@ export function vistaEditor(jamId) {
             s ? (bloqueada()
               ? (s.bpm ? h('span.mono.dim', { style: { fontSize: '11px' } }, s.bpm) : null)
               : chipTempo(s, () => pintarTodo())) : null,
+            s ? (bloqueada()
+              ? (s.vientos ? h('span.vientos-fijo', { title: 'Lleva vientos' }, '🎺') : null)
+              : botonVientos(s)) : null,
             s && !bloqueada() ? chipPatch(s, () => pintarTodo()) : null,
             s && s.cifraUrl ? h('a.print-link', { href: s.cifraUrl, target: '_blank', rel: 'noopener' }, '🎸 cifra') : null,
             bloqueada()
