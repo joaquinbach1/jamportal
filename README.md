@@ -322,10 +322,16 @@ el repertorio entero (289 kB) porque la app necesita poder buscar; la tarjeta
 solo necesita los títulos de esta jam, y eso son 800 bytes. Cada reenvío del link
 dispara un pedido de un robot.
 
-La lista completa se ve en Slack, Telegram y Discord, que muestran la descripción
-entera. **WhatsApp recorta a dos renglones**: para que ahí se vea la lista entera
-haría falta generarla como imagen, y eso pide una dependencia (`@vercel/og`) en
-un proyecto que hoy no tiene ninguna.
+La lista va **dos veces**: en la descripción, que Slack, Telegram y Discord
+muestran entera, y dentro de una imagen de 1200×630 que dibuja `api/og.js`.
+Hacen falta las dos porque WhatsApp recorta la descripción a dos renglones y le
+da toda la pantalla a la imagen.
+
+Esa imagen es la **única dependencia del proyecto** (`@vercel/og`), y vive nada
+más que en esa función: el sitio se sigue sirviendo estático y sin build, y el
+navegador no descarga una línea de eso. Va sin JSX —que pediría compilar— porque
+satori acepta los elementos como objetos planos `{ type, props }`, que es lo
+mismo que produce JSX pero escrito a mano.
 
 ### Qué ve y qué no
 
