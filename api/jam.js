@@ -50,7 +50,7 @@ async function resumen(token) {
   return txt ? JSON.parse(txt) : null;
 }
 
-function pagina({ titulo, descripcion, destino, canonical }) {
+function pagina({ titulo, descripcion, destino, canonical, imagen }) {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -62,7 +62,15 @@ function pagina({ titulo, descripcion, destino, canonical }) {
 <meta property="og:site_name" content="JAM PORTAL">
 <meta property="og:title" content="${escapar(titulo)}">
 <meta property="og:description" content="${escapar(descripcion)}">
-<meta name="twitter:card" content="summary">
+<meta property="og:url" content="${escapar(canonical)}">
+<!-- La lista va también EN la imagen: WhatsApp recorta la descripción a dos
+     renglones y le da toda la pantalla a la imagen. -->
+<meta property="og:image" content="${escapar(imagen)}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${escapar(titulo)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="${escapar(imagen)}">
 <meta name="twitter:title" content="${escapar(titulo)}">
 <meta name="twitter:description" content="${escapar(descripcion)}">
 
@@ -84,7 +92,10 @@ export default async function handler(req, res) {
      arma solo para el canonical, donde sí tiene que ser una URL entera. */
   const destino = `/#/v/${encodeURIComponent(token)}`;
   const proto = req.headers['x-forwarded-proto'] || 'https';
-  const canonical = `${proto}://${req.headers.host}${destino}`;
+  const base = `${proto}://${req.headers.host}`;
+  const canonical = `${base}${destino}`;
+  /* La imagen tiene que ser absoluta: el robot la pide desde su servidor. */
+  const imagen = `${base}/api/og?token=${encodeURIComponent(token)}`;
 
   let jam = null;
   try {
@@ -111,5 +122,5 @@ export default async function handler(req, res) {
      una lista vieja: el setlist se toca hasta el día de la jam. */
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=300');
-  res.status(200).send(pagina({ titulo, descripcion, destino, canonical }));
+  res.status(200).send(pagina({ titulo, descripcion, destino, canonical, imagen }));
 }

@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "name": "jamportal",
+  "description": "El sitio sigue siendo estático y sin build. Esta dependencia es solo para la función que dibuja la tarjeta del link (api/og.js): Vercel la instala para las funciones y no toca nada de lo que se sirve al navegador.",
+  "dependencies": {
+    "@vercel/og": "^0.6.2"
+  }
+}
