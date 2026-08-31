@@ -6,5 +6,12 @@
       "source": "/j/:token",
       "destination": "/api/jam?token=:token"
     }
-  ]
+  ],
+  "functions": {
+    "api/og.js": {
+      "includeFiles": "node_modules/@vercel/og/dist/**",
+      "memory": 1024,
+      "maxDuration": 15
+    }
+  }
 }
