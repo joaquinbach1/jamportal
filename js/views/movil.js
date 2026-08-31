@@ -123,6 +123,10 @@ export function vistaMovil(jamId) {
         h('b', {}, duracionLinda(f.seg)),
         s.duracionSec ? null : h('em', {}, ' estimado')),
       h('div.hd-fila', {}, h('span', {}, 'Canta'), h('b', {}, cantantes || '—')),
+      h('div.hd-fila', {}, h('span', {}, 'Tocada'),
+        (s.jams || []).length
+          ? h('b', {}, `${s.jams.length} ${s.jams.length === 1 ? 'vez' : 'veces'}`)
+          : h('b', { style: { color: 'var(--err)' } }, 'nunca — es nueva')),
       s.bpm ? h('div.hd-fila', {}, h('span', {}, 'Tempo'),
         h('b', {}, `${s.bpmFuente === 'sugerido' ? '≈ ' : ''}${s.bpm} bpm`)) : null,
       nota ? h('div.hd-nota', {}, '📝 ' + nota) : null);
@@ -194,50 +198,97 @@ export function vistaMovil(jamId) {
     const cerrar = () => { panel.remove(); document.removeEventListener('keydown', esc); };
     const esc = e => { if (e.key === 'Escape') cerrar(); };
 
-    const ac = songAutocomplete({
-      placeholder: 'Nombre del tema…',
-      buscar: q => store.searchSongs(q, 25),
-      onPick: s => { cerrar(); alElegir(s); },
-      buscarWeb: buscarEnWeb,
-      onPickWeb: r => { cerrar(); alCrearWeb(r); },
-      onNew: q => { cerrar(); alEscribir(q); },
-      /* acá el desplegable es la pantalla: bajar el teclado no la cierra */
-      cerrarAlSalir: false,
+    /* Dos modos, no una lista mezclada. Los medleys son otra cosa que un tema
+       suelto —entran de a cinco canciones— y buscarlos es una decisión que se
+       toma antes de escribir, no algo que uno espera encontrar entre los
+       resultados. */
+    let modo = 'temas';
+    const cuerpo = h('div.bf-cuerpo');
 
-      /* Los medleys que ya se armaron alguna vez. Van arriba de los temas
-         sueltos: son pocos, y el que busca "stones" para meter el medley de
-         los Stones no debería tener que pasar veinte canciones primero. */
-      ...(alElegirMedley ? {
-        seccionExtra: 'Medleys que ya tocaron',
-        buscarExtra: q => store.medleys(q, jam.id).slice(0, 6),
-        onPickExtra: alElegirMedley,
-        nodoExtra: m => h('div.ac-medley', {},
+    const pill = (v, texto) => h('button.bf-pill' + (modo === v ? '.on' : ''), {
+      onclick: () => { if (modo !== v) { modo = v; pintar(); } },
+    }, texto);
+
+    const pills = h('div.bf-pills');
+    function pintarPills() {
+      poner(clear(pills), pill('temas', '♪ Temas'), pill('medleys', '⛓ Medleys'));
+    }
+
+    /* ---- modo temas: el buscador de siempre ---- */
+    function vistaTemas() {
+      const ac = songAutocomplete({
+        placeholder: 'Nombre del tema…',
+        buscar: q => store.searchSongs(q, 25),
+        onPick: s => { cerrar(); alElegir(s); },
+        buscarWeb: buscarEnWeb,
+        onPickWeb: r => { cerrar(); alCrearWeb(r); },
+        onNew: q => { cerrar(); alEscribir(q); },
+        /* acá el desplegable es la pantalla: bajar el teclado no la cierra */
+        cerrarAlSalir: false,
+      });
+      setTimeout(() => ac.focusInput && ac.focusInput(), 60);
+      return ac;
+    }
+
+    /* ---- modo medleys: la lista entera, filtrable ---- */
+    function vistaMedleys() {
+      const todos = store.medleys('', jam.id);
+      const lista = h('div.ac-menu.bf-lista');
+      const busca = h('input', {
+        type: 'search', placeholder: 'Filtrar medleys…',
+        autocomplete: 'off', spellcheck: false,
+      });
+
+      function pintarLista() {
+        clear(lista);
+        const hay = store.medleys(busca.value, jam.id);
+        if (!hay.length) {
+          lista.appendChild(h('div.ac-loading', {}, todos.length
+            ? 'Ningún medley con ese filtro'
+            : 'Todavía no armaron ningún medley en otra jam. '
+              + 'Los que armes acá van a aparecer la próxima vez.'));
+          return;
+        }
+        hay.forEach(m => lista.appendChild(h('div.ac-item.ac-medley', {
+          onclick: () => { cerrar(); alElegirMedley(m); },
+        },
           h('div', { style: { minWidth: 0 } },
             h('div.ac-t', {}, '⛓ ' + m.titulo),
             h('div.ac-s', {}, m.temas.map(t => t.titulo).join(' · '))),
           h('div.ac-r', {},
             h('span.chip', {}, m.temas.length + ' temas'),
-            m.veces > 1 ? h('span.chip', {}, m.veces + '×') : null)),
-      } : {}),
-    });
+            m.veces > 1 ? h('span.chip', {}, m.veces + '×') : null))));
+      }
+
+      busca.addEventListener('input', pintarLista);
+      pintarLista();
+      setTimeout(() => busca.focus(), 60);
+      return h('div.ac-wrap', {}, busca, lista);
+    }
+
+    function pintar() {
+      pintarPills();
+      poner(clear(cuerpo), modo === 'temas' ? vistaTemas() : vistaMedleys());
+    }
 
     const panel = h('div.buscador-full', {},
       h('div.mv-ed-barra', {},
         h('button.tb-btn', { onclick: cerrar, title: 'Cerrar' }, '✕'),
         h('div.mv-ed-tit', {}, titulo)),
       h('div.bf-ayuda', {}, ayuda),
-      ac);
+      alElegirMedley ? pills : null,
+      cuerpo);
 
+    pintar();
     clear(document.getElementById('modalRoot')).appendChild(panel);
     document.addEventListener('keydown', esc);
-    setTimeout(() => ac.focusInput && ac.focusInput(), 60);
   }
 
   function dialogoAgregar() {
     panelBuscar({
       titulo: 'Sumar a ' + (jam.nombre || 'la jam'),
-      ayuda: 'Un tema o un medley entero. Busco en el repertorio y después en '
-           + 'internet; si no aparece, se agrega con lo que escribas.',
+      ayuda: 'Busco en el repertorio y después en internet; si no aparece, se '
+           + 'agrega con lo que escribas. Para sumar un medley entero, tocá Medleys.',
       alElegir: sumarTema,
       alElegirMedley: sumarMedley,
       alCrearWeb: r => {
@@ -578,7 +629,11 @@ export function vistaMovil(jamId) {
   function renglon(f, num, indice) {
     const s = f.song;
     const cantantes = (f.cantantes || []).join(', ');
-    return h('div.mv-fila', {
+    /* Nunca tocada: va en rojo clarito. `jams` es la lista de jams en las que
+       sonó, así que vacía quiere decir que para la banda es nueva. */
+    const nueva = s && !(s.jams || []).length;
+
+    return h('div.mv-fila' + (nueva ? '.nueva' : ''), {
       onclick: e => {
         if (e.target.closest('.mv-handle')) return;
         if (performance.now() - finArrastre < 300) return;

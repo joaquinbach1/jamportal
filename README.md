@@ -210,13 +210,22 @@ entra con el texto que escribiste — frenar la carga para pedir artista y
 categoría, con el dedo, es perder el tema. Para el cuaderno de ideas hay una
 entrada propia en el ⋯.
 
-Arriba de los temas sueltos aparecen los **medleys que ya se tocaron alguna
-vez**, y elegir uno lo suma entero: sus temas, en orden, con los cantantes que
-tenían. No son una tabla — viven adentro del setlist de cada jam, así que se
+Arriba hay dos pastillas, **♪ Temas** y **⛓ Medleys**. La segunda lista los
+medleys que ya se tocaron alguna vez, con su propio filtro, y elegir uno lo suma
+entero: sus temas, en orden, con los cantantes que tenían. Van en su propio modo
+y no mezclados entre los resultados porque son otra cosa —entran de a cinco
+canciones— y buscarlos es una decisión que se toma antes de escribir.
+
+Los medleys no son una tabla: viven adentro del setlist de cada jam, así que se
 juntan de todas, se deduplican por qué temas tienen (dos medleys con los mismos
 temas son el mismo, se llame como se llame) y se ordenan por cuántas veces se
-usaron. Van primero porque son pocos: el que busca «stones» para meter el medley
-de los Stones no debería pasar veinte canciones antes.
+usaron. El filtro mira también los temas de adentro: casi todos se llaman
+«Medley», así que por título no encontrarías ninguno.
+
+Los temas que **la banda nunca tocó** van con fondo rojo clarito, para verlos de
+un vistazo: son los que hay que ensayar. «Nueva» es no haber sonado en ninguna
+jam, no haberse cargado hace poco — es lo que importa parado frente a la lista.
+El detalle de cada tema lo dice con letras: «Tocada — nunca, es nueva».
 
 El buscador va **a pantalla completa**, no en un diálogo: `.modal` tiene alto
 máximo con `overflow: auto` y el desplegable va posicionado absoluto, así que
