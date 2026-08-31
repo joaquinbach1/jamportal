@@ -293,9 +293,31 @@ cuenta y **puede editar esa jam**: sumar temas, reordenar, sacar, cambiar quién
 canta. Es para mandar por WhatsApp antes de la jam y que cada uno acomode lo
 suyo.
 
-El link es `#/v/<token>`, con 12 caracteres al azar (72 bits). No es el id de la
+El link es `/j/<token>`, con 12 caracteres al azar (72 bits). No es el id de la
 jam, que es adivinable — `hist-jam-nostalgia-15-8`. Se corta desde el mismo
 diálogo: borrar el token mata el link para todos en el momento.
+
+### La tarjeta, cuando se pega en un chat
+
+`api/jam.js` es una función serverless que devuelve HTML con las etiquetas Open
+Graph ya rellenas: nombre de la jam, fecha, hora, lugar y los primeros 14 temas
+numerados. El robot que lee el link se queda con eso; el navegador sigue de largo
+hacia `#/v/<token>`.
+
+**Por eso el link es `/j/…` y no `#/v/…`:** el hash nunca llega al servidor, así
+que con él no había forma de saber siquiera de qué jam se trataba. El precio es
+que el token ahora viaja en el path y queda en los logs de acceso de Vercel; con
+el hash no pasaba, y no hay forma de tener las dos cosas.
+
+Pide los datos a `resumen_publico()` y no a `estado_publico()`: aquella devuelve
+el repertorio entero (289 kB) porque la app necesita poder buscar; la tarjeta
+solo necesita los títulos de esta jam, y eso son 800 bytes. Cada reenvío del link
+dispara un pedido de un robot.
+
+La lista completa se ve en Slack, Telegram y Discord, que muestran la descripción
+entera. **WhatsApp recorta a dos renglones**: para que ahí se vea la lista entera
+haría falta generarla como imagen, y eso pide una dependencia (`@vercel/og`) en
+un proyecto que hoy no tiene ninguna.
 
 ### Qué ve y qué no
 
@@ -549,6 +571,7 @@ db/12-notas.sql        las notas privadas de cada quien
 db/13-duracion-spotify.sql  cuánto dura cada tema, y su link de Spotify
 db/14-album.sql        el disco y la tapa
 db/15-link-publico.sql el link para compartir una jam, y los respaldos
+db/16-resumen-og.sql   el resumen chico para la tarjeta del link
 ```
 
 **La regla que ordena el esquema: nada que se pueda calcular se guarda.** El

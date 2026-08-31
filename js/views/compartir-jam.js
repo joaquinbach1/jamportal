@@ -37,7 +37,10 @@ export function dialogoLink(jam) {
       poner(clear(caja), h('div.method-hint', {}, 'No se pudo: ' + e.message));
       return;
     }
-    const url = location.href.split('#')[0] + '#/v/' + token;
+    /* `/j/<token>` y no `#/v/<token>`: el hash no llega al servidor, así que
+       con él no hay forma de armar la tarjeta que se ve al pegar el link en
+       un chat. La app sigue entendiendo las dos formas. */
+    const url = location.href.split('#')[0].replace(/\/+$/, '') + '/j/' + token;
     const campo = input({ value: url, readonly: true, onclick: e => e.target.select() });
 
     poner(clear(caja),
@@ -45,7 +48,8 @@ export function dialogoLink(jam) {
         h('b', {}, 'Cualquiera con este link entra sin cuenta y puede editar esta jam.'),
         ' Ve el setlist y el repertorio para poder buscar temas. No ve las otras jams, ',
         'ni los teléfonos y mails de la gente, ni los ensayos. Cada cambio deja copia: ',
-        'se vuelve atrás desde «Versiones anteriores».'),
+        'se vuelve atrás desde «Versiones anteriores». Pegado en un chat muestra ',
+        'el nombre de la jam y los temas.'),
       campo,
       h('div', { style: { display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' } },
         h('button.btn.primary', {
