@@ -10,8 +10,8 @@
   "functions": {
     "api/og.js": {
       "includeFiles": "node_modules/@vercel/og/dist/**",
-      "memory": 1024,
-      "maxDuration": 15
+      "memory": 1769,
+      "maxDuration": 60
     }
   }
 }
