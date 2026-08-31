@@ -136,24 +136,60 @@ const MIN_POR_TEMA_MEDLEY = 2;
 /* ============================================================
    Menú flotante (para elegir cantante en una fila)
    ============================================================ */
+/**
+ * Menú flotante con buscador.
+ *
+ * Con veinte nombres, recorrer la lista con el ojo es más lento que
+ * escribir dos letras. Los nombres van en orden alfabético —que es
+ * donde uno los busca— y quien suele cantar el tema queda marcado,
+ * para no perder ese dato al ordenar.
+ */
 function menuFlotante(anchor, opciones, onPick) {
-  const menu = h('div.ac-menu', { style: { position: 'fixed', width: '210px', maxHeight: '300px' } });
+  const menu = h('div.ac-menu', { style: { position: 'fixed', width: '230px', maxHeight: '320px' } });
   const cerrar = () => { menu.remove(); document.removeEventListener('mousedown', fuera, true); };
   const fuera = e => { if (!menu.contains(e.target)) cerrar(); };
 
-  opciones.forEach(o => {
-    const { value, label, hint } = typeof o === 'string' ? { value: o, label: o } : o;
-    menu.appendChild(h('div.ac-item', {
-      onclick: () => { onPick(value); cerrar(); },
-    }, h('div.ac-t', {}, label), hint ? h('div.ac-r', {}, h('span.chip', {}, hint)) : null));
+  const items = opciones
+    .map(o => (typeof o === 'string' ? { value: o, label: o } : o))
+    .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+
+  const buscador = h('input.ac-buscador', { type: 'text', placeholder: 'Buscar…', autocomplete: 'off' });
+  const lista = h('div.ac-lista');
+
+  function pintar() {
+    const q = norm(buscador.value);
+    const visibles = q ? items.filter(o => norm(o.label).includes(q)) : items;
+
+    clear(lista);
+    visibles.forEach(o => lista.appendChild(h('div.ac-item', {
+      onclick: () => { onPick(o.value); cerrar(); },
+    }, h('div.ac-t', {}, o.label), o.hint ? h('div.ac-r', {}, h('span.chip', {}, o.hint)) : null)));
+
+    if (!visibles.length) {
+      lista.appendChild(h('div.ac-loading', {},
+        items.length ? 'Nadie con ese nombre' : 'No hay más nombres'));
+    }
+    return visibles;
+  }
+
+  buscador.addEventListener('input', pintar);
+  buscador.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { e.preventDefault(); cerrar(); }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const primero = pintar()[0];          // Enter elige lo que estás viendo arriba
+      if (primero) { onPick(primero.value); cerrar(); }
+    }
   });
-  if (!opciones.length) menu.appendChild(h('div.ac-loading', {}, 'No hay más nombres'));
+
+  poner(menu, items.length > 6 ? buscador : null, lista);
+  pintar();
 
   document.body.appendChild(menu);
   const r = anchor.getBoundingClientRect();
-  menu.style.left = Math.min(r.left, window.innerWidth - 226) + 'px';
-  menu.style.top = Math.min(r.bottom + 4, window.innerHeight - 310) + 'px';
-  setTimeout(() => document.addEventListener('mousedown', fuera, true), 0);
+  menu.style.left = Math.min(r.left, window.innerWidth - 246) + 'px';
+  menu.style.top = Math.min(r.bottom + 4, window.innerHeight - 330) + 'px';
+  setTimeout(() => { document.addEventListener('mousedown', fuera, true); buscador.focus(); }, 0);
 }
 
 /* chips de personas editables dentro de una fila */
@@ -169,8 +205,7 @@ function chipsPersonas(lista, opciones, onChange, sugeridos = []) {
         e.stopPropagation();
         const libres = opciones.filter(o => !lista.includes(o));
         menuFlotante(btn,
-          libres.map(o => ({ value: o, label: o, hint: sugeridos.includes(o) ? '★ suele cantarla' : null }))
-            .sort((a, b) => (b.hint ? 1 : 0) - (a.hint ? 1 : 0)),
+          libres.map(o => ({ value: o, label: o, hint: sugeridos.includes(o) ? '★' : null })),
           v => onChange([...lista, v]));
       },
     }, lista.length ? '＋' : '＋ cantante');
@@ -681,6 +716,34 @@ export function vistaEditor(jamId) {
     ]);
   }
 
+  /**
+   * El ＋ de cada fila: abre un buscador ahí mismo y lo que elijas entra
+   * justo abajo. Antes había que ir hasta el buscador del final y después
+   * arrastrar el tema hasta su lugar.
+   */
+  function botonInsertar(i) {
+    const btn = h('button.icon-btn.sumar', {
+      title: 'Agregar un tema justo abajo',
+      onclick: e => {
+        e.stopPropagation();
+        const fila = btn.closest('.sl-item');
+        if (!fila || fila.nextElementSibling?.classList.contains('sl-insertar')) return;
+
+        const caja = h('div.sl-insertar', {},
+          buscadorDeTemas(song => {
+            caja.remove();
+            agregarSong(song.id, i + 1);
+            toast(`«${song.titulo}» agregada`, 'ok');
+          }, { placeholder: 'Qué tema va acá…' }),
+          h('button.btn.xs.ghost', { onclick: () => caja.remove() }, 'Cancelar'));
+
+        fila.after(caja);
+        setTimeout(() => caja.querySelector('input')?.focus(), 30);
+      },
+    }, '＋');
+    return btn;
+  }
+
   function filaSong(it, i, numero) {
     const s = store.song(it.songId);
     if (!s) return h('div.sl-item', {}, h('span.sl-num', {}, numero), h('div.sl-main', {}, h('span.dim', {}, 'Tema borrado de DBSongs')),
@@ -694,6 +757,7 @@ export function vistaEditor(jamId) {
       ondragend: () => { row.classList.remove('dragging'); arrastre = null; },
     },
       bloqueada() ? null : manija(),
+      bloqueada() ? null : botonInsertar(i),
       h('span.sl-num', {}, numero),
       h('div.sl-main', {},
         h('div.sl-title', {}, s.titulo),
