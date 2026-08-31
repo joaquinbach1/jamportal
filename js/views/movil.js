@@ -232,7 +232,11 @@ export function vistaMovil(jamId) {
 
     /* ---- modo medleys: la lista entera, filtrable ---- */
     function vistaMedleys() {
-      const todos = store.medleys('', jam.id);
+      /* Todos, incluidos los de esta jam: si querés repetir un medley que ya
+         está en la lista, es una decisión tuya y no algo que haya que
+         esconder. Solo se juntan los que tienen exactamente los mismos temas,
+         que son el mismo medley escrito dos veces. */
+      const todos = store.medleys();
       const lista = h('div.ac-menu.bf-lista');
       const busca = h('input', {
         type: 'search', placeholder: 'Filtrar medleys…',
@@ -241,25 +245,29 @@ export function vistaMovil(jamId) {
 
       function pintarLista() {
         clear(lista);
-        const hay = store.medleys(busca.value, jam.id);
+        const hay = store.medleys(busca.value);
         if (!hay.length) {
           lista.appendChild(h('div.ac-loading', {}, todos.length
             ? 'Ningún medley con ese filtro'
-            : 'Todavía no armaron ningún medley en otra jam. '
-              + 'Los que armes acá van a aparecer la próxima vez.'));
+            : 'Todavía no armaron ningún medley. Los que armes acá van a '
+              + 'aparecer la próxima vez.'));
           return;
         }
         hay.forEach(m => lista.appendChild(h('div.ac-item.ac-medley', {
           onclick: () => { cerrar(); alElegirMedley(m); },
         },
           h('div', { style: { minWidth: 0 } },
+            /* Los temas van enteros y no cortados con puntos suspensivos:
+               el título casi siempre es "Medley" a secas, así que lo único
+               que distingue a uno de otro es qué tiene adentro. */
             h('div.ac-t', {}, '⛓ ' + m.titulo),
-            h('div.ac-s', {}, m.temas.map(t => t.titulo).join(' · '))),
+            h('div.ac-s.entera', {}, m.temas.map(t => t.titulo).join(' · '))),
           h('div.ac-r', {},
             h('span.chip', {}, m.temas.length + ' temas'),
             m.veces > 1 ? h('span.chip', {}, m.veces + '×') : null))));
       }
 
+      busca.placeholder = `Filtrar ${todos.length} medleys…`;
       busca.addEventListener('input', pintarLista);
       pintarLista();
       setTimeout(() => busca.focus(), 60);

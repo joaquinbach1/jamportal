@@ -210,16 +210,19 @@ entra con el texto que escribiste — frenar la carga para pedir artista y
 categoría, con el dedo, es perder el tema. Para el cuaderno de ideas hay una
 entrada propia en el ⋯.
 
-Arriba hay dos pastillas, **♪ Temas** y **⛓ Medleys**. La segunda lista los
-medleys que ya se tocaron alguna vez, con su propio filtro, y elegir uno lo suma
-entero: sus temas, en orden, con los cantantes que tenían. Van en su propio modo
+Arriba hay dos pastillas, **♪ Temas** y **⛓ Medleys**. La segunda lista **los 49
+medleys**, con su propio filtro, y elegir uno lo suma entero: sus temas, en
+orden, con los cantantes que tenían. Cada uno muestra su lista de temas
+completa, sin cortar: casi todos se llaman «Medley» a secas, así que lo único
+que distingue a uno de otro es qué tiene adentro. Van en su propio modo
 y no mezclados entre los resultados porque son otra cosa —entran de a cinco
 canciones— y buscarlos es una decisión que se toma antes de escribir.
 
 Los medleys no son una tabla: viven adentro del setlist de cada jam, así que se
 juntan de todas, se deduplican por qué temas tienen (dos medleys con los mismos
 temas son el mismo, se llame como se llame) y se ordenan por cuántas veces se
-usaron. El filtro mira también los temas de adentro: casi todos se llaman
+usaron. No se esconden los de la jam que estás editando: repetir uno es una
+decisión tuya. El filtro mira también los temas de adentro: casi todos se llaman
 «Medley», así que por título no encontrarías ninguno.
 
 Los temas que **la banda nunca tocó** van con fondo rojo clarito, para verlos de
