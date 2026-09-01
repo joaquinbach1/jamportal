@@ -31,8 +31,11 @@ const RUTAS = [
   [/^\/live\/(.+)$/,  (m) => vistaLive(m[1]),   'jams'],
   [/^\/lyrics\/(.+)$/, (m) => vistaLyrics(m[1]), 'jams'],
   /* El editor completo tiene ruta propia: así se llega desde el celular
-     a propósito, y el link se puede compartir sin depender de la pantalla. */
+     a propósito, y el link se puede compartir sin depender de la pantalla.
+     Y la lista minimalista también: es cómo se mira la jam desde la compu
+     sin abrir el editor entero. */
   [/^\/jams\/(.+)\/editar$/, (m) => vistaEditor(m[1]), 'jams'],
+  [/^\/jams\/(.+)\/lista$/,  (m) => vistaMovil(m[1]),  'jams'],
   [/^\/jams\/(.+)$/, (m) => (enCelular() ? vistaMovil(m[1]) : vistaEditor(m[1])), 'jams'],
   [/^\/jams$/,       () => vistaJams(),        'jams'],
   [/^\/nueva$/,      () => vistaNueva(),       'jams'],  // sin ítem propio: se llega desde Jams

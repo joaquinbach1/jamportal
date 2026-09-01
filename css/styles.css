@@ -2237,6 +2237,11 @@ body.modo-compartido .topbar { display: none; }
 /* el toggle de instrumentos: solo el ícono, sin el aire de los de texto */
 .mv-btn-cab.icono { padding: 0 9px; font-size: 15px; }
 
+/* El ⋯ de la cabecera existe solo donde no hay barra de arriba: en la
+   compu. En el celular y entrando por el link, el ⋯ ya está en la barra. */
+@media (max-width: 820px) { .mv-btn-cab.mas { display: none; } }
+body.modo-link .mv-btn-cab.mas { display: none; }
+
 /* ---------- de qué hora a qué hora ----------
    Las horas de arriba son un botón: tocarlas abre fecha, hora de arranque
    y lugar. La barra también se toca: cada segmento dice qué tema (o qué

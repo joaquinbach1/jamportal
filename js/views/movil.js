@@ -1070,7 +1070,14 @@ export function vistaMovil(jamId) {
           }, '＋') : null,
           editable() ? h('button.mv-btn-cab' + (editando ? '.on' : ''), {
             onclick: () => { editando = !editando; pintar(); },
-          }, editando ? 'Listo' : 'Editar') : null)),
+          }, editando ? 'Listo' : 'Editar') : null,
+          /* En la compu esta vista no tiene la barra de arriba, así que el
+             ⋯ —con "abrir el editor completo" adentro— vive acá. El CSS lo
+             esconde donde la barra existe: en el celular y por el link. */
+          h('button.mv-btn-cab.icono.mas', {
+            title: 'Más acciones',
+            onclick: menu,
+          }, '⋯'))),
       tira(plan, dialogoHorario, pintar));
 
     if (!plan.filas.length) {
