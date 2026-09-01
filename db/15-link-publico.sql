@@ -28,10 +28,13 @@
 
 alter table jam add column if not exists token text;
 
+-- `duplicate_table` además de `duplicate_object`: una constraint unique
+-- ya existente tira lo primero, y sin atraparlo el archivo dejaba de ser
+-- re-corrible — se cortaba acá y lo de abajo no corría.
 do $$
 begin
   alter table jam add constraint jam_token_uk unique (token);
-exception when duplicate_object then null;
+exception when duplicate_object or duplicate_table then null;
 end $$;
 
 
@@ -232,6 +235,7 @@ select case when jam_del_token(t) is null then null else jsonb_build_object(
              'cifraConfianza', s.cifra_confianza,
              'duracionSec', s.duracion_sec, 'spotifyUrl', s.spotify_url,
              'album', s.album, 'albumId', s.album_id, 'cover', s.cover,
+             'noEsNueva', s.no_es_nueva,
              'esIdea', s.estado = 'idea',
              'cantantes', (select coalesce(jsonb_agg(p.nombre order by sc.orden, p.nombre), '[]'::jsonb)
                              from song_cantante sc join persona p on p.id = sc.persona_id

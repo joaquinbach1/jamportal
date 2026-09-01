@@ -1,0 +1,28 @@
+-- ============================================================
+-- JAM PORTAL — marcar que un tema ya no es "nuevo"
+-- ------------------------------------------------------------
+-- "Nueva" es no haber sonado en ninguna jam, y la app lo marca
+-- para saber qué hay que ensayar. Pero hay temas que la banda
+-- ya sabe aunque nunca entraron a una lista —quedaron de un
+-- ensayo, alguien los canta desde siempre— y tenerlos en rojo
+-- para siempre es ruido. Esta columna guarda ese "ya lo
+-- sabemos": en el celular, la pill de "nueva" se toca y se
+-- apaga; en el editor de la compu el rojo desaparece igual.
+--
+-- Mismo movimiento que db/13: la columna acá, y las funciones
+-- que la mueven quedaron al día en sus archivos de siempre
+-- (03, 04 y 15 son `create or replace` y ya la nombran, junto
+-- con las columnas de álbum de db/14):
+--
+--   psql "$CONN" -v ON_ERROR_STOP=1 -f db/20-no-es-nueva.sql
+--   psql "$CONN" -v ON_ERROR_STOP=1 -f db/03-app-estado.sql
+--   psql "$CONN" -v ON_ERROR_STOP=1 -f db/04-escritura.sql
+--   psql "$CONN" -v ON_ERROR_STOP=1 -f db/06-concurrencia.sql
+--   psql "$CONN" -v ON_ERROR_STOP=1 -f db/15-link-publico.sql
+--
+-- db/06 va de nuevo porque db/04 recrea guardar_jam(jsonb), el
+-- de antes del control de concurrencia, y db/06 es quien lo
+-- reemplaza por el bueno.
+-- ============================================================
+
+alter table song add column if not exists no_es_nueva boolean not null default false;

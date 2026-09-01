@@ -43,7 +43,9 @@
   --foco: #4a4a63;            --foco-fondo: #12121a;
   --err-linea: #40252b;       --err-fondo: #2a1618;
   --ok-linea: #21432f;        --ok-fondo: #16251d;
-  --medley-fondo: #17131a;    --medley-linea: #4a2436;
+  /* con más lila que el panel a propósito: casi del mismo gris, la fila
+     de un medley no se distinguía de un tema suelto en el celular */
+  --medley-fondo: #201826;    --medley-linea: #4a2436;
   --medley-badge: #251722;    --medley-song: #1c1620;
   --medley-song-linea: #2a1f2e;
   --rayado: #33333f;          --rayado-a: #16161e;
@@ -2045,33 +2047,81 @@ body.modo-compartido .topbar { display: none; }
   --med: 42px;    --cab: 21px;   --tl: 11px;
 }
 
-.mv-cab { padding: 2px 2px calc(var(--tl) + 2px); }
+.mv-cab {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 2px 2px calc(var(--tl) + 2px);
+}
+.mv-cab-txt { flex: 1 1 auto; min-width: 0; }
 .mv-cab h1 { margin: 0; font-size: var(--cab); line-height: 1.25; letter-spacing: -.01em; }
 .mv-cab-sub { margin-top: 3px; font-size: 12.5px; color: var(--txt-3); }
 
+/* ---------- los dos botones de arriba: ＋ y Editar ----------
+   La vista arranca solo para leer. Editar prende el modo edición (manijas
+   para arrastrar, sacar cosas, tocar breaks y bloques) y se vuelve
+   "Listo"; el ＋ suma un tema o un medley sin pasar por ahí. */
+.mv-cab-acc { flex: none; display: flex; gap: 6px; }
+.mv-btn-cab {
+  min-width: 38px; height: 34px; padding: 0 13px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--panel); color: var(--txt-2);
+  border: 1px solid var(--line); border-radius: 17px;
+  font: inherit; font-size: 13.5px; cursor: pointer;
+}
+.mv-btn-cab:active { background: var(--panel-2); color: var(--txt); }
+.mv-btn-cab.on {
+  background: var(--acc-tinte); color: var(--acc);
+  border-color: var(--acc-linea); font-weight: 600;
+}
+
 /* ---------- de qué hora a qué hora ----------
-   Es un botón: tocarlo abre fecha, hora de arranque y lugar. La hora de
-   arranque no tenía dónde cargarse en el celular, y es de donde cuelga
-   todo el horario de abajo, así que se pone donde se lee. */
+   Las horas de arriba son un botón: tocarlas abre fecha, hora de arranque
+   y lugar. La barra también se toca: cada segmento dice qué tema (o qué
+   sección) es y cuánto dura, y el botoncito del pie cambia entre los dos
+   modos. */
 .mv-timeline {
   display: block; width: 100%; text-align: left;
   padding: var(--tl) 12px calc(var(--tl) + 1px);
   background: var(--panel); border: 1px solid var(--line-soft);
   border-radius: var(--r);
-  font: inherit; color: inherit; cursor: pointer;
+  font: inherit; color: inherit;
 }
-.mv-timeline:active { background: var(--panel-2); }
 .mv-tl-hora.vacia { font-size: 13px; color: var(--acc); letter-spacing: 0; }
-.mv-tl-horas { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.mv-tl-horas {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  width: 100%; padding: 0; margin: 0;
+  background: none; border: 0; border-radius: 4px;
+  font: inherit; color: inherit; cursor: pointer; text-align: left;
+}
+.mv-tl-horas:active { background: var(--panel-2); }
 .mv-tl-hora { font-family: var(--mono); font-size: 17px; color: var(--txt); }
 .mv-tl-largo { font-family: var(--mono); font-size: 11.5px; color: var(--txt-3); }
 .mv-tl-barra {
-  display: flex; gap: 1px; height: 7px; margin-top: 7px;
+  display: flex; gap: 1px; height: 9px; margin-top: 7px;
   border-radius: 5px; overflow: hidden; background: var(--rayado-a);
 }
-.mv-tl-seg { background: var(--acc); min-width: 1px; }
+.mv-tl-seg {
+  background: var(--acc); min-width: 1px;
+  border: 0; padding: 0; cursor: pointer;
+}
 .mv-tl-seg.brk { background: var(--rayado); }
-.mv-tl-pie { margin-top: 6px; font-size: 11.5px; color: var(--txt-3); }
+/* en el modo por sección, una sí y una no van más apagadas: sin el
+   contraste, dos secciones seguidas se leen como una sola */
+.mv-tl-seg.s2 { background: var(--acc); opacity: .55; }
+.mv-tl-seg.on { background: var(--acc-2); opacity: 1; }
+/* qué segmento tocaste: número, tema y duración — o la sección */
+.mv-tl-info {
+  margin-top: 7px; font-size: 12.5px; color: var(--txt);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.mv-tl-pie {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-top: 6px; font-size: 11.5px; color: var(--txt-3);
+}
+.mv-tl-toggle {
+  flex: none; padding: 2px 0 2px 8px; margin: 0;
+  background: none; border: 0;
+  font: inherit; font-size: 11.5px; color: var(--acc); cursor: pointer;
+}
 .mv-tl-aprox { color: var(--txt-3); border-bottom: 1px dotted var(--linea-fuerte); cursor: help; }
 
 /* ---------- la lista ---------- */
@@ -2090,8 +2140,10 @@ body.modo-compartido .topbar { display: none; }
   border-bottom: 1px solid var(--line-soft);
 }
 .mv-fila:last-child { border-bottom: 0; }
+/* alineados a la izquierda, todos parejos: el "1" y el "12" arrancan
+   en la misma columna, igual que el "5a" de un medley */
 .mv-n {
-  flex: 0 0 var(--f-num); text-align: right;
+  flex: 0 0 var(--f-num); text-align: left;
   font-family: var(--mono); font-size: 11.5px; color: var(--txt-3);
 }
 .mv-txt {
@@ -2173,7 +2225,9 @@ body.mv-arrastrando-algo { user-select: none; -webkit-user-select: none; }
 }
 .mv-bloque .mv-handle, .mv-break .mv-handle { align-self: center; margin: 0 0 0 -6px; }
 
-/* ---------- el ＋ de siempre, abajo a la derecha ---------- */
+/* ---------- el ＋ flotante, abajo a la derecha ----------
+   Acompaña al modo edición (movil.js lo esconde fuera de él): mientras
+   solo se lee, con el ＋ de la cabecera alcanza. */
 .fab {
   position: fixed; z-index: 90;
   right: 16px; bottom: calc(18px + env(safe-area-inset-bottom));
@@ -2352,18 +2406,26 @@ body.modo-link .view { padding: 20px 16px calc(96px + env(safe-area-inset-bottom
 /* ============================================================
    Los temas que la banda nunca tocó
    ------------------------------------------------------------
-   En rojo clarito, para verlos de un vistazo: son los que hay
-   que ensayar. "Nueva" es no haberla tocado en ninguna jam, no
-   haberla cargado hace poco — es lo que importa parado frente
-   a la lista.
-   ============================================================ */
-.mv-fila.nueva { background: var(--nueva-fondo); }
-.mv-fila.nueva + .mv-fila.nueva { border-top-color: var(--nueva-linea); }
-.mv-fila.nueva:active { background: var(--nueva-linea); }
-.mv-medley .mv-fila.nueva { background: var(--nueva-fondo); }
+   Son los que hay que ensayar. "Nueva" es no haberla tocado en
+   ninguna jam, no haberla cargado hace poco — es lo que importa
+   parado frente a la lista.
 
-/* Lo mismo en el editor de la compu: ahí el texto "nunca tocada" ya estaba,
-   pero hay que leerlo tema por tema. El color se ve de un vistazo. */
+   En el celular va como una pill al lado del título, no como
+   fondo: el fondo se pisaba con el color del medley y no había
+   dónde tocar. La pill se toca y marca el tema como sabido
+   (song.noEsNueva), que apaga el rojo en todos lados.
+   ============================================================ */
+.mv-pill-nueva {
+  flex: none; margin: 0; padding: 2px 8px 3px;
+  background: var(--nueva-fondo); color: var(--err);
+  border: 1px solid var(--nueva-linea); border-radius: 999px;
+  font-family: var(--mono); font-size: 9px; letter-spacing: .1em;
+  text-transform: uppercase; line-height: 1.4; cursor: pointer;
+}
+.mv-pill-nueva:active { background: var(--nueva-linea); }
+
+/* En el editor de la compu sigue el fondo rojo clarito: ahí hay lugar y
+   el color se ve de un vistazo, tema por tema. */
 .sl-item.nueva { background: var(--nueva-fondo); }
 .sl-item.nueva:hover { background: var(--nueva-linea); }
 .med-song.nueva { background: var(--nueva-fondo); border-radius: 4px; }

@@ -9,6 +9,15 @@
 -- Cada jam se reescribe entera: borrar sus ítems e insertarlos de
 -- nuevo es más simple y más seguro que diferenciarlos, y con 25
 -- ítems por lista el costo es irrelevante.
+--
+-- Este archivo está al día con las columnas de las migraciones
+-- (db/13, db/14, db/20): correrlas primero, y esto después.
+--
+-- Ojo al re-correrlo sobre una base que ya corrió db/06: acá se
+-- crea guardar_jam(jsonb), que db/06 reemplaza por la versión
+-- con control de concurrencia. Correr db/06 de nuevo después
+-- (es idempotente), o queda un doble pelado y con permisos de
+-- más.
 -- ============================================================
 
 -- Contador global de revisión: el sondeo pregunta por esto en vez
@@ -109,7 +118,8 @@ begin
     insert into song (id, titulo, artista, categoria_id, estado, bpm, bpm_raw,
                       bpm_fuente, anio, notas, origen, genero_web,
                       cifra_url, cifra_artista, cifra_confianza,
-                      duracion_sec, spotify_url, patches, actualizada)
+                      duracion_sec, spotify_url,
+                      album, album_id, cover, no_es_nueva, patches, actualizada)
     values (e->>'id', e->>'titulo', e->>'artista', cid,
             case when coalesce((e->>'esIdea')::boolean, false)
                  then 'idea'::estado_song else 'repertorio'::estado_song end,
@@ -119,6 +129,9 @@ begin
             coalesce(e->>'generoWeb', ''), coalesce(e->>'cifraUrl', ''),
             coalesce(e->>'cifraArtista', ''), coalesce(e->>'cifraConfianza', ''),
             nullif(e->>'duracionSec', '')::smallint, coalesce(e->>'spotifyUrl', ''),
+            coalesce(e->>'album', ''), nullif(e->>'albumId', '')::bigint,
+            coalesce(e->>'cover', ''),
+            coalesce((e->>'noEsNueva')::boolean, false),
             coalesce((select array_agg(x#>>'{}')
                         from jsonb_array_elements(e->'patches') x), '{}'),
             now())
@@ -132,6 +145,8 @@ begin
       cifra_artista = excluded.cifra_artista,
       cifra_confianza = excluded.cifra_confianza,
       duracion_sec = excluded.duracion_sec, spotify_url = excluded.spotify_url,
+      album = excluded.album, album_id = excluded.album_id, cover = excluded.cover,
+      no_es_nueva = excluded.no_es_nueva,
       patches = excluded.patches, actualizada = now()
     -- El WHERE es lo que hace que `actualizada` signifique algo. Sin él,
     -- cambiar un título marcaba los 551 temas como actualizados y no
@@ -150,6 +165,10 @@ begin
        or song.genero_web      is distinct from excluded.genero_web
        or song.duracion_sec    is distinct from excluded.duracion_sec
        or song.spotify_url     is distinct from excluded.spotify_url
+       or song.album           is distinct from excluded.album
+       or song.album_id        is distinct from excluded.album_id
+       or song.cover           is distinct from excluded.cover
+       or song.no_es_nueva     is distinct from excluded.no_es_nueva
        or song.cifra_url       is distinct from excluded.cifra_url
        or song.cifra_artista   is distinct from excluded.cifra_artista
        or song.cifra_confianza is distinct from excluded.cifra_confianza

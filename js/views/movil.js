@@ -10,13 +10,15 @@
    la lista, así que vive en el detalle: se toca el tema y ahí
    están artista, duración, cantante y el link a Spotify.
 
-   Editar también se puede, sin salir: se arrastra de la manija
-   para reordenar, se toca el horario para correrlo, y el ⋯ abre
-   la lista entera como texto a pantalla completa. El editor
-   completo sigue existiendo: #/jams/:id/editar
+   Se abre solo para leer: tocar un tema muestra su detalle y
+   nada más se puede romper. "Editar", arriba, prende el modo
+   edición —manijas para arrastrar, sacar cosas, tocar breaks y
+   bloques— y el ＋ de al lado suma un tema o un medley. El ⋯
+   sigue abriendo la lista entera como texto a pantalla
+   completa, y el editor completo existe en #/jams/:id/editar
    ============================================================ */
 
-import { store } from '../store.js';
+import { store, esNueva } from '../store.js';
 import {
   h, frag, clear, toast, fechaLinda, copiar, hojaAcciones, confirmar,
   descargarBlob, modal, field, input, poner,
@@ -56,34 +58,112 @@ function densidad() {
 
 /* ============================================================
    El horario: de qué hora a qué hora, y el break en el medio
+   ------------------------------------------------------------
+   La barra se toca: cada segmento dice qué tema (o qué sección)
+   es y cuánto dura. Y tiene dos modos —tema por tema, o por
+   sección usando los bloques de la lista— que se cambian desde
+   el botoncito del pie y quedan guardados en este teléfono.
    ============================================================ */
-function tira(plan, alTocar) {
+const CLAVE_TL = 'jamportal.movil.timeline';
+const modoTimeline = () => localStorage.getItem(CLAVE_TL) === 'secciones' ? 'secciones' : 'temas';
+
+/** La barra agrupada por sección: de cada bloque hasta el siguiente. */
+function tramosPorSeccion(filas) {
+  const tramos = [];
+  let actual = null, ultimoLabel = 'Arranque';
+  for (const f of filas) {
+    if (f.tipo === 'bloque') {
+      ultimoLabel = f.label || 'BLOQUE';
+      actual = { tipo: 'seccion', label: ultimoLabel, hora: f.hora, seg: 0 };
+      tramos.push(actual);
+      continue;
+    }
+    if (!f.seg) continue;
+    /* el break corta la sección en dos: si se sumara al tramo, el dibujo
+       quedaría con la sección entera antes del break, que no es lo que pasa */
+    if (f.tipo === 'break') {
+      tramos.push({ tipo: 'break', label: f.label, minutos: f.minutos, hora: f.hora, seg: f.seg });
+      actual = null;
+      continue;
+    }
+    if (!actual) {
+      actual = { tipo: 'seccion', label: ultimoLabel, hora: f.hora, seg: 0 };
+      tramos.push(actual);
+    }
+    actual.seg += f.seg;
+  }
+  return tramos.filter(tr => tr.seg > 0);
+}
+
+function tira(plan, alTocar, alCambiarModo) {
+  const hayBloques = plan.filas.some(f => f.tipo === 'bloque');
+  const modo = hayBloques ? modoTimeline() : 'temas';
+
+  const tramos = modo === 'secciones'
+    ? tramosPorSeccion(plan.filas)
+    : plan.filas.filter(f => f.tipo !== 'bloque' && f.seg > 0);
+
+  /* qué dice el pie cuando tocás un segmento */
+  const leyenda = tr => {
+    const hora = tr.hora ? ` · ${tr.hora}` : '';
+    if (tr.tipo === 'seccion') return `${tr.label} — ${largoLindo(tr.seg)}${hora}`;
+    if (tr.tipo === 'break')   return `${tr.label || 'BREAK'} — ${tr.minutos}′${hora}`;
+    if (tr.tipo === 'medley')  return `${tr.n}. MEDLEY`
+      + (/^medley$/i.test((tr.titulo || '').trim()) ? '' : ` ${tr.titulo}`)
+      + ` — ${duracionLinda(tr.seg)}${hora}`;
+    return `${tr.n}. ${tr.song ? tr.song.titulo : '—'} — ${duracionLinda(tr.seg)}${hora}`;
+  };
+
+  const info = h('div.mv-tl-info', { hidden: true });
   const barra = h('div.mv-tl-barra');
   if (plan.total > 0) {
-    plan.filas.forEach(f => {
-      if (f.tipo === 'bloque' || !f.seg) return;
-      barra.appendChild(h('div.mv-tl-seg' + (f.tipo === 'break' ? '.brk' : ''), {
-        style: { width: (f.seg / plan.total) * 100 + '%' },
-      }));
+    let seccionN = 0;
+    tramos.forEach(tr => {
+      if (tr.tipo === 'seccion') seccionN++;
+      const seg = h('button.mv-tl-seg'
+        + (tr.tipo === 'break' ? '.brk' : '')
+        + (tr.tipo === 'seccion' && seccionN % 2 === 0 ? '.s2' : ''), {
+        style: { width: (tr.seg / plan.total) * 100 + '%' },
+        onclick: () => {
+          const otra = !seg.classList.contains('on');
+          barra.querySelectorAll('.on').forEach(el => el.classList.remove('on'));
+          info.hidden = !otra;
+          if (otra) { seg.classList.add('on'); info.textContent = leyenda(tr); }
+        },
+      });
+      barra.appendChild(seg);
     });
   }
+
+  /* Cada medley cuenta como un tema: es una entrada de la lista, no cinco. */
+  const nTemas = plan.filas.filter(f => f.tipo === 'song' || f.tipo === 'medley').length;
 
   /* Sin hora de arranque no hay reloj que mostrar, pero el largo total
      sigue sirviendo: es lo que dura la jam, empiece cuando empiece. Y
      que diga "poné la hora" es justamente dónde se toca para ponerla. */
-  return h('button.mv-timeline', {
-    onclick: alTocar,
-    title: 'Tocar para cambiar la fecha, la hora de arranque y el lugar',
-  },
-    h('div.mv-tl-horas', {},
+  return h('div.mv-timeline', {},
+    h('button.mv-tl-horas', {
+      onclick: alTocar,
+      title: 'Tocar para cambiar la fecha, la hora de arranque y el lugar',
+    },
       h('span.mv-tl-hora' + (plan.inicio ? '' : '.vacia'), {}, plan.inicio || 'poné la hora'),
       h('span.mv-tl-largo', {}, largoLindo(plan.total)),
       h('span.mv-tl-hora', {}, plan.fin || '')),
     barra,
+    info,
     h('div.mv-tl-pie', {},
-      `${plan.temas} tema${plan.temas === 1 ? '' : 's'}`,
-      plan.breaks ? ` · ${Math.round(plan.breaks / 60)}′ de break` : '',
-      plan.sinDato ? ` · ${plan.sinDato} estimado${plan.sinDato === 1 ? '' : 's'}` : ''));
+      h('span', {},
+        `${nTemas} tema${nTemas === 1 ? '' : 's'}`,
+        plan.breaks ? ` · ${Math.round(plan.breaks / 60)}′ de break` : '',
+        plan.sinDato ? ` · ${plan.sinDato} estimado${plan.sinDato === 1 ? '' : 's'}` : ''),
+      hayBloques
+        ? h('button.mv-tl-toggle', {
+            onclick: () => {
+              localStorage.setItem(CLAVE_TL, modo === 'secciones' ? 'temas' : 'secciones');
+              alCambiarModo();
+            },
+          }, modo === 'secciones' ? '▤ por sección' : '♪ por tema')
+        : null));
 }
 
 /* ============================================================
@@ -101,6 +181,13 @@ export function vistaMovil(jamId) {
      reordenan desde acá. Para abrirlas está el candado del editor completo,
      que es donde vive esa decisión y pide confirmación. */
   const editable = () => !(jam.historica || jam.cerrada);
+
+  /* La vista arranca solo para leer: nada de manijas ni de sacar cosas por
+     accidente con el teléfono en el bolsillo. "Editar", arriba, prende el
+     modo edición; "Listo" lo apaga. El ＋ de arriba suma un tema o un
+     medley sin pasar por el modo edición: apretarlo ya es querer editar. */
+  let editando = false;
+  const puedeTocar = () => editable() && editando;
 
   const cont = h('div.movil', { dataset: { d: densidad() } });
   const lista = h('div.mv-lista');
@@ -126,7 +213,9 @@ export function vistaMovil(jamId) {
       h('div.hd-fila', {}, h('span', {}, 'Tocada'),
         (s.jams || []).length
           ? h('b', {}, `${s.jams.length} ${s.jams.length === 1 ? 'vez' : 'veces'}`)
-          : h('b', { style: { color: 'var(--err)' } }, 'nunca — es nueva')),
+          : esNueva(s)
+            ? h('b', { style: { color: 'var(--err)' } }, 'nunca — es nueva')
+            : h('b', {}, 'nunca — pero ya la saben')),
       s.bpm ? h('div.hd-fila', {}, h('span', {}, 'Tempo'),
         h('b', {}, `${s.bpmFuente === 'sugerido' ? '≈ ' : ''}${s.bpm} bpm`)) : null,
       nota ? h('div.hd-nota', {}, '📝 ' + nota) : null);
@@ -149,9 +238,9 @@ export function vistaMovil(jamId) {
         } },
       /* Editar el tema toca el catálogo de la banda, y por el link eso no
          viaja: crear_song_publica solo da de alta, nunca renombra. */
-      editable() && !store.publico
+      puedeTocar() && !store.publico
         ? { icono: '✎', texto: 'Editar el tema', onClick: () => dialogoCancion(s, pintar) } : null,
-      editable() && sacar
+      puedeTocar() && sacar
         ? { icono: '✕', texto: sacar.texto, peligro: true, onClick: sacar.hacer }
         : null,
     ], { detalle });
@@ -719,37 +808,66 @@ export function vistaMovil(jamId) {
   function renglon(f, num, { alTocar, conManija = false } = {}) {
     const s = f.song;
     const cantantes = (f.cantantes || []).join(', ');
-    /* Nunca tocada: va en rojo clarito. `jams` es la lista de jams en las que
-       sonó, así que vacía quiere decir que para la banda es nueva. */
-    const nueva = s && !(s.jams || []).length;
 
-    return h('div.mv-fila' + (nueva ? '.nueva' : ''), {
+    /* Nunca tocada: lleva una pill de "nueva" al lado del título. Tocarla
+       la apaga para siempre —quedó marcada como sabida— así que por el
+       link no se puede: ese cambio es del catálogo y no viaja. */
+    const pill = s && esNueva(s)
+      ? h('button.mv-pill-nueva', {
+          title: 'Nunca sonó en una jam. Tocá para marcar que ya la saben.',
+          onclick: async e => {
+            e.stopPropagation();
+            if (store.publico) { toast('Nunca sonó en una jam: hay que ensayarla'); return; }
+            if (await confirmar(`«${s.titulo}» nunca sonó en una jam. ¿Marcarla como que ya la saben, para que deje de figurar como nueva?`,
+                { titulo: 'Tema nuevo', danger: false, okText: 'Ya no es nueva' })) {
+              store.updateSong(s.id, { noEsNueva: true });
+              pintar();
+              toast(`«${s.titulo}» ya no figura como nueva`, 'ok');
+            }
+          },
+        }, 'nueva')
+      : null;
+
+    return h('div.mv-fila', {
       onclick: e => {
         if (e.target.closest('.mv-handle')) return;
         if (performance.now() - finArrastre < 300) return;
         alTocar && alTocar();
       },
     },
-      editable() && conManija ? manija() : null,
+      puedeTocar() && conManija ? manija() : null,
       h('span.mv-n', {}, num),
       h('span.mv-txt', {},
         h('b', {}, s ? s.titulo : 'Tema borrado'),
         cantantes ? h('span.mv-quien', {}, ` (${cantantes})`) : null),
+      pill,
       s && notaDe(jam.id, s.id) ? h('span.mv-nota', {}, '📝') : null,
       h('span.mv-dur', {}, duracionLinda(f.seg)));
   }
 
   function pintar() {
     clear(cont);
+    fab.style.display = puedeTocar() ? '' : 'none';
     const plan = agenda(jam, id => store.song(id));
 
     cont.append(
       h('div.mv-cab', {},
-        h('h1', {}, jam.nombre || 'Jam sin nombre'),
-        h('div.mv-cab-sub', {},
-          [jam.fecha ? fechaLinda(jam.fecha) : '', jam.lugar].filter(Boolean).join(' · ')
-          || 'sin fecha')),
-      tira(plan, dialogoHorario));
+        h('div.mv-cab-txt', {},
+          h('h1', {}, jam.nombre || 'Jam sin nombre'),
+          h('div.mv-cab-sub', {},
+            [jam.fecha ? fechaLinda(jam.fecha) : '', jam.lugar].filter(Boolean).join(' · ')
+            || 'sin fecha')),
+        editable()
+          ? h('div.mv-cab-acc', {},
+              h('button.mv-btn-cab', {
+                title: 'Sumar un tema o un medley',
+                onclick: dialogoAgregar,
+              }, '＋'),
+              h('button.mv-btn-cab' + (editando ? '.on' : ''), {
+                onclick: () => { editando = !editando; pintar(); },
+              }, editando ? 'Listo' : 'Editar'))
+          : null),
+      tira(plan, dialogoHorario, pintar));
 
     if (!plan.filas.length) {
       cont.appendChild(h('div.empty', {},
@@ -775,12 +893,12 @@ export function vistaMovil(jamId) {
       if (f.tipo === 'bloque') {
         lista.appendChild(marcar(h('div.mv-bloque', {
           onclick: e => {
-            if (e.target.closest('.mv-handle') || !editable()) return;
+            if (e.target.closest('.mv-handle') || !puedeTocar()) return;
             if (performance.now() - finArrastre < 300) return;
             hojaBloque(f, pos, quitar);
           },
         },
-          editable() ? manija() : null,
+          puedeTocar() ? manija() : null,
           h('span', {}, f.label || 'BLOQUE'))));
         return;
       }
@@ -788,12 +906,12 @@ export function vistaMovil(jamId) {
       if (f.tipo === 'break') {
         lista.appendChild(marcar(h('div.mv-break', {
           onclick: e => {
-            if (e.target.closest('.mv-handle') || !editable()) return;
+            if (e.target.closest('.mv-handle') || !puedeTocar()) return;
             if (performance.now() - finArrastre < 300) return;
             hojaBreak(f, pos, quitar);
           },
         },
-          editable() ? manija() : null,
+          puedeTocar() ? manija() : null,
           h('span.mv-break-txt', {}, `${f.label} · ${f.minutos}′`),
           f.hora ? h('span.mv-break-hora', {}, f.hora) : null)));
         return;
@@ -803,18 +921,18 @@ export function vistaMovil(jamId) {
         lista.appendChild(marcar(h('div.mv-medley', {},
           h('div.mv-medley-cab', {
             onclick: e => {
-              if (e.target.closest('.mv-handle') || !editable()) return;
+              if (e.target.closest('.mv-handle') || !puedeTocar()) return;
               if (performance.now() - finArrastre < 300) return;
               hojaMedley(f, pos, quitar);
             },
           },
-            editable() ? manija() : null,
+            puedeTocar() ? manija() : null,
             h('span.mv-n', {}, f.n),
             h('span.mv-txt', {}, h('b', {}, 'MEDLEY'),
               /^medley$/i.test(f.titulo.trim()) ? null : h('span.mv-art', {}, ' ' + f.titulo)),
             h('span.mv-dur', {}, duracionLinda(f.seg))),
           ...f.songs.map((x, k) => renglon(x, `${f.n}${String.fromCharCode(97 + k)}`, {
-            alTocar: () => hojaTema(x, editable() ? {
+            alTocar: () => hojaTema(x, puedeTocar() ? {
               texto: 'Sacar del medley',
               hacer: () => {
                 const m = jam.items[pos];
@@ -835,26 +953,24 @@ export function vistaMovil(jamId) {
 
       lista.appendChild(marcar(renglon(f, f.n, {
         conManija: true,
-        alTocar: () => hojaTema(f, editable()
+        alTocar: () => hojaTema(f, puedeTocar()
           ? { texto: 'Sacar de la lista', hacer: quitar } : null),
       })));
     });
     cont.appendChild(lista);
   }
 
+  /* El ＋ flotante acompaña al modo edición: mientras solo se lee, con el
+     ＋ de arriba alcanza y la lista queda limpia. pintar() lo prende. */
+  const fab = h('button.fab', {
+    title: 'Sumar un tema a esta jam',
+    onclick: dialogoAgregar,
+  }, '＋');
+
   pintar();
   /* El ⋯ de la barra de arriba es de la vista, no del chrome: cada
      pantalla pone ahí lo suyo y el router lo limpia al navegar. */
   accionesDePagina(menu);
 
-  return frag(
-    cont,
-    /* En una jam cerrada no hay nada que sumar; el ＋ sería un botón que
-       miente. El cuaderno de ideas sigue estando en el ⋯. */
-    editable()
-      ? h('button.fab', {
-          title: 'Sumar un tema a esta jam',
-          onclick: dialogoAgregar,
-        }, '＋')
-      : null);
+  return frag(cont, fab);
 }
