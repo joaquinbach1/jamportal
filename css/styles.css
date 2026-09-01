@@ -2234,6 +2234,8 @@ body.modo-compartido .topbar { display: none; }
   background: var(--acc-tinte); color: var(--acc);
   border-color: var(--acc-linea); font-weight: 600;
 }
+/* el toggle de instrumentos: solo el ícono, sin el aire de los de texto */
+.mv-btn-cab.icono { padding: 0 9px; font-size: 15px; }
 
 /* ---------- de qué hora a qué hora ----------
    Las horas de arriba son un botón: tocarlas abre fecha, hora de arranque
@@ -2308,10 +2310,18 @@ body.modo-compartido .topbar { display: none; }
   flex: 0 0 var(--f-num); text-align: left;
   font-family: var(--mono); font-size: 11.5px; color: var(--txt-3);
 }
+/* La columna del medio: el renglón del título y, con el 🎸 prendido,
+   el de los instrumentos abajo. */
+.mv-col { flex: 1 1 auto; min-width: 0; }
 .mv-txt {
   flex: 1 1 auto; min-width: 0;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   font-size: var(--f-tit); line-height: 1.3;
+}
+.mv-instr {
+  margin-top: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 10.5px; line-height: 1.35; color: var(--txt-3);
 }
 .mv-txt b { font-weight: 600; color: var(--txt); }
 .mv-art { color: var(--txt-3); }

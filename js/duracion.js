@@ -115,6 +115,7 @@ export function agenda(jam, song) {
     const seg = segundosDeTema(s);
     n++; temas++;
     filas.push({ tipo: 'song', n, song: s, songId: it.songId, cantantes: it.cantantes || [],
+                 guitarras: it.guitarras || [],
                  desde: t, hora: horaMas(inicio, t), seg });
     t += seg; musica += seg;
     ultimoConRespiro = filas.length - 1;

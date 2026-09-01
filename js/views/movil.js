@@ -57,6 +57,28 @@ function densidad() {
 }
 
 /* ============================================================
+   Ver los instrumentos de cada tema
+   ------------------------------------------------------------
+   Un renglón chico abajo del título: la trompeta si lleva
+   vientos, los guitarristas de esta jam (con quién hace el
+   solo), el patch de teclado y los invitados. Se prende con el
+   🎸 de arriba y queda guardado en este teléfono.
+   ============================================================ */
+const CLAVE_I = 'jamportal.movil.instrumentos';
+const verInstrumentos = () => localStorage.getItem(CLAVE_I) === '1';
+
+function lineaInstrumentos(f, s) {
+  const partes = [];
+  if (s.vientos) partes.push('🎺 vientos');
+  (f.guitarras || []).filter(g => g && g.nombre).forEach(g =>
+    partes.push('🎸 ' + g.nombre + (g.solo ? ' (solo)' : '')));
+  if ((s.patches || []).length) partes.push('🎹 ' + s.patches.join(' '));
+  (s.invitados || []).forEach(x => partes.push(x));
+  if (!partes.length) return null;
+  return h('div.mv-instr', {}, partes.join(' · '));
+}
+
+/* ============================================================
    El horario: de qué hora a qué hora, y el break en el medio
    ------------------------------------------------------------
    La barra se toca: cada segmento dice qué tema (o qué sección)
@@ -833,6 +855,8 @@ export function vistaMovil(jamId) {
         }, 'nueva')
       : null;
 
+    const instr = verInstrumentos() && s ? lineaInstrumentos(f, s) : null;
+
     return h('div.mv-fila', {
       onclick: e => {
         if (e.target.closest('.mv-handle')) return;
@@ -842,9 +866,11 @@ export function vistaMovil(jamId) {
     },
       puedeTocar() && conManija ? manija() : null,
       h('span.mv-n', {}, num),
-      h('span.mv-txt', {},
-        h('b', {}, s ? s.titulo : 'Tema borrado'),
-        cantantes ? h('span.mv-quien', {}, ` (${cantantes})`) : null),
+      h('div.mv-col', {},
+        h('div.mv-txt', {},
+          h('b', {}, s ? s.titulo : 'Tema borrado'),
+          cantantes ? h('span.mv-quien', {}, ` (${cantantes})`) : null),
+        instr),
       pill,
       s && notaDe(jam.id, s.id) ? h('span.mv-nota', {}, '📝') : null,
       h('span.mv-dur', {}, duracionLinda(f.seg)));
@@ -872,16 +898,22 @@ export function vistaMovil(jamId) {
           h('div.mv-cab-sub', {},
             [jam.fecha ? fechaLinda(jam.fecha) : '', jam.lugar].filter(Boolean).join(' · ')
             || 'sin fecha')),
-        editable()
-          ? h('div.mv-cab-acc', {},
-              h('button.mv-btn-cab', {
-                title: 'Sumar un tema o un medley',
-                onclick: dialogoAgregar,
-              }, '＋'),
-              h('button.mv-btn-cab' + (editando ? '.on' : ''), {
-                onclick: () => { editando = !editando; pintar(); },
-              }, editando ? 'Listo' : 'Editar'))
-          : null),
+        h('div.mv-cab-acc', {},
+          /* ver instrumentos es leer, así que va aunque la jam esté cerrada */
+          h('button.mv-btn-cab.icono' + (verInstrumentos() ? '.on' : ''), {
+            title: 'Mostrar los instrumentos de cada tema',
+            onclick: () => {
+              localStorage.setItem(CLAVE_I, verInstrumentos() ? '' : '1');
+              pintar();
+            },
+          }, '🎸'),
+          editable() ? h('button.mv-btn-cab', {
+            title: 'Sumar un tema o un medley',
+            onclick: dialogoAgregar,
+          }, '＋') : null,
+          editable() ? h('button.mv-btn-cab' + (editando ? '.on' : ''), {
+            onclick: () => { editando = !editando; pintar(); },
+          }, editando ? 'Listo' : 'Editar') : null)),
       tira(plan, dialogoHorario, pintar));
 
     if (!plan.filas.length) {
