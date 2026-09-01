@@ -262,9 +262,11 @@ begin
 
     kpos := 0;
     for sub in select * from jsonb_array_elements(coalesce(it->'songs', '[]')) loop
-      insert into setlist_item (id, jam_id, parent_id, orden, tipo, song_id, notas)
+      insert into setlist_item (id, jam_id, parent_id, orden, tipo, song_id,
+                                notas, guitarras)
       values (gen_random_uuid(), j->>'id', iid, kpos, 'song',
-              nullif(sub->>'songId', ''), coalesce(sub->>'notas', ''))
+              nullif(sub->>'songId', ''), coalesce(sub->>'notas', ''),
+              coalesce(sub->'guitarras', '[]'::jsonb))
       returning id into eid;
 
       insert into item_cantante (item_id, persona_id, orden)

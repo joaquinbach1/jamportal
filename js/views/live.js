@@ -23,7 +23,9 @@ export function filas(jam) {
     if (it.tipo === 'medley') {
       n++;
       out.push({ tipo: 'medley', n, titulo: it.titulo, i,
-        songs: (it.songs || []).map(ms => ({ song: store.song(ms.songId), cantantes: ms.cantantes || [] })) });
+        songs: (it.songs || []).map(ms => ({
+          song: store.song(ms.songId), cantantes: ms.cantantes || [],
+          guitarras: ms.guitarras || [] })) });
       return;
     }
     n++;
@@ -135,6 +137,10 @@ export function vistaLive(jamId) {
               h('div.live-sub-song', {},
                 h('span', {}, x.song ? x.song.titulo : '—'),
                 x.cantantes.length ? h('span.live-cantante', {}, x.cantantes.join(', ')) : null,
+                ...(x.guitarras || [])
+                  .filter(g => g && g.nombre)
+                  .map(g => h('span.live-guitarra.chica' + (g.solo ? '.solo' : ''), {},
+                    '🎸 ' + g.nombre + (g.solo ? ' · solo' : ''))),
                 x.song && x.song.bpm ? h('span.live-bpm', {}, x.song.bpm) : null,
                 x.song && notaDe(jam.id, x.song.id)
                   ? h('span.live-nota.chica', {}, notaDe(jam.id, x.song.id)) : null))))));

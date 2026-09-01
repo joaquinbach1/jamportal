@@ -1334,6 +1334,9 @@ body.en-vivo { background: var(--live-fondo); }
 .live-guitarra.solo {
   color: var(--acc); font-weight: 650;
 }
+/* dentro de un medley la fila ya es chica: el guitarrista entra ahí,
+   no compite con el título del tema */
+.live-guitarra.chica { font-size: .74em; }
 
 /* la nota de uno, en el vivo: destacada pero sin robarle el lugar al tema */
 .live-nota {

@@ -613,7 +613,8 @@ export function vistaEditor(jamId) {
     const m = items()[i];
     if (!m || m.tipo !== 'medley') return;
     const [ms] = m.songs.splice(k, 1);
-    const suelto = { tipo: 'song', songId: ms.songId, cantantes: ms.cantantes || [], notas: '' };
+    const suelto = { tipo: 'song', songId: ms.songId, cantantes: ms.cantantes || [], notas: '',
+                     guitarras: ms.guitarras || undefined };
 
     if (m.songs.length >= 2) {
       items().splice(i + 1, 0, suelto);                    // el medley sigue en pie
@@ -621,7 +622,8 @@ export function vistaEditor(jamId) {
       // con un solo tema ya no es un medley: se desarma solo
       const [q] = m.songs;
       items().splice(i, 1,
-        { tipo: 'song', songId: q.songId, cantantes: q.cantantes || [], notas: '' }, suelto);
+        { tipo: 'song', songId: q.songId, cantantes: q.cantantes || [], notas: '',
+          guitarras: q.guitarras || undefined }, suelto);
       toast('El medley quedó con un solo tema, así que lo desarmé', '');
     } else {
       items().splice(i, 1, suelto);
@@ -1092,19 +1094,26 @@ export function vistaEditor(jamId) {
             },
             ondragend: () => { fila.classList.remove('dragging'); fila.draggable = false; arrastre = null; },
           });
+          /* Los temas del medley también llevan guitarrista: en un medley
+             se turnan más que en cualquier otro lado, y es justo ahí donde
+             hay que saber quién agarra la viola. Con el gremio Guitarras
+             puesto la fila deja pasar el resto —artista, tempo, patch— para
+             que los dos puestos entren sin apretarse. */
+          const guit = gremioActual() === 'guitarras';
           poner(fila,
             bloqueada() ? null : manija('Arrastrar para reordenar dentro del medley'),
-            franjaDot(s && s.franja),
+            guit ? null : franjaDot(s && s.franja),
             h('span', {}, s ? s.titulo : '—'),
-            h('span.dim', { style: { fontSize: '11px' } }, s ? s.artista : ''),
-            s ? (bloqueada()
+            guit ? null : h('span.dim', { style: { fontSize: '11px' } }, s ? s.artista : ''),
+            guit || !s ? null : (bloqueada()
               ? (s.bpm ? h('span.mono.dim', { style: { fontSize: '11px' } }, s.bpm) : null)
-              : chipTempo(s, () => pintarTodo())) : null,
-            s ? (bloqueada()
+              : chipTempo(s, () => pintarTodo())),
+            guit || !s ? null : (bloqueada()
               ? (s.vientos ? h('span.vientos-fijo', { title: 'Lleva vientos' }, '🎺') : null)
-              : botonVientos(s)) : null,
-            s && !bloqueada() ? chipPatch(s, () => pintarTodo()) : null,
-            s && s.cifraUrl ? h('a.print-link', { href: s.cifraUrl, target: '_blank', rel: 'noopener' }, '🎸 cifra') : null,
+              : botonVientos(s)),
+            guit ? null : (s && !bloqueada() ? chipPatch(s, () => pintarTodo()) : null),
+            guit ? [puestoGuitarra(ms, 0), puestoGuitarra(ms, 1)] : null,
+            guit ? null : (s && s.cifraUrl ? h('a.print-link', { href: s.cifraUrl, target: '_blank', rel: 'noopener' }, '🎸 cifra') : null),
             bloqueada()
               ? (ms.cantantes || []).map(n => h('span.chip.sel', {}, n))
               : chipsPersonas(ms.cantantes || [], opcionesGente(), v => { ms.cantantes = v; guardar(); pintarTodo(); }, (s && s.cantantes) || []),

@@ -13,6 +13,9 @@
 --
 -- Este archivo está al día con las columnas de las migraciones
 -- (db/13, db/14, db/20, db/21): correrlas primero, y esto después.
+--
+-- `guitarras` sale tanto en el tema suelto como en cada tema de un
+-- medley: la columna es la misma, son todos setlist_item.
 -- ============================================================
 
 create or replace function cantantes_de(i uuid) returns jsonb
@@ -154,6 +157,7 @@ select jsonb_build_object(
                      'songs', (select coalesce(jsonb_agg(jsonb_build_object(
                                  'songId',    h.song_id,
                                  'notas',     h.notas,
+                                 'guitarras', h.guitarras,
                                  'cantantes', cantantes_de(h.id)
                                ) order by h.orden), '[]'::jsonb)
                                from setlist_item h where h.parent_id = i.id))
