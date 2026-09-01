@@ -87,7 +87,9 @@ function instrumentosDe(f, s) {
    el botoncito del pie y quedan guardados en este teléfono.
    ============================================================ */
 const CLAVE_TL = 'jamportal.movil.timeline';
-const modoTimeline = () => localStorage.getItem(CLAVE_TL) === 'secciones' ? 'secciones' : 'temas';
+/* Por sección salvo que hayas elegido por tema: la barra de secciones se
+   lee de un vistazo; el tema por tema es el zoom para cuando hace falta. */
+const modoTimeline = () => localStorage.getItem(CLAVE_TL) === 'temas' ? 'temas' : 'secciones';
 
 /** La barra agrupada por sección: de cada bloque hasta el siguiente. */
 function tramosPorSeccion(filas) {
