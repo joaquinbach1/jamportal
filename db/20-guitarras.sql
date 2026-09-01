@@ -13,6 +13,10 @@
 -- así agregar un tercero no pide otra migración.
 --
 -- Es idempotente: correrlo dos veces no rompe nada.
+--
+-- Va después del 19 porque reemplaza guardar_jam y app_estado enteras,
+-- copiadas de la versión de hoy. Correrlo antes pisaría lo que venga
+-- después.
 -- ============================================================
 
 alter table setlist_item
