@@ -2403,10 +2403,13 @@ body.mv-arrastrando-algo { user-select: none; -webkit-user-select: none; }
    quién canta y dónde está el break. */
 .mv-bloque {
   display: flex; align-items: center; gap: 4px;
-  padding: var(--blq) 12px 4px;
+  padding: var(--blq) 12px calc(var(--blq) - 2px);
   font-family: var(--mono); font-size: 10.5px;
-  letter-spacing: .18em; text-transform: uppercase; color: var(--txt-3);
-  background: var(--panel);
+  letter-spacing: .18em; text-transform: uppercase; color: var(--txt-2);
+  /* un gris apenas más claro que el panel: separa la sección de un
+     vistazo sin pelearle el color al break */
+  background: var(--panel-2);
+  border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft);
 }
 .mv-bloque .mv-handle, .mv-break .mv-handle { align-self: center; margin: 0 0 0 -6px; }
 
