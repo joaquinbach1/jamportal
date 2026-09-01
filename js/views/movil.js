@@ -327,54 +327,89 @@ export function vistaMovil(jamId) {
     setTimeout(() => fMin.focus(), 80);
   }
 
+  function dialogoBloque(pos) {
+    const it = jam.items[pos];
+    const fNom = input({ value: it.label || '', placeholder: 'ROCK NACIONAL, 2000s, PIANO BAR…' });
+    const m = modal({
+      title: 'El bloque',
+      body: [field('Nombre', fNom)],
+      footer: [
+        h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
+        h('button.btn.primary', { onclick: () => {
+            it.label = fNom.value.trim();
+            guardar(); m.close(); pintar(); toast('Bloque actualizado', 'ok');
+          } }, 'Guardar'),
+      ],
+    });
+    setTimeout(() => { fNom.focus(); fNom.select(); }, 80);
+  }
+
   function hojaBloque(f, pos, quitar) {
     hojaAcciones(f.label || 'Bloque', [
-      { icono: '✎', texto: 'Cambiarle el nombre', onClick: () => {
-          const it = jam.items[pos];
-          const fNom = input({ value: it.label || '', placeholder: 'ROCK NACIONAL, 2000s, PIANO BAR…' });
-          const m = modal({
-            title: 'El bloque',
-            body: [field('Nombre', fNom)],
-            footer: [
-              h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
-              h('button.btn.primary', { onclick: () => {
-                  it.label = fNom.value.trim();
-                  guardar(); m.close(); pintar(); toast('Bloque actualizado', 'ok');
-                } }, 'Guardar'),
-            ],
-          });
-          setTimeout(() => { fNom.focus(); fNom.select(); }, 80);
-        } },
+      { icono: '✎', texto: 'Cambiarle el nombre', onClick: () => dialogoBloque(pos) },
       { icono: '✕', texto: 'Sacar el bloque de la lista', peligro: true, onClick: quitar },
     ]);
   }
 
   /* ============================================================
-     Sumar un tema a esta jam
+     Sumar a esta jam: al final con el ＋ de arriba, o justo abajo
+     de una línea con su ＋ (solo en modo edición)
      ------------------------------------------------------------
      El ＋ antes anotaba en Ideas, y adentro de una jam eso es lo
      que nadie espera: agregás un tema, volvés a la lista y no
      está. Ahora suma acá, que es lo que se estaba pidiendo. Para
      el cuaderno de ideas quedó su entrada propia en el ⋯.
      ============================================================ */
-  function sumarAlFinal(item, aviso) {
-    jam.items = [...jam.items, item];
+  /** Mete el ítem en `pos` (o al final) y baja hasta lo recién puesto. */
+  function insertarItem(item, aviso, pos = null) {
+    const idx = (pos == null || pos > jam.items.length) ? jam.items.length : pos;
+    jam.items = [...jam.items.slice(0, idx), item, ...jam.items.slice(idx)];
     guardar(); pintar();
     toast(aviso, 'ok');
-    /* que baje hasta lo recién puesto, si no quedó a la vista */
-    const ultima = lista.lastElementChild;
-    if (ultima) ultima.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const el = lista.querySelector(`[data-i="${idx}"]`);
+    if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    return idx;
   }
 
-  const sumarTema = song => sumarAlFinal(
+  const sumarTema = (song, pos = null) => insertarItem(
     { tipo: 'song', songId: song.id, cantantes: [], notas: '' },
-    `«${song.titulo}» al final de la lista`);
+    pos == null ? `«${song.titulo}» al final de la lista` : `«${song.titulo}» agregada`,
+    pos);
 
   /** Un medley que ya se armó antes, entero: sus temas y sus cantantes. */
-  const sumarMedley = m => sumarAlFinal(
+  const sumarMedley = (m, pos = null) => insertarItem(
     { tipo: 'medley', titulo: m.titulo, notas: '',
       songs: m.songs.map(x => ({ songId: x.songId, cantantes: [...(x.cantantes || [])] })) },
-    `Medley de ${m.temas.length} temas al final de la lista`);
+    pos == null ? `Medley de ${m.temas.length} temas al final de la lista`
+                : `Medley de ${m.temas.length} temas agregado`,
+    pos);
+
+  /** El ＋ de una línea: qué va justo abajo — tema/medley, break o bloque. */
+  function hojaInsertar(pos) {
+    hojaAcciones('Agregar justo abajo', [
+      { icono: '♪', texto: 'Un tema o un medley', onClick: () => dialogoAgregar(pos + 1) },
+      { icono: '⏱', texto: 'Un break', onClick: () => {
+          const idx = insertarItem({ tipo: 'break', label: 'BREAK', minutos: 15 },
+            'Break de 15′ — tocalo para cambiarlo', pos + 1);
+          dialogoBreak(idx);
+        } },
+      { icono: '▭', texto: 'Un bloque — el rótulo de una sección', onClick: () => {
+          const idx = insertarItem({ tipo: 'bloque', label: '' }, 'Bloque agregado', pos + 1);
+          dialogoBloque(idx);
+        } },
+    ]);
+  }
+
+  function botonInsertar(pos) {
+    return h('button.mv-sumar', {
+      title: 'Agregar justo abajo',
+      onclick: e => {
+        e.stopPropagation();
+        if (performance.now() - finArrastre < 300) return;
+        hojaInsertar(pos);
+      },
+    }, '＋');
+  }
 
   /**
    * Buscador a pantalla completa.
@@ -483,22 +518,23 @@ export function vistaMovil(jamId) {
     document.addEventListener('keydown', esc);
   }
 
-  function dialogoAgregar() {
+  /** @param pos dónde meter lo elegido; null = al final */
+  function dialogoAgregar(pos = null) {
     panelBuscar({
       titulo: 'Sumar a ' + (jam.nombre || 'la jam'),
       ayuda: 'Busco en el repertorio y después en internet; si no aparece, se '
            + 'agrega con lo que escribas. Para sumar un medley entero, tocá Medleys.',
-      alElegir: sumarTema,
-      alElegirMedley: sumarMedley,
+      alElegir: s => sumarTema(s, pos),
+      alElegirMedley: m => sumarMedley(m, pos),
       alCrearWeb: r => {
         const s = store.addSong(webAResultado(r));
-        sumarTema(s);
+        sumarTema(s, pos);
         if (!s.bpm) asegurarTempo(s, { alTerminar: pintar });   // el tempo llega solo
       },
       /* Si no está en ningún lado, entra igual con lo que escribiste: en el
          celular, frenar la carga para pedir artista y categoría es perder el
          tema. Los datos que falten se completan después. */
-      alEscribir: q => sumarTema(store.addSong({ titulo: q, artista: '' })),
+      alEscribir: q => sumarTema(store.addSong({ titulo: q, artista: '' }), pos),
     });
   }
 
@@ -832,7 +868,7 @@ export function vistaMovil(jamId) {
    * @param {function} [opts.alTocar]  qué abre el toque
    * @param {boolean} [opts.conManija] si se puede arrastrar (solo el 1er nivel)
    */
-  function renglon(f, num, { alTocar, conManija = false } = {}) {
+  function renglon(f, num, { alTocar, conManija = false, pos = null } = {}) {
     const s = f.song;
     const cantantes = (f.cantantes || []).join(', ');
 
@@ -873,7 +909,8 @@ export function vistaMovil(jamId) {
         instr),
       pill,
       s && notaDe(jam.id, s.id) ? h('span.mv-nota', {}, '📝') : null,
-      h('span.mv-dur', {}, duracionLinda(f.seg)));
+      h('span.mv-dur', {}, duracionLinda(f.seg)),
+      puedeTocar() && pos != null ? botonInsertar(pos) : null);
   }
 
   function pintar() {
@@ -909,7 +946,7 @@ export function vistaMovil(jamId) {
           }, '🎸'),
           editable() ? h('button.mv-btn-cab', {
             title: 'Sumar un tema o un medley',
-            onclick: dialogoAgregar,
+            onclick: () => dialogoAgregar(),
           }, '＋') : null,
           editable() ? h('button.mv-btn-cab' + (editando ? '.on' : ''), {
             onclick: () => { editando = !editando; pintar(); },
@@ -946,7 +983,8 @@ export function vistaMovil(jamId) {
           },
         },
           puedeTocar() ? manija() : null,
-          h('span', {}, f.label || 'BLOQUE'))));
+          h('span', {}, f.label || 'BLOQUE'),
+          puedeTocar() ? botonInsertar(pos) : null)));
         return;
       }
 
@@ -960,7 +998,8 @@ export function vistaMovil(jamId) {
         },
           puedeTocar() ? manija() : null,
           h('span.mv-break-txt', {}, `${f.label} · ${f.minutos}′`),
-          f.hora ? h('span.mv-break-hora', {}, f.hora) : null)));
+          f.hora ? h('span.mv-break-hora', {}, f.hora) : null,
+          puedeTocar() ? botonInsertar(pos) : null)));
         return;
       }
 
@@ -978,7 +1017,8 @@ export function vistaMovil(jamId) {
             h('span.mv-n', {}, ''),
             h('span.mv-txt', {}, h('b', {}, 'MEDLEY'),
               /^medley$/i.test(f.titulo.trim()) ? null : h('span.mv-art', {}, ' ' + f.titulo)),
-            h('span.mv-dur', {}, duracionLinda(f.seg))),
+            h('span.mv-dur', {}, duracionLinda(f.seg)),
+            puedeTocar() ? botonInsertar(pos) : null),
           ...f.songs.map((x, k) => renglon(x, x.numero, {
             alTocar: () => hojaTema(x, puedeTocar() ? {
               texto: 'Sacar del medley',
@@ -1000,7 +1040,7 @@ export function vistaMovil(jamId) {
       }
 
       lista.appendChild(marcar(renglon(f, f.numero, {
-        conManija: true,
+        conManija: true, pos,
         alTocar: () => hojaTema(f, puedeTocar()
           ? { texto: 'Sacar de la lista', hacer: quitar } : null),
       })));
@@ -1012,7 +1052,7 @@ export function vistaMovil(jamId) {
      ＋ de arriba alcanza y la lista queda limpia. pintar() lo prende. */
   const fab = h('button.fab', {
     title: 'Sumar un tema a esta jam',
-    onclick: dialogoAgregar,
+    onclick: () => dialogoAgregar(),
   }, '＋');
 
   pintar();

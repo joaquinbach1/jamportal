@@ -2344,6 +2344,18 @@ body.modo-compartido .topbar { display: none; }
 }
 .mv-handle:active { color: var(--txt); cursor: grabbing; }
 
+/* ---------- el ＋ de cada línea (solo en modo edición) ----------
+   Abre la hoja de "agregar justo abajo": tema/medley, break o bloque.
+   Como la manija, se agarra por todo el alto de la fila. */
+.mv-sumar {
+  flex: none; width: 32px; align-self: stretch;
+  display: flex; align-items: center; justify-content: center;
+  margin: calc(var(--f-pady) * -1) -6px calc(var(--f-pady) * -1) 0;
+  background: none; border: 0;
+  font-size: 15px; color: var(--txt-3); cursor: pointer;
+}
+.mv-sumar:active { color: var(--acc); }
+
 .mv-arrastrando {
   position: relative; z-index: 5;
   background: var(--panel-2) !important;
@@ -2378,14 +2390,19 @@ body.mv-arrastrando-algo { user-select: none; -webkit-user-select: none; }
    parte de la segunda, y en el medio de la jam nadie va a leer con
    atención. Por eso va tintado y en el color de acento, no en gris. */
 .mv-break {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  display: flex; align-items: center; gap: 10px;
   padding: var(--sep) 12px;
   background: var(--break-fondo);
   border-top: 1px solid var(--break-linea); border-bottom: 1px solid var(--break-linea);
   font-family: var(--mono); font-size: 11.5px;
   letter-spacing: .18em; text-transform: uppercase; color: var(--acc);
 }
-.mv-break-hora { font-size: 13px; letter-spacing: .04em; color: var(--acc); }
+/* la hora a la derecha con margen y no con space-between: así el ＋ de
+   modo edición puede ir después de ella sin correrla al medio */
+.mv-break-hora { font-size: 13px; letter-spacing: .04em; color: var(--acc); margin-left: auto; }
+.mv-bloque .mv-sumar, .mv-break .mv-sumar { align-self: center; margin: -6px -6px -6px 0; }
+.mv-bloque .mv-sumar { margin-left: auto; }
+.mv-break .mv-break-txt + .mv-sumar { margin-left: auto; }
 
 /* El bloque es un rótulo de sección, no un aviso: va en gris. El ámbar
    queda reservado para las dos cosas que sí hay que ver sin buscarlas —
