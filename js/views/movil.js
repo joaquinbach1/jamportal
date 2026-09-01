@@ -23,7 +23,7 @@ import {
   h, frag, clear, toast, fechaLinda, copiar, hojaAcciones, confirmar,
   descargarBlob, modal, field, input, poner,
 } from '../ui.js';
-import { agenda, duracionLinda, largoLindo } from '../duracion.js';
+import { agenda, duracionLinda, largoLindo, horaMas } from '../duracion.js';
 import { linkSpotify } from '../spotify.js';
 import { notaDe } from '../notas.js';
 import { anotarIdea } from './ideas.js';
@@ -940,7 +940,11 @@ export function vistaMovil(jamId) {
         instr),
       pill,
       s && notaDe(jam.id, s.id) ? h('span.mv-nota', {}, '📝') : null,
-      h('span.mv-dur', {}, duracionLinda(f.seg)),
+      /* A qué hora cae, no cuánto dura: parado frente a la lista la
+         pregunta es "¿cuándo me toca?". Sale de la agenda —respiros,
+         medleys a la mitad, breaks— y sin hora de arranque cargada
+         vuelve a mostrar la duración. Cuánto dura sigue en el detalle. */
+      h('span.mv-dur', {}, f.hora || duracionLinda(f.seg)),
       puedeTocar() && pos != null ? botonInsertar(pos) : null);
   }
 
@@ -952,11 +956,21 @@ export function vistaMovil(jamId) {
     /* Numeración corrida: cada canción lleva su número, también las de
        adentro de un medley — nada de 4a/4b/4c. agenda() numera el medley
        como una unidad (así lo usan el editor y el texto de WhatsApp), así
-       que acá se recorre de nuevo y cada tema recibe el suyo. */
+       que acá se recorre de nuevo y cada tema recibe el suyo.
+
+       De paso, la hora de cada tema del medley: agenda() trae la hora del
+       medley entero, y adentro se va sumando lo que ocupa cada pedazo. */
     let numero = 0;
     plan.filas.forEach(f => {
       if (f.tipo === 'song') f.numero = ++numero;
-      else if (f.tipo === 'medley') f.songs.forEach(x => { x.numero = ++numero; });
+      else if (f.tipo === 'medley') {
+        let t = f.desde;
+        f.songs.forEach(x => {
+          x.numero = ++numero;
+          x.hora = horaMas(plan.inicio, t);
+          t += x.seg;
+        });
+      }
     });
 
     cont.append(
@@ -1048,7 +1062,7 @@ export function vistaMovil(jamId) {
                número: vacía dejaba a MEDLEY con un margen raro */
             h('span.mv-txt', {}, h('b', {}, 'MEDLEY'),
               /^medley$/i.test(f.titulo.trim()) ? null : h('span.mv-art', {}, ' ' + f.titulo)),
-            h('span.mv-dur', {}, duracionLinda(f.seg)),
+            h('span.mv-dur', {}, f.hora || duracionLinda(f.seg)),
             puedeTocar() ? botonInsertar(pos) : null),
           ...f.songs.map((x, k) => renglon(x, x.numero, {
             alTocar: () => hojaTema(x, puedeTocar() ? {
