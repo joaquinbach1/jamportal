@@ -92,6 +92,18 @@ async function crearSongDesde({ titulo, artista }) {
 /* Los gremios son lentes sobre la misma lista: cada uno deja a la vista
    lo que ese instrumento necesita y esconde el resto. No cambian nada de
    la jam, solo lo que estás mirando, así que viven en el navegador. */
+/* Los que agarran la viola en esta banda. El orden importa: primero el
+   titular, que además es el que viene puesto por defecto en G1.
+   "Invitado" queda al final, para el que cae esa noche. */
+const GUITARRISTAS = [
+  { nombre: 'Tomi', titular: true },
+  { nombre: 'Nano' },
+  { nombre: 'Peter' },
+  { nombre: 'Ale' },
+  { nombre: 'Invitado' },
+];
+const TITULAR = (GUITARRISTAS.find(x => x.titular) || {}).nombre || '';
+
 const CLAVE_GREMIO = 'jamportal.gremio';
 const GREMIOS = [
   { clave: '',           icono: '🎚', etiqueta: 'Todo',      detalle: 'bpm, trompeta, patch y cantantes' },
@@ -572,7 +584,10 @@ export function vistaEditor(jamId) {
     if (!s) return;
     // ojo: sigue siendo idea. Recién pasa al repertorio cuando la jam ya pasó
     if (s.esIdea) toast(`«${s.titulo}» queda como idea hasta que pase la jam`, '');
-    insertar({ tipo: 'song', songId, cantantes: [], notas: '' }, at ?? items().length);
+    insertar({
+      tipo: 'song', songId, cantantes: [], notas: '',
+      guitarras: [{ nombre: TITULAR, solo: false }, { nombre: '', solo: false }],
+    }, at ?? items().length);
   }
   function quitar(i) { items().splice(i, 1); guardar(); pintarTodo(); }
   function mover(from, to) {
@@ -710,18 +725,14 @@ export function vistaEditor(jamId) {
      la viola es cosa de esta jam, no del tema para siempre.
      ============================================================ */
 
-  /* Los que agarran la viola en esta banda. El orden importa: primero el
-     titular. "Invitado" queda al final para el que cae esa noche. */
-  const GUITARRISTAS = [
-    { nombre: 'Tomi', titular: true },
-    { nombre: 'Nano' },
-    { nombre: 'Peter' },
-    { nombre: 'Ale' },
-    { nombre: 'Invitado' },
-  ];
-
   function puestoGuitarra(it, n) {
-    if (!Array.isArray(it.guitarras)) it.guitarras = [];
+    /* La primera vez arranca con el titular en G1: es quien toca casi
+       siempre, y escribirlo tema por tema era el 90% de los clics. Una
+       vez que el tema tiene su lista, se respeta —si alguien puso
+       "sin nadie" a propósito, no se la volvemos a llenar. */
+    if (!Array.isArray(it.guitarras)) {
+      it.guitarras = [{ nombre: TITULAR, solo: false }, { nombre: '', solo: false }];
+    }
     while (it.guitarras.length < 2) it.guitarras.push({ nombre: '', solo: false });
     const g = it.guitarras[n];
 
