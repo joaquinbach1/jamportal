@@ -7,7 +7,7 @@
      3) Sugerencias: nunca tocados de bandas que ya funcionan
    ============================================================ */
 
-import { store, norm, FRANJA_LABEL } from '../store.js';
+import { store, norm, esNueva, FRANJA_LABEL } from '../store.js';
 import {
   h, frag, clear, poner, field, input, select, personPicker, toast, modal, confirmar, songAutocomplete, hojaAcciones,
   catPill, catCorta, franjaDot, fechaLinda, copiar, debounce,
@@ -868,7 +868,7 @@ export function vistaEditor(jamId) {
     /* Nunca tocada: fondo rojo clarito, igual que en la lista del celular.
        El texto "nunca tocada" ya estaba, pero hay que leerlo tema por tema;
        el color deja ver de un vistazo cuánto de la lista hay que ensayar. */
-    const row = h('div.sl-item' + ((s.jams || []).length ? '' : '.nueva'), {
+    const row = h('div.sl-item' + (esNueva(s) ? '.nueva' : ''), {
       ondragstart: e => { arrastre = { tipo: 'item', index: i }; row.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', s.titulo); },
       ondragend: () => { row.classList.remove('dragging'); arrastre = null; },
     },
@@ -1071,7 +1071,7 @@ export function vistaEditor(jamId) {
       },
         (it.songs || []).map((ms, k) => {
           const s = store.song(ms.songId);
-          const fila = h('div.med-song' + (s && !(s.jams || []).length ? '.nueva' : ''), {
+          const fila = h('div.med-song' + (esNueva(s) ? '.nueva' : ''), {
             ondragstart: e => {
               arrastre = { tipo: 'medleySong', medley: i, indice: k };
               fila.classList.add('dragging');

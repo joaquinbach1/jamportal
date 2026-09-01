@@ -166,6 +166,15 @@ export function franjaDeBpm(bpm) {
 
 export const FRANJA_LABEL = { low: '🔵 Low', mid: '🟢 Mid', high: '🔴 High' };
 
+/**
+ * "Nueva" es no haber sonado en ninguna jam — es lo que hay que ensayar.
+ * Salvo que alguien la haya marcado como sabida (`noEsNueva`): temas que
+ * la banda conoce aunque nunca entraron a una lista.
+ */
+export function esNueva(s) {
+  return !!s && !(s.jams || []).length && !s.noEsNueva;
+}
+
 /* ============================================================
    API pública
    ============================================================ */

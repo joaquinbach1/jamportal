@@ -66,10 +66,11 @@ begin
   for it in select * from jsonb_array_elements(coalesce(j->'items', '[]')) loop
     iid := gen_random_uuid();
     insert into setlist_item (id, jam_id, parent_id, orden, tipo, song_id,
-                              titulo, label, minutos, notas)
+                              titulo, label, minutos, notas, guitarras)
     values (iid, j->>'id', null, pos, (it->>'tipo')::tipo_item,
             nullif(it->>'songId', ''), it->>'titulo', it->>'label',
-            nullif(it->>'minutos', '')::smallint, coalesce(it->>'notas', ''));
+            nullif(it->>'minutos', '')::smallint, coalesce(it->>'notas', ''),
+            coalesce(it->'guitarras', '[]'::jsonb));
 
     insert into item_cantante (item_id, persona_id, orden)
     select iid, persona_id(x.v#>>'{}'), (x.nn - 1)::smallint
