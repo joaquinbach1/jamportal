@@ -226,7 +226,13 @@ export function vistaMovil(jamId) {
   /* ============================================================
      Detalle de un tema — lo que no entra en el renglón
      ============================================================ */
-  function hojaTema(f, sacar) {
+  /**
+   * @param {object} f               la fila (o el tema de un medley)
+   * @param {object} [sacar]         { texto, hacer } para quitarlo, si se puede
+   * @param {function} [ponerCantantes] recibe la lista nueva de nombres y la
+   *                                 guarda en el ítem de esta jam
+   */
+  function hojaTema(f, sacar, ponerCantantes) {
     const s = f.song;
     if (!s) return;
     const cantantes = (f.cantantes || []).join(', ');
@@ -265,6 +271,13 @@ export function vistaMovil(jamId) {
             window.open(urlBusqueda(s.titulo, s.artista), '_blank', 'noopener');
           }
         } },
+      /* Quién canta es de esta jam, no del tema: se guarda en el ítem del
+         setlist. No pide el modo edición — abre un diálogo con su Guardar,
+         así que no hay toque accidental posible. */
+      editable() && ponerCantantes
+        ? { icono: '🎤', texto: cantantes ? `Cambiar quién canta (${cantantes})` : 'Elegir quién canta',
+            onClick: () => dialogoCantantes(f, s, ponerCantantes) }
+        : null,
       /* La marca de "nueva" va y viene desde acá: la pill la apaga, y esto
          permite además volver a prenderla si alguien se apuró. Solo tiene
          sentido en temas que nunca sonaron, y por el link no viaja. */
@@ -287,6 +300,66 @@ export function vistaMovil(jamId) {
         ? { icono: '✕', texto: sacar.texto, peligro: true, onClick: sacar.hacer }
         : null,
     ], { detalle });
+  }
+
+  /* ============================================================
+     Quién canta este tema, en esta jam
+     ------------------------------------------------------------
+     Chips para tocar: primero los que la cantan siempre, después
+     el resto de la banda. Un nombre que no está se escribe abajo.
+     ============================================================ */
+  function dialogoCantantes(f, s, poner) {
+    const elegidos = [...(f.cantantes || [])];
+    const habituales = (s && s.cantantes) || [];
+    const todos = [...new Set([...habituales, ...store.nombresCantantes(), ...elegidos])];
+
+    const chips = h('div.mv-chips');
+    function pintarChips() {
+      clear(chips);
+      todos.forEach(n => chips.appendChild(
+        h('button.chip' + (elegidos.includes(n) ? '.sel' : ''), {
+          onclick: () => {
+            const i = elegidos.indexOf(n);
+            if (i >= 0) elegidos.splice(i, 1); else elegidos.push(n);
+            pintarChips();
+          },
+        }, n)));
+    }
+    pintarChips();
+
+    const fOtro = input({ placeholder: 'Otro nombre…' });
+    const sumarOtro = () => {
+      const n = fOtro.value.trim();
+      if (!n) return;
+      if (!todos.includes(n)) todos.push(n);
+      if (!elegidos.includes(n)) elegidos.push(n);
+      fOtro.value = '';
+      pintarChips();
+    };
+    fOtro.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sumarOtro(); } });
+
+    const m = modal({
+      title: 'Quién canta «' + s.titulo + '»',
+      body: [
+        habituales.length
+          ? h('div.method-hint', {}, 'La cantan siempre: ' + habituales.join(', '))
+          : null,
+        chips,
+        h('div.row', { style: { marginTop: '10px', alignItems: 'center', gap: '8px' } },
+          fOtro, h('button.btn.sm.ghost', { onclick: sumarOtro }, 'Sumar')),
+      ],
+      footer: [
+        h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
+        h('button.btn.primary', { onclick: () => {
+            poner([...elegidos]);
+            guardar(); m.close(); pintar();
+            toast(elegidos.length ? 'Canta: ' + elegidos.join(', ') : 'Quedó sin cantante', 'ok');
+          } }, 'Guardar'),
+      ],
+    });
+    /* el modal enfoca el primer input y en el celular eso sube el teclado
+       tapando los chips; acá se elige tocando, el input es la excepción */
+    setTimeout(() => fOtro.blur(), 120);
   }
 
   /* ============================================================
@@ -1081,7 +1154,8 @@ export function vistaMovil(jamId) {
                 }
                 guardar(); pintar(); toast('Sacado del medley');
               },
-            } : null),
+            } : null,
+            v => { jam.items[pos].songs[k].cantantes = v; }),
           })))));
         return;
       }
@@ -1089,7 +1163,8 @@ export function vistaMovil(jamId) {
       lista.appendChild(marcar(renglon(f, f.numero, {
         conManija: true, pos,
         alTocar: () => hojaTema(f, puedeTocar()
-          ? { texto: 'Sacar de la lista', hacer: quitar } : null),
+          ? { texto: 'Sacar de la lista', hacer: quitar } : null,
+          v => { jam.items[pos].cantantes = v; }),
       })));
     });
     cont.appendChild(lista);
