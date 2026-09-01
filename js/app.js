@@ -74,6 +74,25 @@ export function accionesDePagina(fn) {
 
 $('#btnMenu').onclick = () => abrirMenu(!document.body.classList.contains('menu-abierto'));
 $('#menuBack').onclick = () => abrirMenu(false);
+
+/* ---------- achicar el menú lateral (solo compu) ----------
+   Colapsado queda una tirita con el botón para volver. La elección se
+   guarda en este navegador; en el celular no aplica, ahí el menú ya
+   vive detrás del ☰. */
+const CLAVE_SB = 'jamportal.sidebar';
+function aplicarSidebar() {
+  const cerrada = localStorage.getItem(CLAVE_SB) === 'cerrada';
+  document.body.classList.toggle('sidebar-cerrada', cerrada);
+  const b = $('#btnSidebar');
+  b.textContent = cerrada ? '›' : '‹';
+  b.title = cerrada ? 'Agrandar el menú' : 'Achicar el menú';
+}
+$('#btnSidebar').onclick = () => {
+  localStorage.setItem(CLAVE_SB,
+    document.body.classList.contains('sidebar-cerrada') ? '' : 'cerrada');
+  aplicarSidebar();
+};
+aplicarSidebar();
 /* Elegir a dónde ir es terminar con el menú: si quedara abierto, taparía
    la pantalla a la que acabás de entrar. */
 $('#nav').addEventListener('click', e => { if (e.target.closest('a')) abrirMenu(false); });

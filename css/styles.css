@@ -162,6 +162,30 @@ button { font: inherit; color: inherit; }
   position: sticky; top: 0; height: 100vh;
 }
 
+/* ---------- achicar el menú (solo compu) ----------
+   El botón vive a caballo del borde; colapsado queda una tirita y el
+   contenido se lleva todo el ancho. En el celular no existe: ahí el
+   menú ya está detrás del ☰. */
+.sb-toggle {
+  position: absolute; top: 24px; right: -13px; z-index: 60;
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-2); border: 1px solid var(--line);
+  color: var(--txt-3); cursor: pointer;
+  font-size: 15px; line-height: 1; padding: 0 0 2px;
+}
+.sb-toggle:hover { color: var(--txt); border-color: var(--linea-fuerte); }
+
+@media (min-width: 821px) {
+  body.sidebar-cerrada .sidebar {
+    width: 18px; flex-basis: 18px;
+    padding: 22px 0;
+  }
+  body.sidebar-cerrada .sidebar .brand,
+  body.sidebar-cerrada .sidebar #nav,
+  body.sidebar-cerrada .sidebar .sidebar-foot { display: none; }
+}
+
 .brand { padding: 0 10px 26px; line-height: 1; }
 .brand-mark {
   display: block;
@@ -2175,6 +2199,9 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
 
   /* el FAB tapa el final de la lista si no le dejamos aire */
   .view { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+
+  /* el achicador del menú es de la compu: acá el menú vive detrás del ☰ */
+  .sb-toggle { display: none; }
 }
 
 /* En vivo, en el login y en el link de letras compartido no hay navegación
@@ -2328,6 +2355,31 @@ body.modo-link .mv-btn-cab.mas { display: none; }
 .mv-chips .chip {
   font: inherit; font-size: 13.5px; padding: 7px 13px;
   cursor: pointer;
+}
+
+/* ---------- la vista simple, en la compu ----------
+   Más ancha y con tipografía más grande: en un monitor los renglones de
+   teléfono quedan enanos. Pisa los tres niveles de densidad a propósito
+   —la densidad es una preferencia del pulgar, no del mouse— y por eso el
+   selector lleva [data-d]: mismo peso que las reglas de cada nivel, y
+   gana por venir después. */
+@media (min-width: 821px) {
+  .movil { max-width: 980px; }
+  .movil[data-d] {
+    --f-alto: 46px; --f-pady: 6px; --f-gap: 10px; --f-tit: 16px;
+    --f-num: 34px;  --f-asa: 36px; --sep: 13px;  --blq: 13px;
+    --med: 40px;    --cab: 26px;   --tl: 13px;
+  }
+  .movil .mv-n { font-size: 13.5px; }
+  .movil .mv-dur { font-size: 13px; }
+  .movil .mv-instr { font-size: 13px; }
+  .movil .mv-cab-sub { font-size: 14px; }
+  .movil .mv-tl-hora { font-size: 19px; }
+  .movil .mv-tl-largo, .movil .mv-tl-pie, .movil .mv-tl-toggle { font-size: 12.5px; }
+  .movil .mv-tl-info { font-size: 14px; }
+  .movil .mv-medley-cab .mv-txt b { font-size: 12px; }
+  .movil .mv-break { font-size: 12.5px; }
+  .movil .mv-bloque { font-size: 12px; }
 }
 .mv-txt b { font-weight: 600; color: var(--txt); }
 .mv-art { color: var(--txt-3); }
