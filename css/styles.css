@@ -43,9 +43,7 @@
   --foco: #4a4a63;            --foco-fondo: #12121a;
   --err-linea: #40252b;       --err-fondo: #2a1618;
   --ok-linea: #21432f;        --ok-fondo: #16251d;
-  /* con más lila que el panel a propósito: casi del mismo gris, la fila
-     de un medley no se distinguía de un tema suelto en el celular */
-  --medley-fondo: #201826;    --medley-linea: #4a2436;
+  --medley-fondo: #17131a;    --medley-linea: #4a2436;
   --medley-badge: #251722;    --medley-song: #1c1620;
   --medley-song-linea: #2a1f2e;
   --rayado: #33333f;          --rayado-a: #16161e;
@@ -2346,8 +2344,10 @@ body.modo-compartido .topbar { display: none; }
 body.mv-arrastrando-algo { user-select: none; -webkit-user-select: none; }
 
 /* ---------- medley: los temas, agrupados ---------- */
+/* Sin fondo propio: la marca del medley es la línea de la izquierda y el
+   rótulo MEDLEY. El fondo tinteaba media lista y competía con todo lo
+   demás que hay que ver. */
 .mv-medley {
-  background: var(--medley-fondo);
   border-bottom: 1px solid var(--line-soft);
   box-shadow: inset 3px 0 0 var(--medley-linea);
 }

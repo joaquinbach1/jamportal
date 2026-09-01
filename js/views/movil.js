@@ -108,10 +108,14 @@ function tira(plan, alTocar, alCambiarModo) {
     const hora = tr.hora ? ` · ${tr.hora}` : '';
     if (tr.tipo === 'seccion') return `${tr.label} — ${largoLindo(tr.seg)}${hora}`;
     if (tr.tipo === 'break')   return `${tr.label || 'BREAK'} — ${tr.minutos}′${hora}`;
-    if (tr.tipo === 'medley')  return `${tr.n}. MEDLEY`
-      + (/^medley$/i.test((tr.titulo || '').trim()) ? '' : ` ${tr.titulo}`)
-      + ` — ${duracionLinda(tr.seg)}${hora}`;
-    return `${tr.n}. ${tr.song ? tr.song.titulo : '—'} — ${duracionLinda(tr.seg)}${hora}`;
+    if (tr.tipo === 'medley') {
+      const nums = (tr.songs || []).map(x => x.numero).filter(Boolean);
+      const rango = nums.length ? `${nums[0]}–${nums[nums.length - 1]}. ` : '';
+      return `${rango}MEDLEY`
+        + (/^medley$/i.test((tr.titulo || '').trim()) ? '' : ` ${tr.titulo}`)
+        + ` — ${duracionLinda(tr.seg)}${hora}`;
+    }
+    return `${tr.numero}. ${tr.song ? tr.song.titulo : '—'} — ${duracionLinda(tr.seg)}${hora}`;
   };
 
   const info = h('div.mv-tl-info', { hidden: true });
@@ -135,8 +139,9 @@ function tira(plan, alTocar, alCambiarModo) {
     });
   }
 
-  /* Cada medley cuenta como un tema: es una entrada de la lista, no cinco. */
-  const nTemas = plan.filas.filter(f => f.tipo === 'song' || f.tipo === 'medley').length;
+  /* Cada canción cuenta, también las de adentro de un medley: es lo mismo
+     que dice la numeración de la lista. */
+  const nTemas = plan.temas;
 
   /* Sin hora de arranque no hay reloj que mostrar, pero el largo total
      sigue sirviendo: es lo que dura la jam, empiece cuando empiece. Y
@@ -256,7 +261,7 @@ export function vistaMovil(jamId) {
   function hojaMedley(f, pos, quitar) {
     const detalle = h('div.hoja-detalle', {},
       ...f.songs.map((x, k) => h('div.hd-fila', {},
-        h('span', {}, String.fromCharCode(97 + k)),
+        h('span', {}, String(x.numero || k + 1)),
         h('b', {}, x.song ? x.song.titulo : '—'),
         (x.cantantes || []).length ? h('em', {}, ' ' + x.cantantes.join(', ')) : null)),
       h('div.hd-fila', {}, h('span', {}, 'Dura'), h('b', {}, duracionLinda(f.seg))));
@@ -850,6 +855,16 @@ export function vistaMovil(jamId) {
     fab.style.display = puedeTocar() ? '' : 'none';
     const plan = agenda(jam, id => store.song(id));
 
+    /* Numeración corrida: cada canción lleva su número, también las de
+       adentro de un medley — nada de 4a/4b/4c. agenda() numera el medley
+       como una unidad (así lo usan el editor y el texto de WhatsApp), así
+       que acá se recorre de nuevo y cada tema recibe el suyo. */
+    let numero = 0;
+    plan.filas.forEach(f => {
+      if (f.tipo === 'song') f.numero = ++numero;
+      else if (f.tipo === 'medley') f.songs.forEach(x => { x.numero = ++numero; });
+    });
+
     cont.append(
       h('div.mv-cab', {},
         h('div.mv-cab-txt', {},
@@ -927,11 +942,12 @@ export function vistaMovil(jamId) {
             },
           },
             puedeTocar() ? manija() : null,
-            h('span.mv-n', {}, f.n),
+            /* sin número propio: los llevan sus canciones, una por una */
+            h('span.mv-n', {}, ''),
             h('span.mv-txt', {}, h('b', {}, 'MEDLEY'),
               /^medley$/i.test(f.titulo.trim()) ? null : h('span.mv-art', {}, ' ' + f.titulo)),
             h('span.mv-dur', {}, duracionLinda(f.seg))),
-          ...f.songs.map((x, k) => renglon(x, `${f.n}${String.fromCharCode(97 + k)}`, {
+          ...f.songs.map((x, k) => renglon(x, x.numero, {
             alTocar: () => hojaTema(x, puedeTocar() ? {
               texto: 'Sacar del medley',
               hacer: () => {
@@ -951,7 +967,7 @@ export function vistaMovil(jamId) {
         return;
       }
 
-      lista.appendChild(marcar(renglon(f, f.n, {
+      lista.appendChild(marcar(renglon(f, f.numero, {
         conManija: true,
         alTocar: () => hojaTema(f, puedeTocar()
           ? { texto: 'Sacar de la lista', hacer: quitar } : null),
