@@ -904,7 +904,7 @@ export function vistaMovil(jamId) {
       h('span.mv-n', {}, num),
       h('span.mv-txt', {},
         h('b', {}, s ? s.titulo : 'Tema borrado'),
-        cantantes ? h('span.mv-quien', {}, ` 🎤 ${cantantes}`) : null,
+        cantantes ? h('span.mv-quien', {}, ` (${cantantes})`) : null,
         instr),
       pill,
       s && notaDe(jam.id, s.id) ? h('span.mv-nota', {}, '📝') : null,
