@@ -1304,6 +1304,15 @@ body.en-vivo { background: var(--live-fondo); }
   color: var(--acc-2); border: 1px solid var(--medley-linea); background: var(--medley-badge);
   padding: 2px 7px; border-radius: 4px; vertical-align: middle;
 }
+/* quién agarra la viola, en el vivo */
+.live-guitarra {
+  color: var(--txt-2);
+  font-size: .82em;
+}
+.live-guitarra.solo {
+  color: var(--acc); font-weight: 650;
+}
+
 /* la nota de uno, en el vivo: destacada pero sin robarle el lugar al tema */
 .live-nota {
   margin-top: 10px;
@@ -1706,6 +1715,20 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
 
 /* los dos puestos de guitarra, con su check de solo */
 .sub-guitarras { gap: 12px; }
+
+/* En compacta la sub-fila va en una línea y sin envolver: los dos puestos
+   no entran. Acá se les da el ancho, se deja envolver, y se cae el artista
+   —que en esta vista no es lo que estás mirando. */
+.setlist.compacta .sl-sub.sub-guitarras {
+  flex-wrap: wrap; overflow: visible;
+  max-width: none; margin-left: auto;
+  gap: 8px; row-gap: 4px;
+}
+.setlist.compacta .sub-guitarras > span:first-child { display: none; }
+.setlist.compacta .sl-item:has(.sub-guitarras) { padding-top: 4px; padding-bottom: 4px; }
+.setlist.compacta .sub-guitarras .gt-puesto { padding: 1px 5px 1px 3px; }
+.setlist.compacta .sub-guitarras .gt-nombre { font-size: 12px; }
+.setlist.compacta .sub-guitarras .gt-solo { font-size: 10.5px; padding: 0 5px; }
 .gt-puesto {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 2px 6px 2px 4px;

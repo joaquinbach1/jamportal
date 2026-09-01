@@ -27,7 +27,8 @@ export function filas(jam) {
       return;
     }
     n++;
-    out.push({ tipo: 'song', n, i, song: store.song(it.songId), cantantes: it.cantantes || [] });
+    out.push({ tipo: 'song', n, i, song: store.song(it.songId),
+      cantantes: it.cantantes || [], guitarras: it.guitarras || [] });
   });
   return out;
 }
@@ -148,6 +149,12 @@ export function vistaLive(jamId) {
           h('div.live-meta', {},
             s ? h('span.live-artista', {}, s.artista) : null,
             f.cantantes.length ? h('span.live-cantante', {}, '🎤 ' + f.cantantes.join(', ')) : null,
+            /* los guitarristas, con el que hace el solo destacado: parado
+               frente a la gente eso es lo que hay que saber de un vistazo */
+            ...(f.guitarras || [])
+              .filter(g => g && g.nombre)
+              .map(g => h('span.live-guitarra' + (g.solo ? '.solo' : ''), {},
+                '🎸 ' + g.nombre + (g.solo ? ' · solo' : ''))),
             s && s.bpm ? h('span.live-bpm' + (s.bpmFuente === 'sugerido' ? '.sug' : ''), {}, s.bpm + ' bpm') : null,
             s && (s.patches || []).length ? h('span.live-patch', {}, '🎹 ' + s.patches.join(' ')) : null,
             s && s.cifraUrl
