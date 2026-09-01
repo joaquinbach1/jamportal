@@ -2317,6 +2317,13 @@ body.modo-compartido .topbar { display: none; }
 }
 /* los instrumentos, en el mismo renglón que el título */
 .mv-instr { font-size: 11px; color: var(--txt-3); }
+
+/* el selector de cantantes: chips grandes para el dedo */
+.mv-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.mv-chips .chip {
+  font: inherit; font-size: 13.5px; padding: 7px 13px;
+  cursor: pointer;
+}
 .mv-txt b { font-weight: 600; color: var(--txt); }
 .mv-art { color: var(--txt-3); }
 .mv-quien { color: var(--acc); }
