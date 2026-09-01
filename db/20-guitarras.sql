@@ -1,0 +1,31 @@
+-- ============================================================
+-- JAM PORTAL — quién toca la viola en cada tema
+-- ------------------------------------------------------------
+-- Dos puestos de guitarra por tema, con quién lo toca y si hace
+-- el solo. Se ve y se edita desde el gremio Guitarras.
+--
+-- Va en `setlist_item` y no en `song` a propósito: quién agarra
+-- la viola es cosa de esta jam, no del tema para siempre. Igual
+-- que los cantantes.
+--
+-- Se guarda como jsonb —[{nombre, solo}, {nombre, solo}]— en vez
+-- de cuatro columnas: son siempre dos puestos, siempre juntos, y
+-- así agregar un tercero no pide otra migración.
+--
+-- Es idempotente: correrlo dos veces no rompe nada.
+--
+-- Mismo movimiento que db/13: la columna acá, y las funciones que
+-- la mueven viven en sus archivos de siempre, que son `create or
+-- replace` y ya la nombran. Este archivo llevaba copias enteras de
+-- guardar_jam y app_estado, pero eran de una versión vieja (sin
+-- álbum ni vientos) y además reemplazaban el guardar_jam SIN
+-- control de concurrencia, que la app no llama — el bueno es el de
+-- db/06. Después de esto:
+--
+--   psql "$CONN" -v ON_ERROR_STOP=1 -f db/03-app-estado.sql
+--   psql "$CONN" -v ON_ERROR_STOP=1 -f db/04-escritura.sql
+--   psql "$CONN" -v ON_ERROR_STOP=1 -f db/06-concurrencia.sql
+-- ============================================================
+
+alter table setlist_item
+  add column if not exists guitarras jsonb not null default '[]'::jsonb;

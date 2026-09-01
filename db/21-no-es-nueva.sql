@@ -14,7 +14,7 @@
 -- (03, 04 y 15 son `create or replace` y ya la nombran, junto
 -- con las columnas de álbum de db/14):
 --
---   psql "$CONN" -v ON_ERROR_STOP=1 -f db/20-no-es-nueva.sql
+--   psql "$CONN" -v ON_ERROR_STOP=1 -f db/21-no-es-nueva.sql
 --   psql "$CONN" -v ON_ERROR_STOP=1 -f db/03-app-estado.sql
 --   psql "$CONN" -v ON_ERROR_STOP=1 -f db/04-escritura.sql
 --   psql "$CONN" -v ON_ERROR_STOP=1 -f db/06-concurrencia.sql

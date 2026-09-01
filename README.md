@@ -637,7 +637,8 @@ db/16-resumen-og.sql   el resumen chico para la tarjeta del link
 db/17-nombrar-medleys.sql  nombre a los medleys que no tenían
 db/18-medleys-publicos.sql los medleys, también por el link
 db/19-medley-reggae.sql    arreglar el Reggae Medley, que la importación rompió
-db/20-no-es-nueva.sql      marcar un tema nunca tocado como que ya lo saben
+db/20-guitarras.sql        quién toca la viola en cada tema, y quién hace el solo
+db/21-no-es-nueva.sql      marcar un tema nunca tocado como que ya lo saben
 ```
 
 **La regla que ordena el esquema: nada que se pueda calcular se guarda.** El

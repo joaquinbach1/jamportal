@@ -89,6 +89,18 @@ async function crearSongDesde({ titulo, artista }) {
    tuya, no de cada jam: si te gusta cómoda, la querés cómoda siempre.
    Arranca compacta: ver la jam entera de una es lo que uno quiere casi
    siempre, y los datos desplegados son la excepción. */
+/* Los gremios son lentes sobre la misma lista: cada uno deja a la vista
+   lo que ese instrumento necesita y esconde el resto. No cambian nada de
+   la jam, solo lo que estás mirando, así que viven en el navegador. */
+const CLAVE_GREMIO = 'jamportal.gremio';
+const GREMIOS = [
+  { clave: '',           icono: '🎚', etiqueta: 'Todo',      detalle: 'bpm, trompeta, patch y cantantes' },
+  { clave: 'guitarras',  icono: '🎸', etiqueta: 'Guitarras', detalle: 'la cifra y el bpm' },
+  { clave: 'sivibra',    icono: '🎹', etiqueta: 'Sivibra',   detalle: 'todo, por ahora' },
+  { clave: 'bateros',    icono: '🥁', etiqueta: 'Bateros',   detalle: 'todo, por ahora' },
+];
+const gremioActual = () => localStorage.getItem(CLAVE_GREMIO) || '';
+
 const CLAVE_DENSIDAD = 'jamportal.densidad';
 /* A pantalla completa siempre va compacta: si te tomás toda la pantalla
    es para ver la lista entera, no para ver ocho temas más grandes.
@@ -103,6 +115,12 @@ window.addEventListener('hashchange', () => {
   pantallaCompleta = false;
   document.body.classList.remove('lista-full');
 });
+
+/* Medleys plegados. Va por objeto y no por índice: al reordenar la lista
+   los índices se corren, pero el medley sigue siendo el mismo. Un WeakSet
+   además no deja rastro — esto es cómo estás mirando la lista, no un dato
+   de la jam, así que no tiene por qué viajar a la base. */
+const medleysPlegados = new WeakSet();
 
 /* Jams históricas que abriste a mano en esta sesión. Vive fuera de la vista
    porque la vista se redibuja sola (cambios de la nube, refrescar) y si no,
@@ -121,7 +139,7 @@ function manija(titulo = 'Arrastrar para reordenar') {
   const sp = h('span.handle', {
     title: titulo,
     onmousedown: () => {
-      const fila = sp.closest('.sl-item, .preview-row');   // la busca sola al apretarla
+      const fila = sp.closest('.med-song, .sl-item, .preview-row');   // la busca sola al apretarla
       if (!fila) return;
       fila.draggable = true;
       document.addEventListener('mouseup', () => { fila.draggable = false; }, { once: true });
@@ -136,24 +154,61 @@ const MIN_POR_TEMA_MEDLEY = 2;
 /* ============================================================
    Menú flotante (para elegir cantante en una fila)
    ============================================================ */
-function menuFlotante(anchor, opciones, onPick) {
-  const menu = h('div.ac-menu', { style: { position: 'fixed', width: '210px', maxHeight: '300px' } });
+/**
+ * Menú flotante con buscador.
+ *
+ * Con veinte nombres, recorrer la lista con el ojo es más lento que
+ * escribir dos letras. Los nombres van en orden alfabético —que es
+ * donde uno los busca— y quien suele cantar el tema queda marcado,
+ * para no perder ese dato al ordenar.
+ */
+function menuFlotante(anchor, opciones, onPick, { ordenar = true } = {}) {
+  const menu = h('div.ac-menu', { style: { position: 'fixed', width: '230px', maxHeight: '320px' } });
   const cerrar = () => { menu.remove(); document.removeEventListener('mousedown', fuera, true); };
   const fuera = e => { if (!menu.contains(e.target)) cerrar(); };
 
-  opciones.forEach(o => {
-    const { value, label, hint } = typeof o === 'string' ? { value: o, label: o } : o;
-    menu.appendChild(h('div.ac-item', {
-      onclick: () => { onPick(value); cerrar(); },
-    }, h('div.ac-t', {}, label), hint ? h('div.ac-r', {}, h('span.chip', {}, hint)) : null));
+  const items = opciones.map(o => (typeof o === 'string' ? { value: o, label: o } : o));
+  /* Alfabético salvo que el orden signifique algo, como en las guitarras:
+     ahí el primero es el titular y el resto va como lo dijo la banda. */
+  if (ordenar) items.sort((a, b) => a.label.localeCompare(b.label, 'es'));
+
+  const buscador = h('input.ac-buscador', { type: 'text', placeholder: 'Buscar…', autocomplete: 'off' });
+  const lista = h('div.ac-lista');
+
+  function pintar() {
+    const q = norm(buscador.value);
+    const visibles = q ? items.filter(o => norm(o.label).includes(q)) : items;
+
+    clear(lista);
+    visibles.forEach(o => lista.appendChild(h('div.ac-item', {
+      onclick: () => { onPick(o.value); cerrar(); },
+    }, h('div.ac-t', {}, o.label), o.hint ? h('div.ac-r', {}, h('span.chip', {}, o.hint)) : null)));
+
+    if (!visibles.length) {
+      lista.appendChild(h('div.ac-loading', {},
+        items.length ? 'Nadie con ese nombre' : 'No hay más nombres'));
+    }
+    return visibles;
+  }
+
+  buscador.addEventListener('input', pintar);
+  buscador.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { e.preventDefault(); cerrar(); }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const primero = pintar()[0];          // Enter elige lo que estás viendo arriba
+      if (primero) { onPick(primero.value); cerrar(); }
+    }
   });
-  if (!opciones.length) menu.appendChild(h('div.ac-loading', {}, 'No hay más nombres'));
+
+  poner(menu, items.length > 6 ? buscador : null, lista);
+  pintar();
 
   document.body.appendChild(menu);
   const r = anchor.getBoundingClientRect();
-  menu.style.left = Math.min(r.left, window.innerWidth - 226) + 'px';
-  menu.style.top = Math.min(r.bottom + 4, window.innerHeight - 310) + 'px';
-  setTimeout(() => document.addEventListener('mousedown', fuera, true), 0);
+  menu.style.left = Math.min(r.left, window.innerWidth - 246) + 'px';
+  menu.style.top = Math.min(r.bottom + 4, window.innerHeight - 330) + 'px';
+  setTimeout(() => { document.addEventListener('mousedown', fuera, true); buscador.focus(); }, 0);
 }
 
 /* chips de personas editables dentro de una fila */
@@ -169,8 +224,7 @@ function chipsPersonas(lista, opciones, onChange, sugeridos = []) {
         e.stopPropagation();
         const libres = opciones.filter(o => !lista.includes(o));
         menuFlotante(btn,
-          libres.map(o => ({ value: o, label: o, hint: sugeridos.includes(o) ? '★ suele cantarla' : null }))
-            .sort((a, b) => (b.hint ? 1 : 0) - (a.hint ? 1 : 0)),
+          libres.map(o => ({ value: o, label: o, hint: sugeridos.includes(o) ? '★' : null })),
           v => onChange([...lista, v]));
       },
     }, lista.length ? '＋' : '＋ cantante');
@@ -207,6 +261,7 @@ export function vistaEditor(jamId) {
     if (card) card.classList.toggle('compacta', compacta());
     /* en el body porque también se achica lo que está arriba de la tarjeta */
     document.body.classList.toggle('lista-compacta', compacta());
+    aplicarGremio();
     aplicarPantalla();
   }
 
@@ -237,6 +292,26 @@ export function vistaEditor(jamId) {
       pintarDensidad();
       window.scrollTo(0, 0);
     },
+  });
+
+  /* el lente elegido se aplica como clase: el DOM es el mismo */
+  function aplicarGremio() {
+    const g = gremioActual();
+    for (const x of GREMIOS) setlistCont.classList.toggle('gremio-' + x.clave, !!x.clave && x.clave === g);
+    const elegido = GREMIOS.find(x => x.clave === g) || GREMIOS[0];
+    btnGremios.textContent = `${elegido.icono} ${elegido.etiqueta.toUpperCase()}`;
+    btnGremios.title = `Se ve ${elegido.detalle} — tocá para cambiar de gremio`;
+  }
+
+  const btnGremios = h('button.btn.gremios', {
+    onclick: () => hojaAcciones('Qué mirar de cada tema',
+      GREMIOS.map(x => ({
+        icono: x.icono,
+        texto: x.clave === gremioActual() ? `${x.etiqueta} · ${x.detalle} (puesto)` : `${x.etiqueta} · ${x.detalle}`,
+        /* Guitarras cambia el contenido de la fila, no solo qué se esconde:
+           hay que volver a dibujar, no alcanza con la clase. */
+        onClick: () => { localStorage.setItem(CLAVE_GREMIO, x.clave); pintarTodo(); },
+      }))),
   });
 
   const btnDensidad = h('button.btn.xs.densidad', {
@@ -604,6 +679,82 @@ export function vistaEditor(jamId) {
     arrastre = null;
   });
 
+  /**
+   * La trompeta: marca si el tema lleva vientos. Apagada es gris; al
+   * tocarla se enciende. Es del tema, no de la jam — igual que el tempo
+   * o el patch —, así que una vez marcado aparece en todas.
+   */
+  function botonVientos(s) {
+    const btn = h('button.icon-btn.vientos', {
+      onclick: e => {
+        e.stopPropagation();
+        const fresco = store.song(s.id) || s;
+        store.updateSong(fresco.id, { vientos: !fresco.vientos });
+        pintarTodo();
+      },
+    }, '🎺');
+    const pintar = () => {
+      const hay = !!(store.song(s.id) || s).vientos;
+      btn.classList.toggle('tiene', hay);
+      btn.title = hay ? 'Lleva vientos — clic para sacarlo' : 'Marcar que lleva vientos';
+    };
+    pintar();
+    return btn;
+  }
+
+  /* ============================================================
+     Guitarras
+     ------------------------------------------------------------
+     Dos puestos por tema, cada uno con quién lo toca y si hace el
+     solo. Va en el ítem de la lista y no en el tema: quién agarra
+     la viola es cosa de esta jam, no del tema para siempre.
+     ============================================================ */
+
+  /* Los que agarran la viola en esta banda. El orden importa: primero el
+     titular. "Invitado" queda al final para el que cae esa noche. */
+  const GUITARRISTAS = [
+    { nombre: 'Tomi', titular: true },
+    { nombre: 'Nano' },
+    { nombre: 'Peter' },
+    { nombre: 'Ale' },
+    { nombre: 'Invitado' },
+  ];
+
+  function puestoGuitarra(it, n) {
+    if (!Array.isArray(it.guitarras)) it.guitarras = [];
+    while (it.guitarras.length < 2) it.guitarras.push({ nombre: '', solo: false });
+    const g = it.guitarras[n];
+
+    const nombre = h('button.gt-nombre' + (g.nombre ? '.puesto' : ''), {
+      title: g.nombre ? `${g.nombre} — clic para cambiarlo` : 'Elegir guitarrista',
+      onclick: e => {
+        e.stopPropagation();
+        menuFlotante(nombre,
+          [{ value: '', label: '— sin nadie —' },
+           ...GUITARRISTAS.map(x => ({
+             value: x.nombre, label: x.nombre, hint: x.titular ? '★' : null,
+           }))],
+          v => { g.nombre = v; guardar(); pintarTodo(); },
+          { ordenar: false });
+      },
+    }, g.nombre || 'quién');
+
+    const solo = h('label.gt-solo' + (g.solo ? '.on' : ''), {
+      title: g.solo ? 'Hace el solo' : 'Marcar que hace el solo',
+      onclick: e => e.stopPropagation(),
+    },
+      h('input', {
+        type: 'checkbox', checked: !!g.solo,
+        onchange: e => { g.solo = e.target.checked; guardar(); pintarTodo(); },
+      }),
+      h('span', {}, '🎸 Solo'));
+
+    return h('span.gt-puesto', {},
+      h('span.gt-rotulo', {}, `G${n + 1}`),
+      nombre,
+      solo);
+  }
+
   /* ---------- nota privada ----------
      Es tuya y de esta máquina: no va a la base compartida. Se escribe
      acá y se lee en el LIVE VIEW, que es cuando hace falta. */
@@ -681,6 +832,34 @@ export function vistaEditor(jamId) {
     ]);
   }
 
+  /**
+   * El ＋ de cada fila: abre un buscador ahí mismo y lo que elijas entra
+   * justo abajo. Antes había que ir hasta el buscador del final y después
+   * arrastrar el tema hasta su lugar.
+   */
+  function botonInsertar(i) {
+    const btn = h('button.icon-btn.sumar', {
+      title: 'Agregar un tema justo abajo',
+      onclick: e => {
+        e.stopPropagation();
+        const fila = btn.closest('.sl-item');
+        if (!fila || fila.nextElementSibling?.classList.contains('sl-insertar')) return;
+
+        const caja = h('div.sl-insertar', {},
+          buscadorDeTemas(song => {
+            caja.remove();
+            agregarSong(song.id, i + 1);
+            toast(`«${song.titulo}» agregada`, 'ok');
+          }, { placeholder: 'Qué tema va acá…' }),
+          h('button.btn.xs.ghost', { onclick: () => caja.remove() }, 'Cancelar'));
+
+        fila.after(caja);
+        setTimeout(() => caja.querySelector('input')?.focus(), 30);
+      },
+    }, '＋');
+    return btn;
+  }
+
   function filaSong(it, i, numero) {
     const s = store.song(it.songId);
     if (!s) return h('div.sl-item', {}, h('span.sl-num', {}, numero), h('div.sl-main', {}, h('span.dim', {}, 'Tema borrado de DBSongs')),
@@ -694,16 +873,28 @@ export function vistaEditor(jamId) {
       ondragend: () => { row.classList.remove('dragging'); arrastre = null; },
     },
       bloqueada() ? null : manija(),
+      bloqueada() ? null : botonInsertar(i),
       h('span.sl-num', {}, numero),
       h('div.sl-main', {},
         h('div.sl-title', {}, s.titulo),
-        h('div.sl-sub', {},
+        gremioActual() === 'guitarras'
+          ? h('div.sl-sub.sub-guitarras', {},
+              h('span', {}, s.artista),
+              puestoGuitarra(it, 0),
+              puestoGuitarra(it, 1),
+              bloqueada()
+                ? (it.cantantes || []).map(n => h('span.chip.sel', {}, n))
+                : chipsPersonas(it.cantantes || [], opcionesGente(), v => { it.cantantes = v; guardar(); pintarTodo(); }, s.cantantes || []))
+          : h('div.sl-sub', {},
           franjaDot(s.franja),
           h('span', {}, s.artista),
           catPill(s.categoria),
           bloqueada()
             ? (s.bpm ? h('span.mono.dim', {}, (s.bpmFuente === 'sugerido' ? '≈ ' : '') + s.bpm + ' bpm') : null)
             : chipTempo(s, () => pintarTodo()),
+          bloqueada()
+            ? (s.vientos ? h('span.vientos-fijo', { title: 'Lleva vientos' }, '🎺') : null)
+            : botonVientos(s),
           s.esIdea
             ? h('span.chip.idea', { title: 'Sigue en Ideas: pasa al repertorio cuando la fecha de esta jam quede atrás' }, '💡 idea')
             : ((s.jams || []).length
@@ -766,6 +957,30 @@ export function vistaEditor(jamId) {
     return row;
   }
 
+  /* ---------- reordenar adentro del medley ---------- */
+
+  /** En qué posición cae el cursor, comparando contra la mitad de cada fila. */
+  function indiceEnMedley(cont, y) {
+    const filas = [...cont.querySelectorAll('.med-song')];
+    for (let k = 0; k < filas.length; k++) {
+      const r = filas[k].getBoundingClientRect();
+      if (y < r.top + r.height / 2) return k;
+    }
+    return filas.length;
+  }
+
+  function limpiarHuecoMedley(cont) {
+    cont.querySelectorAll('.med-song').forEach(f => f.classList.remove('hueco-antes', 'hueco-despues'));
+  }
+
+  function marcarHuecoMedley(cont, y) {
+    limpiarHuecoMedley(cont);
+    const filas = [...cont.querySelectorAll('.med-song')];
+    const k = indiceEnMedley(cont, y);
+    if (k < filas.length) filas[k].classList.add('hueco-antes');
+    else if (filas.length) filas[filas.length - 1].classList.add('hueco-despues');
+  }
+
   function filaMedley(it, i, numero) {
     const cont = h('div.sl-item.sl-medley', {
       ondragstart: e => { arrastre = { tipo: 'item', index: i }; cont.classList.add('dragging'); e.dataTransfer.setData('text/plain', it.titulo || 'Medley'); },
@@ -809,25 +1024,74 @@ export function vistaEditor(jamId) {
       },
     });
 
+    const plegado = medleysPlegados.has(it);
+    const cuantos = (it.songs || []).length;
+
     poner(cont,
       h('div.med-head', {},
         bloqueada() ? null : manija(),
         h('span.sl-num', {}, numero),
+        h('button.med-plegar', {
+          title: plegado ? 'Mostrar los temas' : 'Contraer el medley',
+          onclick: e => {
+            e.stopPropagation();
+            if (plegado) medleysPlegados.delete(it); else medleysPlegados.add(it);
+            pintarTodo();
+          },
+        }, plegado ? '▸' : '▾'),
         h('span.med-badge', {}, 'MEDLEY'),
         h('input', { value: it.titulo || 'Medley', disabled: bloqueada(), oninput: e => { it.titulo = e.target.value; guardar(); } }),
+        /* plegado, el medley tiene que seguir diciendo qué hay adentro */
+        plegado ? h('span.med-cuantos', {}, `${cuantos} tema${cuantos === 1 ? '' : 's'}`) : null,
         bloqueada() ? null : h('div.sl-actions', {},
           h('button.icon-btn', { title: 'Desarmar el medley', onclick: () => desarmarMedley(i) }, '⊟'),
           h('button.icon-btn.danger', { title: 'Quitar', onclick: () => quitar(i) }, '✕'))),
-      h('div.med-songs', {},
+      plegado ? null : h('div.med-songs', {
+        /* Reordenar adentro del medley. El contenedor es quien escucha:
+           con franjas finas entre filas había que apuntar al milímetro,
+           igual que pasaba en la lista grande. */
+        ondragover: e => {
+          if (!arrastre || arrastre.tipo !== 'medleySong' || arrastre.medley !== i) return;
+          e.preventDefault(); e.stopPropagation();
+          marcarHuecoMedley(e.currentTarget, e.clientY);
+        },
+        ondragleave: e => { if (!e.currentTarget.contains(e.relatedTarget)) limpiarHuecoMedley(e.currentTarget); },
+        ondrop: e => {
+          if (!arrastre || arrastre.tipo !== 'medleySong' || arrastre.medley !== i) return;
+          e.preventDefault(); e.stopPropagation();
+          const destino = indiceEnMedley(e.currentTarget, e.clientY);
+          limpiarHuecoMedley(e.currentTarget);
+          const desde = arrastre.indice;
+          arrastre = null;
+          if (destino === desde || destino === desde + 1) { pintarTodo(); return; }
+          const [x] = it.songs.splice(desde, 1);
+          it.songs.splice(desde < destino ? destino - 1 : destino, 0, x);
+          guardar(); pintarTodo();
+        },
+      },
         (it.songs || []).map((ms, k) => {
           const s = store.song(ms.songId);
-          return h('div.med-song' + (esNueva(s) ? '.nueva' : ''), {},
+          const fila = h('div.med-song' + (esNueva(s) ? '.nueva' : ''), {
+            ondragstart: e => {
+              arrastre = { tipo: 'medleySong', medley: i, indice: k };
+              fila.classList.add('dragging');
+              e.dataTransfer.effectAllowed = 'move';
+              e.dataTransfer.setData('text/plain', s ? s.titulo : 'tema');
+              e.stopPropagation();
+            },
+            ondragend: () => { fila.classList.remove('dragging'); fila.draggable = false; arrastre = null; },
+          });
+          poner(fila,
+            bloqueada() ? null : manija('Arrastrar para reordenar dentro del medley'),
             franjaDot(s && s.franja),
             h('span', {}, s ? s.titulo : '—'),
             h('span.dim', { style: { fontSize: '11px' } }, s ? s.artista : ''),
             s ? (bloqueada()
               ? (s.bpm ? h('span.mono.dim', { style: { fontSize: '11px' } }, s.bpm) : null)
               : chipTempo(s, () => pintarTodo())) : null,
+            s ? (bloqueada()
+              ? (s.vientos ? h('span.vientos-fijo', { title: 'Lleva vientos' }, '🎺') : null)
+              : botonVientos(s)) : null,
             s && !bloqueada() ? chipPatch(s, () => pintarTodo()) : null,
             s && s.cifraUrl ? h('a.print-link', { href: s.cifraUrl, target: '_blank', rel: 'noopener' }, '🎸 cifra') : null,
             bloqueada()
@@ -845,6 +1109,7 @@ export function vistaEditor(jamId) {
                 title: 'Borrarlo de la lista',
                 onclick: () => { it.songs.splice(k, 1); if (!it.songs.length) quitar(i); else { guardar(); pintarTodo(); } },
               }, '✕')));
+          return fila;
         }),
         bloqueada() ? null : h('div', { style: { marginTop: '6px' } },
           h('button.btn.xs.ghost', {
@@ -1517,6 +1782,7 @@ export function vistaEditor(jamId) {
       onclick: () => { location.hash = '#/lyrics/' + jam.id; },
       title: 'Las letras de todos los temas, en orden',
     }, '📖 LYRICS VIEW'),
+    btnGremios,
     h('button.btn.sm.secundaria', { onclick: () => copiar(comoTexto()) }, '📋 Copiar lista'),
     /* En el celular estos dos están en el ⋯, que arriba de 820px no existe:
        la barra de acciones es el único lugar donde se los ve con el mouse. */

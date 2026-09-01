@@ -11,7 +11,7 @@
 -- ítems por lista el costo es irrelevante.
 --
 -- Este archivo está al día con las columnas de las migraciones
--- (db/13, db/14, db/20): correrlas primero, y esto después.
+-- (db/13, db/14, db/20, db/21): correrlas primero, y esto después.
 --
 -- Ojo al re-correrlo sobre una base que ya corrió db/06: acá se
 -- crea guardar_jam(jsonb), que db/06 reemplaza por la versión
@@ -119,7 +119,8 @@ begin
                       bpm_fuente, anio, notas, origen, genero_web,
                       cifra_url, cifra_artista, cifra_confianza,
                       duracion_sec, spotify_url,
-                      album, album_id, cover, no_es_nueva, patches, actualizada)
+                      album, album_id, cover, vientos, no_es_nueva,
+                      patches, actualizada)
     values (e->>'id', e->>'titulo', e->>'artista', cid,
             case when coalesce((e->>'esIdea')::boolean, false)
                  then 'idea'::estado_song else 'repertorio'::estado_song end,
@@ -131,6 +132,7 @@ begin
             nullif(e->>'duracionSec', '')::smallint, coalesce(e->>'spotifyUrl', ''),
             coalesce(e->>'album', ''), nullif(e->>'albumId', '')::bigint,
             coalesce(e->>'cover', ''),
+            coalesce((e->>'vientos')::boolean, false),
             coalesce((e->>'noEsNueva')::boolean, false),
             coalesce((select array_agg(x#>>'{}')
                         from jsonb_array_elements(e->'patches') x), '{}'),
@@ -146,7 +148,7 @@ begin
       cifra_confianza = excluded.cifra_confianza,
       duracion_sec = excluded.duracion_sec, spotify_url = excluded.spotify_url,
       album = excluded.album, album_id = excluded.album_id, cover = excluded.cover,
-      no_es_nueva = excluded.no_es_nueva,
+      vientos = excluded.vientos, no_es_nueva = excluded.no_es_nueva,
       patches = excluded.patches, actualizada = now()
     -- El WHERE es lo que hace que `actualizada` signifique algo. Sin él,
     -- cambiar un título marcaba los 551 temas como actualizados y no
@@ -168,6 +170,7 @@ begin
        or song.album           is distinct from excluded.album
        or song.album_id        is distinct from excluded.album_id
        or song.cover           is distinct from excluded.cover
+       or song.vientos         is distinct from excluded.vientos
        or song.no_es_nueva     is distinct from excluded.no_es_nueva
        or song.cifra_url       is distinct from excluded.cifra_url
        or song.cifra_artista   is distinct from excluded.cifra_artista
@@ -246,10 +249,11 @@ begin
   for it in select * from jsonb_array_elements(coalesce(j->'items', '[]')) loop
     iid := gen_random_uuid();
     insert into setlist_item (id, jam_id, parent_id, orden, tipo, song_id,
-                              titulo, label, minutos, notas)
+                              titulo, label, minutos, notas, guitarras)
     values (iid, j->>'id', null, pos, (it->>'tipo')::tipo_item,
             nullif(it->>'songId', ''), it->>'titulo', it->>'label',
-            nullif(it->>'minutos', '')::smallint, coalesce(it->>'notas', ''));
+            nullif(it->>'minutos', '')::smallint, coalesce(it->>'notas', ''),
+            coalesce(it->'guitarras', '[]'::jsonb));
 
     insert into item_cantante (item_id, persona_id, orden)
     select iid, persona_id(x.v#>>'{}'), (x.nn - 1)::smallint

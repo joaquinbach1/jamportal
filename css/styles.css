@@ -596,9 +596,14 @@ table.tbl tr.elegida td:first-child { box-shadow: inset 2px 0 0 var(--acc); }
   transition: background .1s, height .1s, margin .1s;
   pointer-events: none;            /* el que escucha es el contenedor */
 }
+/* Al arrastrar, el hueco se abre de verdad: con 5px había que apuntar
+   fino para saber entre qué dos temas iba a caer. */
 .drop-line.over {
-  height: 5px; margin: 3px 0;
-  background: var(--acc); box-shadow: 0 0 10px rgba(255,201,77,.65);
+  height: 14px; margin: 5px 0;
+  border-radius: 4px;
+  background: var(--acc-tinte);
+  border: 2px dashed var(--acc);
+  box-shadow: 0 0 14px rgba(255, 201, 77, .35);
 }
 /* mientras se arrastra, la lista entera es zona de drop */
 .setlist { min-height: 40px; }
@@ -699,6 +704,13 @@ table.tbl tr.elegida td:first-child { box-shadow: inset 2px 0 0 var(--acc); }
   background: var(--medley-song); border-radius: 5px;
   border: 1px solid var(--medley-song-linea);
 }
+/* arrastrando adentro del medley: el hueco se abre donde va a caer */
+.med-song.dragging { opacity: .35; }
+.med-song.hueco-antes { box-shadow: 0 -3px 0 var(--acc); margin-top: 9px; }
+.med-song.hueco-despues { box-shadow: 0 3px 0 var(--acc); margin-bottom: 9px; }
+.med-song .handle { cursor: grab; color: var(--txt-3); font-size: 13px; letter-spacing: -2px; padding: 0 2px; }
+.med-song .handle:active { cursor: grabbing; }
+
 .med-song .sl-actions { opacity: .5; }
 .med-song:hover .sl-actions { opacity: 1; }
 
@@ -800,7 +812,7 @@ body.lista-compacta .editor-grid .card + .card { margin-top: 10px; }
 /* la franja de drop se cobra 5px por tema; acá se paga caro.
    Queda de 1px y al arrastrar se agranda igual (.over manda). */
 .setlist.compacta .drop-line { height: 1px; margin: 0; }
-.setlist.compacta .drop-line.over { height: 5px; margin: 3px 0; }
+.setlist.compacta .drop-line.over { height: 12px; margin: 4px 0; }
 .setlist.compacta .sl-bloque { margin: 6px 0 0; padding: 0 6px 2px; }
 .setlist.compacta .sl-bloque input { font-size: 11px; }
 .setlist.compacta .sl-break { padding: 0 8px; min-height: 20px; }
@@ -1671,6 +1683,135 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
   flex: none; background: var(--panel-2);
 }
 @media (max-width: 1100px) { .t-album { display: none; } }
+
+/* ============================================================
+   Gremios
+   ------------------------------------------------------------
+   Lentes sobre la misma lista: cada gremio deja a la vista lo que
+   ese instrumento necesita leer de un tema, y esconde el resto.
+   El DOM no cambia — solo qué se muestra.
+   ============================================================ */
+.btn.gremios {
+  background: var(--panel-2); border-color: var(--line);
+  font-weight: 700; font-size: 13.5px; letter-spacing: .3px;
+  padding: 10px 16px;
+}
+.btn.gremios:hover { border-color: var(--linea-fuerte); background: var(--hover); }
+
+/* guitarras: la fila cambia de contenido, no solo de qué esconde —
+   ver .sub-guitarras más abajo. */
+
+/* Sivibra y Bateros muestran todo por ahora: falta saber qué mira cada
+   uno. Existen como lente para no tener que rehacer el menú después. */
+
+/* los dos puestos de guitarra, con su check de solo */
+.sub-guitarras { gap: 12px; }
+.gt-puesto {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 6px 2px 4px;
+  border: 1px solid var(--line-soft); border-radius: 999px;
+}
+.gt-rotulo {
+  font-size: 10px; font-weight: 700; letter-spacing: .5px;
+  color: var(--txt-3); font-family: var(--mono);
+}
+.gt-nombre {
+  background: none; border: none; cursor: pointer;
+  color: var(--txt-3); font-size: 12.5px; padding: 1px 4px;
+  border-radius: 5px; font-style: italic;
+}
+.gt-nombre.puesto { color: var(--txt); font-style: normal; font-weight: 550; }
+.gt-nombre:hover { background: var(--panel-2); color: var(--txt); }
+
+.gt-solo {
+  display: inline-flex; align-items: center; gap: 4px;
+  cursor: pointer; font-size: 11px; color: var(--txt-3);
+  padding: 1px 6px; border-radius: 999px;
+  border: 1px solid transparent;
+  transition: color .12s, background .12s, border-color .12s;
+}
+.gt-solo input { width: auto; margin: 0; accent-color: var(--acc); }
+.gt-solo:hover { color: var(--txt-2); }
+.gt-solo.on {
+  color: var(--txt); background: var(--acc-tinte); border-color: var(--acc);
+  font-weight: 600;
+}
+
+/* la trompeta: apagada en gris, encendida cuando el tema lleva vientos */
+.icon-btn.vientos {
+  filter: grayscale(1); opacity: .35;
+  padding: 1px 5px; font-size: 13px; flex: none;
+  border: 1px solid transparent; border-radius: 999px;
+  transition: filter .12s, opacity .12s, background .12s, border-color .12s;
+}
+.sl-item:hover .icon-btn.vientos, .med-song:hover .icon-btn.vientos { opacity: .55; }
+.icon-btn.vientos:hover { filter: none; opacity: 1; background: none; }
+
+/* Encendida no alcanza con quitarle el gris: al lado de los cantantes y
+   del bpm, un emoji suelto se pierde. Va en una pastilla, que es como se
+   lee el resto de los estados de la fila. */
+.icon-btn.vientos.tiene {
+  filter: none; opacity: 1;
+  background: var(--acc-tinte);
+  border-color: var(--acc);
+  box-shadow: 0 0 0 1px var(--acc-tinte), 0 0 8px rgba(255, 201, 77, .3);
+}
+.icon-btn.vientos.tiene:hover { background: var(--acc-tinte-2); }
+
+.vientos-fijo {
+  font-size: 13px; flex: none;
+  padding: 1px 5px; border-radius: 999px;
+  background: var(--acc-tinte); border: 1px solid var(--acc);
+}
+
+/* plegar el medley: cuando tiene ocho temas, ocupa media pantalla y
+   tapa el resto de la lista */
+.med-plegar {
+  background: none; border: none; cursor: pointer;
+  color: var(--txt-3); flex: none;
+  font-size: 12px; line-height: 1; padding: 4px 5px;
+  border-radius: 4px;
+  transition: color .12s, background .12s;
+}
+.med-plegar:hover { color: var(--txt); background: var(--panel-2); }
+.med-cuantos {
+  font-size: 11.5px; color: var(--txt-3); flex: none;
+  font-family: var(--mono);
+}
+
+/* el ＋ de cada fila: discreto hasta que pasás por encima, para no
+   sumar un botón encendido por tema */
+.icon-btn.sumar {
+  opacity: 0; padding: 0 4px; font-size: 13px; flex: none;
+  transition: opacity .12s, color .12s;
+}
+.sl-item:hover .icon-btn.sumar { opacity: .5; }
+.icon-btn.sumar:hover { opacity: 1; color: var(--acc); background: none; }
+
+/* el buscador que se abre debajo de la fila */
+.sl-insertar {
+  display: flex; align-items: center; gap: 8px;
+  margin: 3px 0 5px 26px;
+  padding: 7px 9px;
+  background: var(--acc-tinte); border: 1px solid var(--acc-linea);
+  border-radius: var(--r-s);
+}
+.sl-insertar .ac-wrap { flex: 1; min-width: 0; }
+
+@media (max-width: 820px) {
+  .icon-btn.sumar { opacity: .55; min-width: 34px; min-height: 34px; font-size: 17px; }
+  .sl-insertar { margin-left: 0; flex-wrap: wrap; }
+}
+
+/* buscador arriba del menú de nombres: con veinte cantantes, escribir
+   dos letras es más rápido que recorrer la lista */
+.ac-buscador {
+  width: 100%; border: none; border-bottom: 1px solid var(--line-soft);
+  border-radius: 0; background: transparent;
+  padding: 9px 12px; font-size: 13.5px;
+}
+.ac-buscador:focus { outline: none; border-bottom-color: var(--acc); background: transparent; }
+.ac-lista { max-height: 258px; overflow-y: auto; }
 
 /* ============================================================
    Discos

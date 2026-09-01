@@ -12,7 +12,7 @@
 -- la comparación de cambios del driver no vea diferencias falsas.
 --
 -- Este archivo está al día con las columnas de las migraciones
--- (db/13, db/14, db/20): correrlas primero, y esto después.
+-- (db/13, db/14, db/20, db/21): correrlas primero, y esto después.
 -- ============================================================
 
 create or replace function cantantes_de(i uuid) returns jsonb
@@ -72,6 +72,7 @@ select jsonb_build_object(
              'album',           s.album,
              'albumId',         s.album_id,
              'cover',           s.cover,
+             'vientos',         s.vientos,
              'noEsNueva',       s.no_es_nueva,
              'esIdea',    s.estado = 'idea',
              'cantantes', (select coalesce(jsonb_agg(p.nombre order by sc.orden, p.nombre), '[]'::jsonb)
@@ -159,6 +160,7 @@ select jsonb_build_object(
 
                    else jsonb_build_object(
                      'tipo', 'song', 'songId', i.song_id, 'notas', i.notas,
+                     'guitarras', i.guitarras,
                      'cantantes', cantantes_de(i.id))
 
                  end as item
