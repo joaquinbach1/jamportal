@@ -263,6 +263,20 @@ export function vistaMovil(jamId) {
             window.open(urlBusqueda(s.titulo, s.artista), '_blank', 'noopener');
           }
         } },
+      /* La marca de "nueva" va y viene desde acá: la pill la apaga, y esto
+         permite además volver a prenderla si alguien se apuró. Solo tiene
+         sentido en temas que nunca sonaron, y por el link no viaja. */
+      !(s.jams || []).length && !store.publico
+        ? (esNueva(s)
+            ? { icono: '✓', texto: 'Ya la saben — que no figure como nueva', onClick: () => {
+                store.updateSong(s.id, { noEsNueva: true });
+                pintar(); toast(`«${s.titulo}» ya no figura como nueva`, 'ok');
+              } }
+            : { icono: '🆕', texto: 'Volver a marcarla como nueva', onClick: () => {
+                store.updateSong(s.id, { noEsNueva: false });
+                pintar(); toast(`«${s.titulo}» vuelve a figurar como nueva`, 'ok');
+              } })
+        : null,
       /* Editar el tema toca el catálogo de la banda, y por el link eso no
          viaja: crear_song_publica solo da de alta, nunca renombra. */
       puedeTocar() && !store.publico
@@ -289,6 +303,7 @@ export function vistaMovil(jamId) {
       h('div.hd-fila', {}, h('span', {}, 'Dura'), h('b', {}, duracionLinda(f.seg))));
 
     hojaAcciones(f.titulo || 'Medley', [
+      { icono: '✎', texto: 'Cambiarle el nombre', onClick: () => dialogoMedley(pos) },
       { icono: '⊟', texto: 'Desarmarlo y dejar los temas sueltos', onClick: () => {
           jam.items.splice(pos, 1, ...f.songs.map(x => ({
             tipo: 'song', songId: x.songId, cantantes: x.cantantes || [], notas: '' })));
@@ -297,6 +312,23 @@ export function vistaMovil(jamId) {
         } },
       { icono: '✕', texto: 'Sacar el medley de la lista', peligro: true, onClick: quitar },
     ], { detalle });
+  }
+
+  function dialogoMedley(pos) {
+    const it = jam.items[pos];
+    const fNom = input({ value: it.titulo || 'Medley', placeholder: 'Medley Bruno Mars, Medley reggae…' });
+    const m = modal({
+      title: 'El medley',
+      body: [field('Nombre', fNom)],
+      footer: [
+        h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
+        h('button.btn.primary', { onclick: () => {
+            it.titulo = fNom.value.trim() || 'Medley';
+            guardar(); m.close(); pintar(); toast('Medley actualizado', 'ok');
+          } }, 'Guardar'),
+      ],
+    });
+    setTimeout(() => { fNom.focus(); fNom.select(); }, 80);
   }
 
   function hojaBreak(f, pos, quitar) {
