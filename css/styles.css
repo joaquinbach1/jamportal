@@ -1699,19 +1699,8 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
 /* guitarras: la fila cambia de contenido, no solo de qué esconde —
    ver .sub-guitarras más abajo. */
 
-/* sivibra: el patch de teclado. La cifra de guitarra no le sirve. */
-.setlist.gremio-sivibra .print-link,
-.setlist.gremio-sivibra .icon-btn.vientos,
-.setlist.gremio-sivibra .vientos-fijo { display: none; }
-
-/* bateros: el pulso y la energía, nada más. */
-.setlist.gremio-bateros .patch,
-.setlist.gremio-bateros .print-link,
-.setlist.gremio-bateros .icon-btn.vientos,
-.setlist.gremio-bateros .vientos-fijo,
-.setlist.gremio-bateros .cat-pill { display: none; }
-/* y el bpm, que es lo que miran, más grande */
-.setlist.gremio-bateros .tempo-val { font-size: 13px; font-weight: 650; color: var(--txt); }
+/* Sivibra y Bateros muestran todo por ahora: falta saber qué mira cada
+   uno. Existen como lente para no tener que rehacer el menú después. */
 
 /* los dos puestos de guitarra, con su check de solo */
 .sub-guitarras { gap: 12px; }

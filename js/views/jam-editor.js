@@ -96,8 +96,8 @@ const CLAVE_GREMIO = 'jamportal.gremio';
 const GREMIOS = [
   { clave: '',           icono: '🎚', etiqueta: 'Todo',      detalle: 'bpm, trompeta, patch y cantantes' },
   { clave: 'guitarras',  icono: '🎸', etiqueta: 'Guitarras', detalle: 'la cifra y el bpm' },
-  { clave: 'sivibra',    icono: '🎹', etiqueta: 'Sivibra',   detalle: 'el patch de teclado y el bpm' },
-  { clave: 'bateros',    icono: '🥁', etiqueta: 'Bateros',   detalle: 'el bpm y la franja de energía' },
+  { clave: 'sivibra',    icono: '🎹', etiqueta: 'Sivibra',   detalle: 'todo, por ahora' },
+  { clave: 'bateros',    icono: '🥁', etiqueta: 'Bateros',   detalle: 'todo, por ahora' },
 ];
 const gremioActual = () => localStorage.getItem(CLAVE_GREMIO) || '';
 
@@ -162,14 +162,15 @@ const MIN_POR_TEMA_MEDLEY = 2;
  * donde uno los busca— y quien suele cantar el tema queda marcado,
  * para no perder ese dato al ordenar.
  */
-function menuFlotante(anchor, opciones, onPick) {
+function menuFlotante(anchor, opciones, onPick, { ordenar = true } = {}) {
   const menu = h('div.ac-menu', { style: { position: 'fixed', width: '230px', maxHeight: '320px' } });
   const cerrar = () => { menu.remove(); document.removeEventListener('mousedown', fuera, true); };
   const fuera = e => { if (!menu.contains(e.target)) cerrar(); };
 
-  const items = opciones
-    .map(o => (typeof o === 'string' ? { value: o, label: o } : o))
-    .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+  const items = opciones.map(o => (typeof o === 'string' ? { value: o, label: o } : o));
+  /* Alfabético salvo que el orden signifique algo, como en las guitarras:
+     ahí el primero es el titular y el resto va como lo dijo la banda. */
+  if (ordenar) items.sort((a, b) => a.label.localeCompare(b.label, 'es'));
 
   const buscador = h('input.ac-buscador', { type: 'text', placeholder: 'Buscar…', autocomplete: 'off' });
   const lista = h('div.ac-lista');
@@ -307,7 +308,9 @@ export function vistaEditor(jamId) {
       GREMIOS.map(x => ({
         icono: x.icono,
         texto: x.clave === gremioActual() ? `${x.etiqueta} · ${x.detalle} (puesto)` : `${x.etiqueta} · ${x.detalle}`,
-        onClick: () => { localStorage.setItem(CLAVE_GREMIO, x.clave); aplicarGremio(); },
+        /* Guitarras cambia el contenido de la fila, no solo qué se esconde:
+           hay que volver a dibujar, no alcanza con la clase. */
+        onClick: () => { localStorage.setItem(CLAVE_GREMIO, x.clave); pintarTodo(); },
       }))),
   });
 
@@ -707,6 +710,16 @@ export function vistaEditor(jamId) {
      la viola es cosa de esta jam, no del tema para siempre.
      ============================================================ */
 
+  /* Los que agarran la viola en esta banda. El orden importa: primero el
+     titular. "Invitado" queda al final para el que cae esa noche. */
+  const GUITARRISTAS = [
+    { nombre: 'Tomi', titular: true },
+    { nombre: 'Nano' },
+    { nombre: 'Peter' },
+    { nombre: 'Ale' },
+    { nombre: 'Invitado' },
+  ];
+
   function puestoGuitarra(it, n) {
     if (!Array.isArray(it.guitarras)) it.guitarras = [];
     while (it.guitarras.length < 2) it.guitarras.push({ nombre: '', solo: false });
@@ -718,8 +731,11 @@ export function vistaEditor(jamId) {
         e.stopPropagation();
         menuFlotante(nombre,
           [{ value: '', label: '— sin nadie —' },
-           ...opcionesGente().map(o => ({ value: o, label: o }))],
-          v => { g.nombre = v; guardar(); pintarTodo(); });
+           ...GUITARRISTAS.map(x => ({
+             value: x.nombre, label: x.nombre, hint: x.titular ? '★' : null,
+           }))],
+          v => { g.nombre = v; guardar(); pintarTodo(); },
+          { ordenar: false });
       },
     }, g.nombre || 'quién');
 
