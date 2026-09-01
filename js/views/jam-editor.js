@@ -89,6 +89,18 @@ async function crearSongDesde({ titulo, artista }) {
    tuya, no de cada jam: si te gusta cómoda, la querés cómoda siempre.
    Arranca compacta: ver la jam entera de una es lo que uno quiere casi
    siempre, y los datos desplegados son la excepción. */
+/* Los gremios son lentes sobre la misma lista: cada uno deja a la vista
+   lo que ese instrumento necesita y esconde el resto. No cambian nada de
+   la jam, solo lo que estás mirando, así que viven en el navegador. */
+const CLAVE_GREMIO = 'jamportal.gremio';
+const GREMIOS = [
+  { clave: '',           icono: '🎚', etiqueta: 'Todo',      detalle: 'bpm, trompeta, patch y cantantes' },
+  { clave: 'guitarras',  icono: '🎸', etiqueta: 'Guitarras', detalle: 'la cifra y el bpm' },
+  { clave: 'sivibra',    icono: '🎹', etiqueta: 'Sivibra',   detalle: 'el patch de teclado y el bpm' },
+  { clave: 'bateros',    icono: '🥁', etiqueta: 'Bateros',   detalle: 'el bpm y la franja de energía' },
+];
+const gremioActual = () => localStorage.getItem(CLAVE_GREMIO) || '';
+
 const CLAVE_DENSIDAD = 'jamportal.densidad';
 /* A pantalla completa siempre va compacta: si te tomás toda la pantalla
    es para ver la lista entera, no para ver ocho temas más grandes.
@@ -248,6 +260,7 @@ export function vistaEditor(jamId) {
     if (card) card.classList.toggle('compacta', compacta());
     /* en el body porque también se achica lo que está arriba de la tarjeta */
     document.body.classList.toggle('lista-compacta', compacta());
+    aplicarGremio();
     aplicarPantalla();
   }
 
@@ -278,6 +291,24 @@ export function vistaEditor(jamId) {
       pintarDensidad();
       window.scrollTo(0, 0);
     },
+  });
+
+  /* el lente elegido se aplica como clase: el DOM es el mismo */
+  function aplicarGremio() {
+    const g = gremioActual();
+    for (const x of GREMIOS) setlistCont.classList.toggle('gremio-' + x.clave, !!x.clave && x.clave === g);
+    const elegido = GREMIOS.find(x => x.clave === g) || GREMIOS[0];
+    btnGremios.textContent = `${elegido.icono} ${elegido.etiqueta.toUpperCase()}`;
+    btnGremios.title = `Se ve ${elegido.detalle} — tocá para cambiar de gremio`;
+  }
+
+  const btnGremios = h('button.btn.gremios', {
+    onclick: () => hojaAcciones('Qué mirar de cada tema',
+      GREMIOS.map(x => ({
+        icono: x.icono,
+        texto: x.clave === gremioActual() ? `${x.etiqueta} · ${x.detalle} (puesto)` : `${x.etiqueta} · ${x.detalle}`,
+        onClick: () => { localStorage.setItem(CLAVE_GREMIO, x.clave); aplicarGremio(); },
+      }))),
   });
 
   const btnDensidad = h('button.btn.xs.densidad', {
@@ -668,6 +699,46 @@ export function vistaEditor(jamId) {
     return btn;
   }
 
+  /* ============================================================
+     Guitarras
+     ------------------------------------------------------------
+     Dos puestos por tema, cada uno con quién lo toca y si hace el
+     solo. Va en el ítem de la lista y no en el tema: quién agarra
+     la viola es cosa de esta jam, no del tema para siempre.
+     ============================================================ */
+
+  function puestoGuitarra(it, n) {
+    if (!Array.isArray(it.guitarras)) it.guitarras = [];
+    while (it.guitarras.length < 2) it.guitarras.push({ nombre: '', solo: false });
+    const g = it.guitarras[n];
+
+    const nombre = h('button.gt-nombre' + (g.nombre ? '.puesto' : ''), {
+      title: g.nombre ? `${g.nombre} — clic para cambiarlo` : 'Elegir guitarrista',
+      onclick: e => {
+        e.stopPropagation();
+        menuFlotante(nombre,
+          [{ value: '', label: '— sin nadie —' },
+           ...opcionesGente().map(o => ({ value: o, label: o }))],
+          v => { g.nombre = v; guardar(); pintarTodo(); });
+      },
+    }, g.nombre || 'quién');
+
+    const solo = h('label.gt-solo' + (g.solo ? '.on' : ''), {
+      title: g.solo ? 'Hace el solo' : 'Marcar que hace el solo',
+      onclick: e => e.stopPropagation(),
+    },
+      h('input', {
+        type: 'checkbox', checked: !!g.solo,
+        onchange: e => { g.solo = e.target.checked; guardar(); pintarTodo(); },
+      }),
+      h('span', {}, '🎸 Solo'));
+
+    return h('span.gt-puesto', {},
+      h('span.gt-rotulo', {}, `G${n + 1}`),
+      nombre,
+      solo);
+  }
+
   /* ---------- nota privada ----------
      Es tuya y de esta máquina: no va a la base compartida. Se escribe
      acá y se lee en el LIVE VIEW, que es cuando hace falta. */
@@ -790,7 +861,15 @@ export function vistaEditor(jamId) {
       h('span.sl-num', {}, numero),
       h('div.sl-main', {},
         h('div.sl-title', {}, s.titulo),
-        h('div.sl-sub', {},
+        gremioActual() === 'guitarras'
+          ? h('div.sl-sub.sub-guitarras', {},
+              h('span', {}, s.artista),
+              puestoGuitarra(it, 0),
+              puestoGuitarra(it, 1),
+              bloqueada()
+                ? (it.cantantes || []).map(n => h('span.chip.sel', {}, n))
+                : chipsPersonas(it.cantantes || [], opcionesGente(), v => { it.cantantes = v; guardar(); pintarTodo(); }, s.cantantes || []))
+          : h('div.sl-sub', {},
           franjaDot(s.franja),
           h('span', {}, s.artista),
           catPill(s.categoria),
@@ -1687,6 +1766,7 @@ export function vistaEditor(jamId) {
       onclick: () => { location.hash = '#/lyrics/' + jam.id; },
       title: 'Las letras de todos los temas, en orden',
     }, '📖 LYRICS VIEW'),
+    btnGremios,
     h('button.btn.sm.secundaria', { onclick: () => copiar(comoTexto()) }, '📋 Copiar lista'),
     /* En el celular estos dos están en el ⋯, que arriba de 820px no existe:
        la barra de acciones es el único lugar donde se los ve con el mouse. */
