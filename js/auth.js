@@ -194,12 +194,38 @@ export class Auth {
   }
 
   async renovar() {
+    /* El refresh token rota: usado una vez, muere. Con dos pestañas (o el
+       teléfono y la compu sobre el mismo navegador), la que renueva
+       segunda tiene el token viejo — y eso antes borraba la sesión de
+       todas. Lo último guardado en el navegador es la verdad: se mira
+       antes de pedir, y otra vez antes de dar la sesión por muerta. */
+    const fresca = leer();
+    if (fresca && fresca.access_token && fresca.access_token !== this.sesion.access_token) {
+      this.sesion = fresca;
+      if (Date.now() < this.sesion.expira - MARGEN_MS) return this.sesion.access_token;
+    }
+
     const res = await fetch(`${this.url}/auth/v1/token?grant_type=refresh_token`, {
       method: 'POST',
       headers: { apikey: this.key, 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: this.sesion.refresh_token }),
     });
+
     if (!res.ok) {
+      /* Un 429 o un 5xx no es "la sesión venció": es Supabase con un mal
+         momento. Borrar la sesión acá obligaba a entrar de nuevo por un
+         problema pasajero; se cuenta como problema de red y el sondeo
+         reintenta solo. */
+      if (res.status === 429 || res.status >= 500) {
+        throw new Error(`Supabase no pudo renovar la sesión (${res.status})`);
+      }
+      /* Rechazo definitivo. Antes de rendirse, una última mirada: si otra
+         pestaña ganó la carrera de la rotación, su sesión es la buena. */
+      const otra = leer();
+      if (otra && otra.access_token && otra.access_token !== this.sesion.access_token) {
+        this.sesion = otra;
+        return this.sesion.access_token;
+      }
       this.cerrarSesion();
       const e = new Error('La sesión venció. Entrá de nuevo.');
       e.sesion = true;              // no es un problema de red: hay que entrar
