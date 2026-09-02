@@ -2435,6 +2435,11 @@ body.modo-link .mv-btn-cab.mas { display: none; }
 .mv-spotify:active { opacity: .55; }
 .mv-spotify svg { display: block; }
 
+/* el parte de la búsqueda masiva de cifras, línea por línea */
+.cifras-log { display: grid; gap: 3px; font-size: 13px; line-height: 1.45; }
+.cifras-log .dudosa { color: var(--warn); }
+.cifras-log .sin { color: var(--txt-3); }
+
 .mv-arrastrando {
   position: relative; z-index: 5;
   background: var(--panel-2) !important;
