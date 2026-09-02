@@ -34,6 +34,7 @@ const BASE = [
   './js/letras.js',
   './js/lookup.js',
   './js/magiclist.js',
+  './js/musicos.js',
   './js/notas.js',
   './js/patch.js',
   './js/realtime.js',
