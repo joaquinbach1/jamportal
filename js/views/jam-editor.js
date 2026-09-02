@@ -552,7 +552,24 @@ export function vistaEditor(jamId) {
   /* ============================================================
      Operaciones sobre el setlist
      ============================================================ */
-  const items = () => jam.items;
+  /* ============================================================
+     Siempre la jam del store, nunca la que capturamos al abrir
+     ------------------------------------------------------------
+     Al sincronizar, el store hace state = {...state, ...remoto} y
+     reemplaza las jams por objetos nuevos. La referencia que agarró
+     esta vista al abrirse queda huérfana: lo que se escribe ahí se
+     dibuja igual pero no lo guarda nadie, porque commit() persiste
+     el state, que ya no la contiene.
+
+     Y guardar sube la versión de la jam, que es justo lo que
+     dispara la próxima sincronización: después del primer guardado
+     de la sesión, todo lo que sigue se perdía. Peor todavía si hay
+     un input con foco —el buscador del menú de músicos, sin ir más
+     lejos—, porque ahí app.js ni siquiera redibuja.
+
+     Es el mismo agujero que tenían las horas de convocatoria. */
+  const alDia = () => store.jam(jamId) || jam;
+  const items = () => alDia().items || (jam.items = jam.items || []);
 
   /** Ids de los temas que ya están en la lista (contando los de los medleys). */
   const idsEnLista = () => new Set(items().flatMap(it =>
@@ -716,8 +733,8 @@ export function vistaEditor(jamId) {
      toca qué es cosa de esta jam, no del tema para siempre.
      ============================================================ */
 
-  function puestoMusico(it, p) {
-    const m = musicosDe(it)[p.clave];
+  function puestoMusico(traer, p) {
+    const m = musicosDe(traer())[p.clave];
     const propio = !!m.nombre && m.nombre !== p.titular;
 
     /* Vacío no siempre quiere decir lo mismo. Hoy todos los puestos
@@ -740,8 +757,12 @@ export function vistaEditor(jamId) {
         if (p.solo) ops.push({ value: '@solo', label: m.solo ? 'Sacarle el solo' : '🎸 Hace el solo' });
 
         menuFlotante(btn, ops, v => {
-          if (v === '@solo') m.solo = !m.solo;
-          else { m.nombre = v; if (!v) m.solo = false; }
+          /* El menú estuvo abierto un rato y en el medio pudo entrar
+             una sincronización: el que vale es el de ahora, no el que
+             había cuando se dibujó el botón. */
+          const vivo = musicosDe(traer())[p.clave];
+          if (v === '@solo') vivo.solo = !vivo.solo;
+          else { vivo.nombre = v; if (!v) vivo.solo = false; }
           guardar(); pintarTodo();
         }, { ordenar: false });
       },
@@ -755,7 +776,7 @@ export function vistaEditor(jamId) {
   }
 
   /** La formación de un tema, en un renglón. */
-  const lineaMusicos = it => PUESTOS.map(p => puestoMusico(it, p));
+  const lineaMusicos = traer => PUESTOS.map(p => puestoMusico(traer, p));
 
   /* ---------- nota privada ----------
      Es tuya y de esta máquina: no va a la base compartida. Se escribe
@@ -886,7 +907,7 @@ export function vistaEditor(jamId) {
               bloqueada()
                 ? (it.cantantes || []).map(n => h('span.chip.sel', {}, n))
                 : chipsPersonas(it.cantantes || [], opcionesGente(), v => { it.cantantes = v; guardar(); pintarTodo(); }, s.cantantes || []),
-              h('span.mu-linea', {}, lineaMusicos(it)))
+              h('span.mu-linea', {}, lineaMusicos(() => items()[i])))
           : h('div.sl-sub', {},
           franjaDot(s.franja),
           h('span', {}, s.artista),
@@ -1101,7 +1122,7 @@ export function vistaEditor(jamId) {
               ? (s.vientos ? h('span.vientos-fijo', { title: 'Lleva vientos' }, '🎺') : null)
               : botonVientos(s)),
             guit ? null : (s && !bloqueada() ? chipPatch(s, () => pintarTodo()) : null),
-            guit ? h('span.mu-linea', {}, lineaMusicos(ms)) : null,
+            guit ? h('span.mu-linea', {}, lineaMusicos(() => (items()[i].songs || [])[k])) : null,
             guit ? null : (s && s.cifraUrl ? h('a.print-link', { href: s.cifraUrl, target: '_blank', rel: 'noopener' }, '🎸 cifra') : null),
             bloqueada()
               ? (ms.cantantes || []).map(n => h('span.chip.sel', {}, n))
