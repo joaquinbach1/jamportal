@@ -11,7 +11,7 @@
 import { store } from '../store.js';
 import { notaDe } from '../notas.js';
 import { h, clear, frag, toast, fechaLinda, descargarBlob } from '../ui.js';
-import { puestosOcupados, iconoDe } from '../musicos.js';
+import { PUESTOS, puestosOcupados, iconoDe } from '../musicos.js';
 import { setlistDocx } from '../docx.js';
 
 /** Aplana el setlist a filas dibujables, numerando solo los temas. */
@@ -43,6 +43,64 @@ function puestosEnVivo(m, chica) {
     ' ' + m[p.clave].nombre + (m[p.clave].solo ? ' · solo' : '')));
 }
 
+/* ============================================================
+   Los cambios de músico
+   ------------------------------------------------------------
+   Parado frente a la gente, lo que hay que saber no es la
+   formación entera —esa casi siempre es la misma— sino qué
+   cambia respecto del tema anterior: quién entra, quién sale y
+   a quién le toca el solo ahora.
+
+   Se compara contra el tema anterior de verdad, salteando
+   bloques y breaks, y entrando a los medleys tema por tema: en
+   un medley se turnan más que en ningún otro lado. El primero
+   no avisa nada: esa es la formación de arranque, no un cambio.
+   ============================================================ */
+
+function diferencias(antes, ahora) {
+  if (!antes || !ahora) return [];
+  const out = [];
+  for (const p of PUESTOS) {
+    const a = antes[p.clave] || {}, b = ahora[p.clave] || {};
+    if ((a.nombre || '') === (b.nombre || '')) {
+      /* mismo músico: solo avisamos si le movieron el solo */
+      if (b.nombre && !!a.solo !== !!b.solo) {
+        out.push({ p, texto: b.solo ? `${b.nombre} hace el solo` : `${b.nombre} ya no hace el solo` });
+      }
+      continue;
+    }
+    if (!b.nombre) out.push({ p, texto: `sale ${a.nombre}` });
+    else if (!a.nombre) out.push({ p, texto: `entra ${b.nombre}` });
+    else out.push({ p, texto: `${b.nombre} por ${a.nombre}` });
+  }
+  return out;
+}
+
+/** Anota en cada tema qué cambia respecto del anterior. */
+function marcarCambios(lista) {
+  let previo = null;
+  for (const f of lista) {
+    if (f.tipo === 'medley') {
+      for (const x of f.songs) {
+        x.cambios = diferencias(previo, x.musicos);
+        if (x.musicos) previo = x.musicos;
+      }
+      continue;
+    }
+    if (f.tipo !== 'song') continue;          // bloques y breaks no cortan la cuenta
+    f.cambios = diferencias(previo, f.musicos);
+    if (f.musicos) previo = f.musicos;
+  }
+  return lista;
+}
+
+function avisoDeCambio(cambios, chica) {
+  if (!cambios || !cambios.length) return null;
+  return h('div.live-cambio' + (chica ? '.chica' : ''), {},
+    h('span.live-cambio-tag', {}, 'CAMBIO'),
+    cambios.map(c => h('span.live-cambio-item', {}, iconoDe(c.p), ' ', c.p.label + ': ' + c.texto)));
+}
+
 export function vistaLive(jamId) {
   const jam = store.jam(jamId);
   if (!jam) {
@@ -50,7 +108,7 @@ export function vistaLive(jamId) {
       h('a.btn.sm', { href: '#/jams', style: { marginTop: '12px' } }, 'Volver'));
   }
 
-  const lista = filas(jam);
+  const lista = marcarCambios(filas(jam));
   const tocables = lista.filter(f => f.tipo !== 'bloque');       // sobre las que se puede parar
   let actual = Math.min(jam.vivoIndice ?? 0, Math.max(tocables.length - 1, 0));
 
@@ -148,7 +206,8 @@ export function vistaLive(jamId) {
                 ...puestosEnVivo(x.musicos, true),
                 x.song && x.song.bpm ? h('span.live-bpm', {}, x.song.bpm) : null,
                 x.song && notaDe(jam.id, x.song.id)
-                  ? h('span.live-nota.chica', {}, notaDe(jam.id, x.song.id)) : null))))));
+                  ? h('span.live-nota.chica', {}, notaDe(jam.id, x.song.id)) : null,
+                avisoDeCambio(x.cambios, true)))))));
         return;
       }
 
@@ -168,6 +227,7 @@ export function vistaLive(jamId) {
             s && s.cifraUrl
               ? h('a.live-cifra', { href: s.cifraUrl, target: '_blank', rel: 'noopener', onclick: e => e.stopPropagation() }, '🎸 cifra')
               : null),
+          avisoDeCambio(f.cambios),
           /* la nota es tuya y de esta máquina: nadie más la ve */
           s && notaDe(jam.id, s.id) ? h('div.live-nota', {}, notaDe(jam.id, s.id)) : null)));
     });
