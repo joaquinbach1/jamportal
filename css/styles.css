@@ -2318,6 +2318,14 @@ body.modo-link .mv-btn-cab.mas { display: none; }
   background: none; border: 0;
   font: inherit; font-size: 11.5px; color: var(--acc); cursor: pointer;
 }
+.mv-tl-cuenta { flex: 1 1 auto; min-width: 0; }
+/* cuántas nuevas hay; tocarlo filtra la lista a solo las nuevas */
+.mv-tl-nuevas {
+  flex: none; margin: 0; padding: 2px 9px 3px;
+  background: none; border: 1px solid var(--nueva-linea); border-radius: 999px;
+  font: inherit; font-size: 11px; color: var(--err); cursor: pointer;
+}
+.mv-tl-nuevas.on { background: var(--nueva-fondo); font-weight: 600; }
 .mv-tl-aprox { color: var(--txt-3); border-bottom: 1px dotted var(--linea-fuerte); cursor: help; }
 
 /* ---------- la lista ---------- */
