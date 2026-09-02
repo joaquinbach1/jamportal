@@ -49,14 +49,27 @@ export function formacionPorDefecto() {
  * tema tiene su formación se respeta tal cual: si alguien dejó un
  * puesto vacío a propósito, no se lo volvemos a llenar.
  */
+/**
+ * Si lo que hay es una formación de verdad. Un array NO lo es, aunque
+ * sea truthy: cuando esto guardaba dos guitarras la columna era una
+ * lista, y los temas que vienen de entonces llegan con `[]`. Colgarle
+ * g1, g2… a un array parece funcionar —en memoria se leen bien— pero
+ * JSON.stringify descarta las propiedades nombradas de un array, así
+ * que al guardar sale `[]` y el trabajo se pierde sin un solo error.
+ */
+const esFormacion = m => !!m && typeof m === 'object' && !Array.isArray(m);
+
 export function musicosDe(it) {
-  if (!it.musicos) {
+  if (!esFormacion(it.musicos)) {
+    const viejo = Array.isArray(it.musicos) ? it.musicos : it.guitarras;
     it.musicos = formacionPorDefecto();
     /* Lo que se cargó cuando esto eran dos guitarras nomás entra en
        G1 y G2, con su solo puesto. */
-    if (Array.isArray(it.guitarras)) {
-      it.guitarras.slice(0, 2).forEach((g, n) => {
-        if (g) it.musicos[PUESTOS[n].clave] = { nombre: g.nombre || '', solo: !!g.solo };
+    if (Array.isArray(viejo)) {
+      viejo.slice(0, 2).forEach((g, n) => {
+        if (g && typeof g === 'object') {
+          it.musicos[PUESTOS[n].clave] = { nombre: g.nombre || '', solo: !!g.solo };
+        }
       });
     }
     delete it.guitarras;
@@ -69,4 +82,4 @@ export function musicosDe(it) {
 
 /** Los puestos con alguien puesto, para las vistas que solo leen. */
 export const puestosOcupados = m =>
-  (m ? PUESTOS.filter(p => m[p.clave] && m[p.clave].nombre) : []);
+  (esFormacion(m) ? PUESTOS.filter(p => m[p.clave] && m[p.clave].nombre) : []);
