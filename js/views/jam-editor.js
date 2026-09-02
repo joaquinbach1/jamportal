@@ -92,26 +92,61 @@ async function crearSongDesde({ titulo, artista }) {
 /* Los gremios son lentes sobre la misma lista: cada uno deja a la vista
    lo que ese instrumento necesita y esconde el resto. No cambian nada de
    la jam, solo lo que estás mirando, así que viven en el navegador. */
-/* Los que agarran la viola en esta banda. El orden importa: primero el
-   titular, que además es el que viene puesto por defecto en G1.
-   "Invitado" queda al final, para el que cae esa noche. */
-const GUITARRISTAS = [
-  { nombre: 'Tomi', titular: true },
-  { nombre: 'Nano' },
-  { nombre: 'Peter' },
-  { nombre: 'Ale' },
-  { nombre: 'Invitado' },
-];
-const TITULAR = (GUITARRISTAS.find(x => x.titular) || {}).nombre || '';
+/* ============================================================
+   La banda, puesto por puesto
+   ------------------------------------------------------------
+   Cada puesto arranca con su titular ya puesto: es quien toca
+   casi siempre, y escribirlo tema por tema era el 90% de los
+   clics. Después ofrece a los suplentes de ESE puesto —no la
+   banda entera— más "Invitado", para el que cae esa noche.
 
-const CLAVE_GREMIO = 'jamportal.gremio';
-const GREMIOS = [
-  { clave: '',           icono: '🎚', etiqueta: 'Todo',      detalle: 'bpm, trompeta, patch y cantantes' },
-  { clave: 'guitarras',  icono: '🎸', etiqueta: 'Guitarras', detalle: 'la cifra y el bpm' },
-  { clave: 'sivibra',    icono: '🎹', etiqueta: 'Sivibra',   detalle: 'todo, por ahora' },
-  { clave: 'bateros',    icono: '🥁', etiqueta: 'Bateros',   detalle: 'todo, por ahora' },
+   La percu es la excepción: no tiene titular. Es el puesto que
+   de verdad cambia de tema en tema, así que arranca pidiendo
+   nombre en vez de suponerlo.
+   ============================================================ */
+const PUESTOS = [
+  { clave: 'g1',    label: 'G1',    titular: 'Tomi',  solo: true, gente: ['Tomi', 'Nano', 'Peter', 'Ale'] },
+  { clave: 'g2',    label: 'G2',    titular: 'Nano',  solo: true, gente: ['Tomi', 'Nano', 'Peter', 'Ale'] },
+  { clave: 'bajo',  label: 'Bajo',  titular: 'Nahue',             gente: ['Nahue'] },
+  { clave: 'bat',   label: 'Bat',   titular: 'Joaco',             gente: ['Joaco'] },
+  { clave: 'percu', label: 'Percu', titular: '',                  gente: ['Fede', 'Fabo'] },
+  { clave: 't1',    label: 'T1',    titular: 'Mati',              gente: ['Mati'] },
+  { clave: 't2',    label: 'T2',    titular: 'Alva',              gente: ['Alva'] },
 ];
-const gremioActual = () => localStorage.getItem(CLAVE_GREMIO) || '';
+const INVITADO = 'Invitado';
+
+const CLAVE_MUSICOS = 'jamportal.musicos';
+const verMusicos = () => localStorage.getItem(CLAVE_MUSICOS) === '1';
+
+/** La formación de arranque: cada puesto con su titular. */
+function formacionPorDefecto() {
+  const m = {};
+  for (const p of PUESTOS) m[p.clave] = { nombre: p.titular, solo: false };
+  return m;
+}
+
+/**
+ * Los músicos de un tema, creándolos la primera vez. Una vez que el
+ * tema tiene su formación se respeta tal cual: si alguien dejó un
+ * puesto vacío a propósito, no se lo volvemos a llenar.
+ */
+function musicosDe(it) {
+  if (!it.musicos) {
+    it.musicos = formacionPorDefecto();
+    /* Lo que ya estaba cargado cuando esto eran dos guitarras nomás
+       entra en G1 y G2, con su solo puesto. */
+    if (Array.isArray(it.guitarras)) {
+      it.guitarras.slice(0, 2).forEach((g, n) => {
+        if (g) it.musicos[PUESTOS[n].clave] = { nombre: g.nombre || '', solo: !!g.solo };
+      });
+    }
+    delete it.guitarras;
+  }
+  for (const p of PUESTOS) {
+    if (!it.musicos[p.clave]) it.musicos[p.clave] = { nombre: p.titular, solo: false };
+  }
+  return it.musicos;
+}
 
 const CLAVE_DENSIDAD = 'jamportal.densidad';
 /* A pantalla completa siempre va compacta: si te tomás toda la pantalla
@@ -306,24 +341,23 @@ export function vistaEditor(jamId) {
     },
   });
 
-  /* el lente elegido se aplica como clase: el DOM es el mismo */
   function aplicarGremio() {
-    const g = gremioActual();
-    for (const x of GREMIOS) setlistCont.classList.toggle('gremio-' + x.clave, !!x.clave && x.clave === g);
-    const elegido = GREMIOS.find(x => x.clave === g) || GREMIOS[0];
-    btnGremios.textContent = `${elegido.icono} ${elegido.etiqueta.toUpperCase()}`;
-    btnGremios.title = `Se ve ${elegido.detalle} — tocá para cambiar de gremio`;
+    const on = verMusicos();
+    setlistCont.classList.toggle('vista-musicos', on);
+    btnGremios.classList.toggle('on', on);
+    btnGremios.textContent = on ? '🎸 MÚSICOS VIEW' : '🎸 Músicos view';
+    btnGremios.title = on
+      ? 'Cada tema muestra quién toca qué — tocá para volver a la vista de siempre'
+      : 'Ver quién toca qué en cada tema';
   }
 
+  /* Prende y apaga: cambia el contenido de la fila, no solo qué se
+     esconde, así que hay que volver a dibujar. */
   const btnGremios = h('button.btn.gremios', {
-    onclick: () => hojaAcciones('Qué mirar de cada tema',
-      GREMIOS.map(x => ({
-        icono: x.icono,
-        texto: x.clave === gremioActual() ? `${x.etiqueta} · ${x.detalle} (puesto)` : `${x.etiqueta} · ${x.detalle}`,
-        /* Guitarras cambia el contenido de la fila, no solo qué se esconde:
-           hay que volver a dibujar, no alcanza con la clase. */
-        onClick: () => { localStorage.setItem(CLAVE_GREMIO, x.clave); pintarTodo(); },
-      }))),
+    onclick: () => {
+      localStorage.setItem(CLAVE_MUSICOS, verMusicos() ? '0' : '1');
+      pintarTodo();
+    },
   });
 
   const btnDensidad = h('button.btn.xs.densidad', {
@@ -586,7 +620,7 @@ export function vistaEditor(jamId) {
     if (s.esIdea) toast(`«${s.titulo}» queda como idea hasta que pase la jam`, '');
     insertar({
       tipo: 'song', songId, cantantes: [], notas: '',
-      guitarras: [{ nombre: TITULAR, solo: false }, { nombre: '', solo: false }],
+      musicos: formacionPorDefecto(),
     }, at ?? items().length);
   }
   function quitar(i) { items().splice(i, 1); guardar(); pintarTodo(); }
@@ -614,7 +648,7 @@ export function vistaEditor(jamId) {
     if (!m || m.tipo !== 'medley') return;
     const [ms] = m.songs.splice(k, 1);
     const suelto = { tipo: 'song', songId: ms.songId, cantantes: ms.cantantes || [], notas: '',
-                     guitarras: ms.guitarras || undefined };
+                     musicos: ms.musicos || undefined };
 
     if (m.songs.length >= 2) {
       items().splice(i + 1, 0, suelto);                    // el medley sigue en pie
@@ -623,7 +657,7 @@ export function vistaEditor(jamId) {
       const [q] = m.songs;
       items().splice(i, 1,
         { tipo: 'song', songId: q.songId, cantantes: q.cantantes || [], notas: '',
-          guitarras: q.guitarras || undefined }, suelto);
+          musicos: q.musicos || undefined }, suelto);
       toast('El medley quedó con un solo tema, así que lo desarmé', '');
     } else {
       items().splice(i, 1, suelto);
@@ -720,53 +754,57 @@ export function vistaEditor(jamId) {
   }
 
   /* ============================================================
-     Guitarras
+     Un puesto de la banda, en un tema
      ------------------------------------------------------------
-     Dos puestos por tema, cada uno con quién lo toca y si hace el
-     solo. Va en el ítem de la lista y no en el tema: quién agarra
-     la viola es cosa de esta jam, no del tema para siempre.
+     Un botón por puesto, sin rótulo: el que está donde siempre va
+     en gris y el que se salió del molde en negro, así la fila se
+     lee de un saque y lo único que salta es la excepción. El
+     rótulo vive en el title, para cuando no se sabe cuál es cuál.
+
+     El solo se marca desde el mismo menú en vez de con un check
+     aparte: con siete puestos, siete checkboxes por fila la hacen
+     ilegible. Va en el ítem de la lista y no en el tema: quién
+     toca qué es cosa de esta jam, no del tema para siempre.
      ============================================================ */
 
-  function puestoGuitarra(it, n) {
-    /* La primera vez arranca con el titular en G1: es quien toca casi
-       siempre, y escribirlo tema por tema era el 90% de los clics. Una
-       vez que el tema tiene su lista, se respeta —si alguien puso
-       "sin nadie" a propósito, no se la volvemos a llenar. */
-    if (!Array.isArray(it.guitarras)) {
-      it.guitarras = [{ nombre: TITULAR, solo: false }, { nombre: '', solo: false }];
-    }
-    while (it.guitarras.length < 2) it.guitarras.push({ nombre: '', solo: false });
-    const g = it.guitarras[n];
+  function puestoMusico(it, p) {
+    const m = musicosDe(it)[p.clave];
+    const propio = !!m.nombre && m.nombre !== p.titular;
 
-    const nombre = h('button.gt-nombre' + (g.nombre ? '.puesto' : ''), {
-      title: g.nombre ? `${g.nombre} — clic para cambiarlo` : 'Elegir guitarrista',
+    /* Vacío no siempre quiere decir lo mismo. La percu nunca tuvo
+       titular: le falta el nombre y por eso pide a los gritos. Un G2
+       que alguien vació a propósito no falta, así que se queda
+       callado. */
+    const btn = h('button.mu-nombre'
+        + (m.nombre ? (propio ? '.propio' : '') : (p.titular ? '.vacio' : '.falta'))
+        + (m.solo ? '.solo' : ''), {
+      title: m.nombre
+        ? `${p.label}: ${m.nombre}${m.solo ? ' — hace el solo' : ''} (tocá para cambiarlo)`
+        : (p.titular ? `${p.label}: sin nadie` : `${p.label}: falta decir quién`),
       onclick: e => {
         e.stopPropagation();
-        menuFlotante(nombre,
-          [{ value: '', label: '— sin nadie —' },
-           ...GUITARRISTAS.map(x => ({
-             value: x.nombre, label: x.nombre, hint: x.titular ? '★' : null,
-           }))],
-          v => { g.nombre = v; guardar(); pintarTodo(); },
-          { ordenar: false });
+        const gente = p.gente.includes(INVITADO) ? p.gente : [...p.gente, INVITADO];
+        const ops = [
+          ...gente.map(n => ({ value: n, label: n, hint: n === p.titular ? '★' : null })),
+          { value: '', label: '— sin nadie —' },
+        ];
+        if (p.solo) ops.push({ value: '@solo', label: m.solo ? 'Sacarle el solo' : '🎸 Hace el solo' });
+
+        menuFlotante(btn, ops, v => {
+          if (v === '@solo') m.solo = !m.solo;
+          else { m.nombre = v; if (!v) m.solo = false; }
+          guardar(); pintarTodo();
+        }, { ordenar: false });
       },
-    }, g.nombre || 'quién');
+    }, m.nombre
+         ? m.nombre + (m.solo ? ' solo' : '')
+         : (p.titular ? 'sin ' + p.label.toLowerCase() : p.label.toLowerCase() + '?'));
 
-    const solo = h('label.gt-solo' + (g.solo ? '.on' : ''), {
-      title: g.solo ? 'Hace el solo' : 'Marcar que hace el solo',
-      onclick: e => e.stopPropagation(),
-    },
-      h('input', {
-        type: 'checkbox', checked: !!g.solo,
-        onchange: e => { g.solo = e.target.checked; guardar(); pintarTodo(); },
-      }),
-      h('span', {}, '🎸 Solo'));
-
-    return h('span.gt-puesto', {},
-      h('span.gt-rotulo', {}, `G${n + 1}`),
-      nombre,
-      solo);
+    return btn;
   }
+
+  /** La formación de un tema, en un renglón. */
+  const lineaMusicos = it => PUESTOS.map(p => puestoMusico(it, p));
 
   /* ---------- nota privada ----------
      Es tuya y de esta máquina: no va a la base compartida. Se escribe
@@ -890,14 +928,14 @@ export function vistaEditor(jamId) {
       h('span.sl-num', {}, numero),
       h('div.sl-main', {},
         h('div.sl-title', {}, s.titulo),
-        gremioActual() === 'guitarras'
-          ? h('div.sl-sub.sub-guitarras', {},
-              h('span', {}, s.artista),
-              puestoGuitarra(it, 0),
-              puestoGuitarra(it, 1),
+        verMusicos()
+          /* El cantante primero: es el dato que más se busca mirando la
+             lista, y los instrumentos van detrás como un solo bloque. */
+          ? h('div.sl-sub.sub-musicos', {},
               bloqueada()
                 ? (it.cantantes || []).map(n => h('span.chip.sel', {}, n))
-                : chipsPersonas(it.cantantes || [], opcionesGente(), v => { it.cantantes = v; guardar(); pintarTodo(); }, s.cantantes || []))
+                : chipsPersonas(it.cantantes || [], opcionesGente(), v => { it.cantantes = v; guardar(); pintarTodo(); }, s.cantantes || []),
+              h('span.mu-linea', {}, lineaMusicos(it)))
           : h('div.sl-sub', {},
           franjaDot(s.franja),
           h('span', {}, s.artista),
@@ -1099,7 +1137,7 @@ export function vistaEditor(jamId) {
              hay que saber quién agarra la viola. Con el gremio Guitarras
              puesto la fila deja pasar el resto —artista, tempo, patch— para
              que los dos puestos entren sin apretarse. */
-          const guit = gremioActual() === 'guitarras';
+          const guit = verMusicos();
           poner(fila,
             bloqueada() ? null : manija('Arrastrar para reordenar dentro del medley'),
             guit ? null : franjaDot(s && s.franja),
@@ -1112,7 +1150,7 @@ export function vistaEditor(jamId) {
               ? (s.vientos ? h('span.vientos-fijo', { title: 'Lleva vientos' }, '🎺') : null)
               : botonVientos(s)),
             guit ? null : (s && !bloqueada() ? chipPatch(s, () => pintarTodo()) : null),
-            guit ? [puestoGuitarra(ms, 0), puestoGuitarra(ms, 1)] : null,
+            guit ? h('span.mu-linea', {}, lineaMusicos(ms)) : null,
             guit ? null : (s && s.cifraUrl ? h('a.print-link', { href: s.cifraUrl, target: '_blank', rel: 'noopener' }, '🎸 cifra') : null),
             bloqueada()
               ? (ms.cantantes || []).map(n => h('span.chip.sel', {}, n))

@@ -25,14 +25,33 @@ export function filas(jam) {
       out.push({ tipo: 'medley', n, titulo: it.titulo, i,
         songs: (it.songs || []).map(ms => ({
           song: store.song(ms.songId), cantantes: ms.cantantes || [],
-          guitarras: ms.guitarras || [] })) });
+          musicos: ms.musicos || null })) });
       return;
     }
     n++;
     out.push({ tipo: 'song', n, i, song: store.song(it.songId),
-      cantantes: it.cantantes || [], guitarras: it.guitarras || [] });
+      cantantes: it.cantantes || [], musicos: it.musicos || null });
   });
   return out;
+}
+
+/* Los puestos de la banda en el orden del editor. El que está vacío no
+   sale: en el vivo lo que no se toca no se lee.
+
+   El bajo lleva la palabra y no un dibujo: no hay emoji de bajo, y con
+   la guitarra puesta quedaban tres 🎸 seguidos donde solo la posición
+   decía cuál era cuál. */
+const PUESTOS_VIVO = [
+  ['g1', '🎸'], ['g2', '🎸'], ['bajo', 'bajo'], ['bat', '🥁'],
+  ['percu', '🪘'], ['t1', '🎹'], ['t2', '🎹'],
+];
+
+function puestosEnVivo(m, chica) {
+  if (!m) return [];
+  return PUESTOS_VIVO
+    .filter(([k]) => m[k] && m[k].nombre)
+    .map(([k, ico]) => h('span.live-guitarra' + (chica ? '.chica' : '') + (m[k].solo ? '.solo' : ''), {},
+      ico + ' ' + m[k].nombre + (m[k].solo ? ' · solo' : '')));
 }
 
 export function vistaLive(jamId) {
@@ -137,10 +156,7 @@ export function vistaLive(jamId) {
               h('div.live-sub-song', {},
                 h('span', {}, x.song ? x.song.titulo : '—'),
                 x.cantantes.length ? h('span.live-cantante', {}, x.cantantes.join(', ')) : null,
-                ...(x.guitarras || [])
-                  .filter(g => g && g.nombre)
-                  .map(g => h('span.live-guitarra.chica' + (g.solo ? '.solo' : ''), {},
-                    '🎸 ' + g.nombre + (g.solo ? ' · solo' : ''))),
+                ...puestosEnVivo(x.musicos, true),
                 x.song && x.song.bpm ? h('span.live-bpm', {}, x.song.bpm) : null,
                 x.song && notaDe(jam.id, x.song.id)
                   ? h('span.live-nota.chica', {}, notaDe(jam.id, x.song.id)) : null))))));
@@ -155,12 +171,9 @@ export function vistaLive(jamId) {
           h('div.live-meta', {},
             s ? h('span.live-artista', {}, s.artista) : null,
             f.cantantes.length ? h('span.live-cantante', {}, '🎤 ' + f.cantantes.join(', ')) : null,
-            /* los guitarristas, con el que hace el solo destacado: parado
+            /* quién toca qué, con el que hace el solo destacado: parado
                frente a la gente eso es lo que hay que saber de un vistazo */
-            ...(f.guitarras || [])
-              .filter(g => g && g.nombre)
-              .map(g => h('span.live-guitarra' + (g.solo ? '.solo' : ''), {},
-                '🎸 ' + g.nombre + (g.solo ? ' · solo' : ''))),
+            ...puestosEnVivo(f.musicos),
             s && s.bpm ? h('span.live-bpm' + (s.bpmFuente === 'sugerido' ? '.sug' : ''), {}, s.bpm + ' bpm') : null,
             s && (s.patches || []).length ? h('span.live-patch', {}, '🎹 ' + s.patches.join(' ')) : null,
             s && s.cifraUrl

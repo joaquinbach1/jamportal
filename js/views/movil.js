@@ -78,11 +78,27 @@ const verInstrumentos = () => localStorage.getItem(CLAVE_I) === '1';
 const CLAVE_N = 'jamportal.movil.nuevas';
 const verNuevas = () => localStorage.getItem(CLAVE_N) !== '0';
 
+/* Los puestos de la banda, en el orden en que se cargan en el editor.
+   Acá solo se leen: el que está vacío no ocupa lugar en el renglón.
+   El bajo va con la palabra: no hay emoji de bajo y con la guitarra
+   quedaban tres 🎸 seguidos. */
+const PUESTOS_MOVIL = [
+  ['g1', '🎸'], ['g2', '🎸'], ['bajo', 'bajo'], ['bat', '🥁'],
+  ['percu', '🪘'], ['t1', '🎹'], ['t2', '🎹'],
+];
+
+function musicosEnFila(f) {
+  const m = f.musicos;
+  if (!m) return [];
+  return PUESTOS_MOVIL
+    .filter(([k]) => m[k] && m[k].nombre)
+    .map(([k, ico]) => ico + ' ' + m[k].nombre + (m[k].solo ? ' (solo)' : ''));
+}
+
 function instrumentosDe(f, s) {
   const partes = [];
   if (s.vientos) partes.push('🎺');
-  (f.guitarras || []).filter(g => g && g.nombre).forEach(g =>
-    partes.push('🎸 ' + g.nombre + (g.solo ? ' (solo)' : '')));
+  musicosEnFila(f).forEach(x => partes.push(x));
   if ((s.patches || []).length) partes.push('🎹 ' + s.patches.join(' '));
   (s.invitados || []).forEach(x => partes.push(x));
   if (!partes.length) return null;
@@ -411,7 +427,7 @@ export function vistaMovil(jamId) {
       { icono: '⊟', texto: 'Desarmarlo y dejar los temas sueltos', onClick: () => {
           jam.items.splice(pos, 1, ...f.songs.map(x => ({
             tipo: 'song', songId: x.songId, cantantes: x.cantantes || [], notas: '',
-            guitarras: x.guitarras || undefined })));
+            musicos: x.musicos || undefined })));
           guardar(); pintar();
           toast(`${f.songs.length} temas sueltos`, 'ok');
         } },
