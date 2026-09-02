@@ -99,6 +99,7 @@ export function agenda(jam, song) {
         if (!s || !s.duracionSec) sinDato++;
         temas++;
         return { song: s, cantantes: ms.cantantes || [], songId: ms.songId,
+                 guitarras: ms.guitarras || [],
                  seg: segundosDeTema(s, true) };
       });
       const seg = songs.reduce((a, x) => a + x.seg, 0);

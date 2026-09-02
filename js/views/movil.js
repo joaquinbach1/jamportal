@@ -410,7 +410,8 @@ export function vistaMovil(jamId) {
       { icono: '✎', texto: 'Cambiarle el nombre', onClick: () => dialogoMedley(pos) },
       { icono: '⊟', texto: 'Desarmarlo y dejar los temas sueltos', onClick: () => {
           jam.items.splice(pos, 1, ...f.songs.map(x => ({
-            tipo: 'song', songId: x.songId, cantantes: x.cantantes || [], notas: '' })));
+            tipo: 'song', songId: x.songId, cantantes: x.cantantes || [], notas: '',
+            guitarras: x.guitarras || undefined })));
           guardar(); pintar();
           toast(`${f.songs.length} temas sueltos`, 'ok');
         } },
