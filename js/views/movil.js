@@ -67,6 +67,17 @@ function densidad() {
 const CLAVE_I = 'jamportal.movil.instrumentos';
 const verInstrumentos = () => localStorage.getItem(CLAVE_I) === '1';
 
+/* ============================================================
+   Modo nuevas
+   ------------------------------------------------------------
+   Prendido (el default): la pill roja en cada tema nuevo, el
+   porcentaje de nuevas en el timeline, y ahí mismo el filtro de
+   "solo nuevas". Apagado desde el ⋯, la lista queda limpia de
+   marcas. Queda guardado en este teléfono.
+   ============================================================ */
+const CLAVE_N = 'jamportal.movil.nuevas';
+const verNuevas = () => localStorage.getItem(CLAVE_N) !== '0';
+
 function instrumentosDe(f, s) {
   const partes = [];
   if (s.vientos) partes.push('🎺');
@@ -119,7 +130,13 @@ function tramosPorSeccion(filas) {
   return tramos.filter(tr => tr.seg > 0);
 }
 
-function tira(plan, alTocar, alCambiarModo) {
+/**
+ * @param {object} [extras]  lo del modo nuevas:
+ *   nuevas           {n, pct} o null si el modo está apagado o no hay
+ *   soloNuevas       si el filtro está puesto
+ *   alFiltrarNuevas  prende/apaga el filtro
+ */
+function tira(plan, alTocar, alCambiarModo, extras = {}) {
   const hayBloques = plan.filas.some(f => f.tipo === 'bloque');
   const modo = hayBloques ? modoTimeline() : 'temas';
 
@@ -181,10 +198,18 @@ function tira(plan, alTocar, alCambiarModo) {
     barra,
     info,
     h('div.mv-tl-pie', {},
-      h('span', {},
+      h('span.mv-tl-cuenta', {},
         `${nTemas} tema${nTemas === 1 ? '' : 's'}`,
         plan.breaks ? ` · ${Math.round(plan.breaks / 60)}′ de break` : '',
         plan.sinDato ? ` · ${plan.sinDato} estimado${plan.sinDato === 1 ? '' : 's'}` : ''),
+      extras.nuevas
+        ? h('button.mv-tl-nuevas' + (extras.soloNuevas ? '.on' : ''), {
+            title: extras.soloNuevas
+              ? 'Volver a ver la lista entera'
+              : 'Ver solo los temas nuevos',
+            onclick: extras.alFiltrarNuevas,
+          }, `🆕 ${extras.nuevas.n} (${extras.nuevas.pct}%)`)
+        : null,
       hayBloques
         ? h('button.mv-tl-toggle', {
             onclick: () => {
@@ -217,6 +242,10 @@ export function vistaMovil(jamId) {
      medley sin pasar por el modo edición: apretarlo ya es querer editar. */
   let editando = false;
   const puedeTocar = () => editable() && editando;
+
+  /* El filtro de "solo nuevas". Es un lente del momento, no una
+     preferencia: cada vez que se abre la jam arranca apagado. */
+  let soloNuevas = false;
 
   const cont = h('div.movil', { dataset: { d: densidad() } });
   const lista = h('div.mv-lista');
@@ -880,6 +909,15 @@ export function vistaMovil(jamId) {
       { icono: '🕘', texto: 'Fecha, hora y lugar', onClick: dialogoHorario },
       { icono: '▤', texto: 'Tamaño de la lista: ' + DENSIDADES.find(d => d.v === densidad()).label.toLowerCase(),
         onClick: hojaDensidad },
+      /* Apagado, la lista queda sin marcas rojas y el timeline sin el
+         porcentaje; el filtro de "solo nuevas" se apaga con él. */
+      { icono: '🆕', texto: verNuevas()
+          ? 'Esconder la marca de tema nuevo'
+          : 'Mostrar la marca de tema nuevo (y el % en el timeline)',
+        onClick: () => {
+          localStorage.setItem(CLAVE_N, verNuevas() ? '0' : '');
+          pintar();
+        } },
       { icono: '📋', texto: 'Copiar la lista como texto', onClick: () => copiar(comoTexto()) },
       { icono: '⬇', texto: 'Bajar el setlist en Word', onClick: bajarDocx },
 
@@ -982,7 +1020,7 @@ export function vistaMovil(jamId) {
     /* Nunca tocada: lleva una pill de "nueva" al lado del título. Tocarla
        la apaga para siempre —quedó marcada como sabida— así que por el
        link no se puede: ese cambio es del catálogo y no viaja. */
-    const pill = s && esNueva(s)
+    const pill = s && verNuevas() && esNueva(s)
       ? h('button.mv-pill-nueva', {
           title: 'Nunca sonó en una jam. Tocá para marcar que ya la saben.',
           onclick: async e => {
@@ -1036,17 +1074,23 @@ export function vistaMovil(jamId) {
        De paso, la hora de cada tema del medley: agenda() trae la hora del
        medley entero, y adentro se va sumando lo que ocupa cada pedazo. */
     let numero = 0;
-    plan.filas.forEach(f => {
-      if (f.tipo === 'song') f.numero = ++numero;
-      else if (f.tipo === 'medley') {
+    /* los temas nuevos, con dónde viven, para el % y el filtro */
+    const nuevos = [];
+    plan.filas.forEach((f, pos) => {
+      if (f.tipo === 'song') {
+        f.numero = ++numero;
+        if (esNueva(f.song)) nuevos.push({ f, pos });
+      } else if (f.tipo === 'medley') {
         let t = f.desde;
-        f.songs.forEach(x => {
+        f.songs.forEach((x, k) => {
           x.numero = ++numero;
           x.hora = horaMas(plan.inicio, t);
           t += x.seg;
+          if (esNueva(x.song)) nuevos.push({ f: x, pos, k });
         });
       }
     });
+    if (!verNuevas()) soloNuevas = false;
 
     cont.append(
       h('div.mv-cab', {},
@@ -1078,7 +1122,13 @@ export function vistaMovil(jamId) {
             title: 'Más acciones',
             onclick: menu,
           }, '⋯'))),
-      tira(plan, dialogoHorario, pintar));
+      tira(plan, dialogoHorario, pintar, {
+        nuevas: verNuevas() && nuevos.length
+          ? { n: nuevos.length, pct: Math.round((nuevos.length / (plan.temas || 1)) * 100) }
+          : null,
+        soloNuevas,
+        alFiltrarNuevas: () => { soloNuevas = !soloNuevas; pintar(); },
+      }));
 
     if (!plan.filas.length) {
       cont.appendChild(h('div.empty', {},
@@ -1086,6 +1136,26 @@ export function vistaMovil(jamId) {
         editable()
           ? h('button.btn.sm', { style: { marginTop: '12px' }, onclick: editorTexto }, 'Escribirla')
           : h('a.btn.sm', { href: `#/jams/${jam.id}/editar`, style: { marginTop: '12px' } }, 'Abrir el editor')));
+      return;
+    }
+
+    /* ---- solo las nuevas: la lista filtrada, para leer ----
+       Sin manijas ni ＋ por línea: reordenar una lista de la que no se ve
+       la mitad es pedir un desastre. Tocar un tema abre su hoja igual,
+       con el cambio de cantante y la marca de nueva incluidos. */
+    if (soloNuevas) {
+      clear(lista);
+      if (!nuevos.length) {
+        cont.appendChild(h('div.empty', {},
+          h('b', {}, 'No hay temas nuevos en esta lista')));
+        return;
+      }
+      nuevos.forEach(({ f, pos, k }) => lista.appendChild(renglon(f, f.numero, {
+        alTocar: () => hojaTema(f, null, k == null
+          ? v => { jam.items[pos].cantantes = v; }
+          : v => { jam.items[pos].songs[k].cantantes = v; }),
+      })));
+      cont.appendChild(lista);
       return;
     }
 
