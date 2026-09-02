@@ -967,16 +967,6 @@ export function vistaMovil(jamId) {
     ]);
   }
 
-  /* Las dos formas de mirar la misma jam: la minimalista (esta) y el
-     cockpit, que es el editor completo. El mismo botón vive allá. */
-  function hojaVistas() {
-    hojaAcciones('Vistas', [
-      { icono: '✓', texto: 'Minimalist view — la lista liviana (estás acá)', onClick: () => {} },
-      { icono: '🎛', texto: 'Cockpit view — el editor completo',
-        onClick: () => { location.hash = `#/jams/${jam.id}/editar`; } },
-    ]);
-  }
-
   function hojaDensidad() {
     const actual = densidad();
     hojaAcciones('Tamaño de la lista', DENSIDADES.map(d => ({
@@ -1228,12 +1218,12 @@ export function vistaMovil(jamId) {
             [jam.fecha ? fechaLinda(jam.fecha) : '', jam.lugar].filter(Boolean).join(' · ')
             || 'sin fecha')),
         h('div.mv-cab-acc', {},
-          /* Las dos formas de mirar la misma jam. Por el link no va: el
-             cockpit es media app y sin sesión no carga nada. */
+          /* El toggle a la otra vista: un toque y estás en el cockpit.
+             Por el link no va: el cockpit sin sesión no carga nada. */
           store.publico ? null : h('button.mv-btn-cab.icono', {
-            title: 'Cambiar de vista',
-            onclick: hojaVistas,
-          }, '▦'),
+            title: 'Cockpit view — el editor completo',
+            onclick: () => { location.hash = `#/jams/${jam.id}/editar`; },
+          }, '🎛'),
           /* ver instrumentos es leer, así que va aunque la jam esté cerrada */
           h('button.mv-btn-cab.icono' + (verInstrumentos() ? '.on' : ''), {
             title: 'Mostrar los instrumentos de cada tema',

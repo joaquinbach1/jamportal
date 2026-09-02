@@ -1792,16 +1792,12 @@ export function vistaEditor(jamId) {
       title: 'Las letras de todos los temas, en orden',
     }, '📖 LYRICS VIEW'),
     btnGremios,
-    /* Las dos formas de mirar la misma jam: el cockpit (esto) y la
-       minimalista, la del celular. El mismo botón vive allá también. */
+    /* El toggle a la otra vista: un toque y estás en la minimalista.
+       El botón espejo vive allá, al lado del 🎸. */
     h('button.btn.sm.secundaria', {
-      title: 'Cambiar de vista',
-      onclick: () => hojaAcciones('Vistas', [
-        { icono: '✓', texto: 'Cockpit view — el editor completo (estás acá)', onClick: () => {} },
-        { icono: '▤', texto: 'Minimalist view — la lista liviana, la del celular',
-          onClick: () => { location.hash = `#/jams/${jam.id}/lista`; } },
-      ]),
-    }, '▦ Views'),
+      title: 'Minimalist view — la lista liviana, la del celular',
+      onclick: () => { location.hash = `#/jams/${jam.id}/lista`; },
+    }, '▤ Minimalist'),
     h('button.btn.sm.secundaria', { onclick: () => copiar(comoTexto()) }, '📋 Copiar lista'),
     /* En el celular estos dos están en el ⋯, que arriba de 820px no existe:
        la barra de acciones es el único lugar donde se los ve con el mouse. */
