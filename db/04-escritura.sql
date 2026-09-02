@@ -11,7 +11,8 @@
 -- ítems por lista el costo es irrelevante.
 --
 -- Este archivo está al día con las columnas de las migraciones
--- (db/13, db/14, db/20, db/21): correrlas primero, y esto después.
+-- (db/13, db/14, db/20, db/21, db/22): correrlas primero, y esto
+-- después.
 --
 -- Ojo al re-correrlo sobre una base que ya corrió db/06: acá se
 -- crea guardar_jam(jsonb), que db/06 reemplaza por la versión

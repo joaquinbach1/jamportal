@@ -2,8 +2,8 @@
 -- JAM PORTAL — quién toca qué, puesto por puesto
 -- ------------------------------------------------------------
 -- La columna `guitarras` de db/20 guardaba dos puestos de viola.
--- Ahora guarda la banda entera —G1, G2, bajo, batería, percu y
--- las dos teclas—, así que pasa a llamarse `musicos`.
+-- Ahora guarda la banda entera —G1, G2, bajo, batería, las dos
+-- teclas y el saxo—, así que pasa a llamarse `musicos`.
 --
 -- Es solo el nombre: adentro sigue siendo jsonb y Postgres no
 -- mira lo que hay ahí, así que cambiarle la forma al contenido
