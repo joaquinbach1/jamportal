@@ -1059,6 +1059,17 @@ export function vistaMovil(jamId) {
          medleys a la mitad, breaks— y sin hora de arranque cargada
          vuelve a mostrar la duración. Cuánto dura sigue en el detalle. */
       h('span.mv-dur', {}, f.hora || duracionLinda(f.seg)),
+      /* escuchar el tema sin abrir la hoja: en el celular el link de
+         búsqueda cae directo en la app de Spotify */
+      s && linkSpotify(s)
+        ? h('button.mv-spotify', {
+            title: s.spotifyUrl ? 'Escuchar en Spotify' : 'Buscar en Spotify',
+            onclick: e => {
+              e.stopPropagation();
+              window.open(linkSpotify(s), '_blank', 'noopener');
+            },
+          }, '♫')
+        : null,
       puedeTocar() && pos != null ? botonInsertar(pos) : null);
   }
 

@@ -2425,6 +2425,17 @@ body.modo-link .mv-btn-cab.mas { display: none; }
 }
 .mv-sumar:active { color: var(--acc); }
 
+/* ---------- escuchar en Spotify, directo desde el renglón ----------
+   Como la manija y el ＋, el botón se agarra por todo el alto de la fila. */
+.mv-spotify {
+  flex: none; width: 30px; align-self: stretch;
+  display: flex; align-items: center; justify-content: center;
+  margin: calc(var(--f-pady) * -1) -4px calc(var(--f-pady) * -1) -2px;
+  background: none; border: 0;
+  font-size: 15px; color: var(--spotify); cursor: pointer;
+}
+.mv-spotify:active { opacity: .55; }
+
 .mv-arrastrando {
   position: relative; z-index: 5;
   background: var(--panel-2) !important;
