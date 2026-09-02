@@ -956,6 +956,8 @@ export function vistaMovil(jamId) {
          duplicar o borrar la jam entera no es algo que deba poder hacer
          cualquiera que reciba el link por WhatsApp. */
       ...(conCuenta ? [
+        /* Fija las cifras en el catálogo, y eso por el link no viaja. */
+        { icono: '⤓', texto: 'Bajar las cifras que faltan', onClick: bajarCifras },
         { icono: '💡', texto: 'Anotar un tema en Ideas (sin sumarlo acá)', onClick: dialogoIdea },
         { icono: '🔗', texto: 'Link para compartir esta jam', onClick: () => dialogoLink(jam) },
         /* refrescar() y no pintar(): sincronizar() reemplaza los objetos del
@@ -1017,6 +1019,64 @@ export function vistaMovil(jamId) {
     }
     copiar(lineas.join('\n'));
     if (sin) toast(`${sin} tema${sin === 1 ? '' : 's'} sin cifra quedaron afuera`);
+  }
+
+  /**
+   * Busca en CifraClub las cifras de todos los temas de la lista que no
+   * tienen una, de a uno y mostrando por dónde va. Lo que encuentra queda
+   * fijado en el tema (como hace el botón de la hoja); lo que no, marcado
+   * para que la hoja ofrezca la búsqueda manual.
+   */
+  async function bajarCifras() {
+    const vistos = new Set();
+    const faltan = [];
+    const mirar = s => {
+      if (!s || s.cifraUrl || vistos.has(s.id)) return;
+      vistos.add(s.id);
+      faltan.push(s);
+    };
+    const plan = agenda(jam, id => store.song(id));
+    plan.filas.forEach(f => {
+      if (f.tipo === 'song') mirar(f.song);
+      else if (f.tipo === 'medley') f.songs.forEach(x => mirar(x.song));
+    });
+
+    if (!faltan.length) { toast('Todos los temas ya tienen su cifra', 'ok'); return; }
+
+    let vivo = true;
+    const linea = h('div.method-hint', {}, `Buscando 1/${faltan.length}…`);
+    const log = h('div.cifras-log');
+    const m = modal({
+      title: 'Bajar las cifras que faltan',
+      body: [linea, log],
+      footer: [h('button.btn.ghost', { onclick: () => m.close() }, 'Cerrar')],
+      onClose: () => { vivo = false; },
+    });
+
+    let ok = 0, covers = 0, nada = 0;
+    for (let i = 0; i < faltan.length && vivo; i++) {
+      const s = faltan[i];
+      linea.textContent = `Buscando ${i + 1}/${faltan.length} — ${s.titulo}`;
+      const r = await buscarCifra(s.titulo, s.artista).catch(() => null);
+      if (!vivo) break;                    // cerraron el diálogo a mitad de camino
+      if (r) {
+        store.updateSong(s.id, { cifraUrl: r.url, cifraArtista: r.artista, cifraConfianza: r.confianza });
+        if (r.confianza === 'media') { covers++; log.appendChild(h('div.dudosa', {}, `≈ ${s.titulo} — la de ${r.artista}`)); }
+        else { ok++; log.appendChild(h('div', {}, `✓ ${s.titulo}`)); }
+      } else {
+        store.updateSong(s.id, { cifraUrl: '', cifraConfianza: 'no' });
+        nada++;
+        log.appendChild(h('div.sin', {}, `✗ ${s.titulo} — no está`));
+      }
+    }
+    if (vivo) {
+      linea.textContent = [
+        `${ok + covers} encontrada${ok + covers === 1 ? '' : 's'}`,
+        covers ? `${covers} de otro artista (cover)` : '',
+        nada ? `${nada} sin cifra en CifraClub` : '',
+      ].filter(Boolean).join(' · ');
+    }
+    pintar();
   }
 
   /** La lista en texto plano, numerada, como se pega en el WhatsApp. */
