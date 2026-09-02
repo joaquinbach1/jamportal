@@ -1758,11 +1758,9 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
   font: inherit; font-size: 12.5px; color: var(--txt-3);
   cursor: pointer; white-space: nowrap;
 }
-/* el punto que separa se dibuja acá y no en el DOM: es puntuación,
-   no un elemento, y así no se puede tocar por error */
-.mu-linea .mu-nombre + .mu-nombre::before {
-  content: '·'; color: var(--txt-3); margin-right: 5px; opacity: .55;
-}
+/* Con el ícono adelante de cada nombre el punto separador sobraba:
+   ya se ve dónde termina uno y empieza el otro. Queda el aire. */
+.mu-linea { gap: 3px; }
 .mu-nombre:hover { background: var(--panel-2); color: var(--txt); }
 .mu-nombre.propio { color: var(--txt); font-weight: 550; }
 .mu-nombre.solo { color: var(--acc); font-weight: 650; }

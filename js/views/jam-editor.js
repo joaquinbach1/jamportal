@@ -8,6 +8,7 @@
    ============================================================ */
 
 import { store, norm, esNueva, FRANJA_LABEL } from '../store.js';
+import { PUESTOS, INVITADO, iconoDe, formacionPorDefecto, musicosDe } from '../musicos.js';
 import {
   h, frag, clear, poner, field, input, select, personPicker, toast, modal, confirmar, songAutocomplete, hojaAcciones,
   catPill, catCorta, franjaDot, fechaLinda, copiar, debounce,
@@ -92,62 +93,9 @@ async function crearSongDesde({ titulo, artista }) {
 /* Los gremios son lentes sobre la misma lista: cada uno deja a la vista
    lo que ese instrumento necesita y esconde el resto. No cambian nada de
    la jam, solo lo que estás mirando, así que viven en el navegador. */
-/* ============================================================
-   La banda, puesto por puesto
-   ------------------------------------------------------------
-   Cada puesto arranca con su titular ya puesto: es quien toca
-   casi siempre, y escribirlo tema por tema era el 90% de los
-   clics. Después ofrece a los suplentes de ESE puesto —no la
-   banda entera— más "Invitado", para el que cae esa noche.
-
-   La percu es la excepción: no tiene titular. Es el puesto que
-   de verdad cambia de tema en tema, así que arranca pidiendo
-   nombre en vez de suponerlo.
-   ============================================================ */
-const PUESTOS = [
-  { clave: 'g1',    label: 'G1',    titular: 'Tomi',  solo: true, gente: ['Tomi', 'Nano', 'Peter', 'Ale'] },
-  { clave: 'g2',    label: 'G2',    titular: 'Nano',  solo: true, gente: ['Tomi', 'Nano', 'Peter', 'Ale'] },
-  { clave: 'bajo',  label: 'Bajo',  titular: 'Nahue',             gente: ['Nahue'] },
-  { clave: 'bat',   label: 'Bat',   titular: 'Joaco',             gente: ['Joaco', 'Fede', 'Fabo'] },
-  { clave: 'percu', label: 'Percu', titular: '',                  gente: ['Fede', 'Fabo'] },
-  { clave: 't1',    label: 'T1',    titular: 'Mati',              gente: ['Mati'] },
-  { clave: 't2',    label: 'T2',    titular: 'Alva',              gente: ['Alva'] },
-  { clave: 'saxo',  label: 'Saxo',  titular: 'Fede',              gente: ['Fede'] },
-];
-const INVITADO = 'Invitado';
-
 const CLAVE_MUSICOS = 'jamportal.musicos';
 const verMusicos = () => localStorage.getItem(CLAVE_MUSICOS) === '1';
 
-/** La formación de arranque: cada puesto con su titular. */
-function formacionPorDefecto() {
-  const m = {};
-  for (const p of PUESTOS) m[p.clave] = { nombre: p.titular, solo: false };
-  return m;
-}
-
-/**
- * Los músicos de un tema, creándolos la primera vez. Una vez que el
- * tema tiene su formación se respeta tal cual: si alguien dejó un
- * puesto vacío a propósito, no se lo volvemos a llenar.
- */
-function musicosDe(it) {
-  if (!it.musicos) {
-    it.musicos = formacionPorDefecto();
-    /* Lo que ya estaba cargado cuando esto eran dos guitarras nomás
-       entra en G1 y G2, con su solo puesto. */
-    if (Array.isArray(it.guitarras)) {
-      it.guitarras.slice(0, 2).forEach((g, n) => {
-        if (g) it.musicos[PUESTOS[n].clave] = { nombre: g.nombre || '', solo: !!g.solo };
-      });
-    }
-    delete it.guitarras;
-  }
-  for (const p of PUESTOS) {
-    if (!it.musicos[p.clave]) it.musicos[p.clave] = { nombre: p.titular, solo: false };
-  }
-  return it.musicos;
-}
 
 const CLAVE_DENSIDAD = 'jamportal.densidad';
 /* A pantalla completa siempre va compacta: si te tomás toda la pantalla
@@ -772,10 +720,10 @@ export function vistaEditor(jamId) {
     const m = musicosDe(it)[p.clave];
     const propio = !!m.nombre && m.nombre !== p.titular;
 
-    /* Vacío no siempre quiere decir lo mismo. La percu nunca tuvo
-       titular: le falta el nombre y por eso pide a los gritos. Un G2
-       que alguien vació a propósito no falta, así que se queda
-       callado. */
+    /* Vacío no siempre quiere decir lo mismo. Hoy todos los puestos
+       tienen titular, así que vacío es siempre alguien que lo vació a
+       propósito y se queda callado. Si mañana entra un puesto sin
+       titular —uno que cambia de tema en tema—, ese sí pide nombre. */
     const btn = h('button.mu-nombre'
         + (m.nombre ? (propio ? '.propio' : '') : (p.titular ? '.vacio' : '.falta'))
         + (m.solo ? '.solo' : ''), {
@@ -797,9 +745,11 @@ export function vistaEditor(jamId) {
           guardar(); pintarTodo();
         }, { ordenar: false });
       },
-    }, m.nombre
-         ? m.nombre + (m.solo ? ' solo' : '')
-         : (p.titular ? 'sin ' + p.label.toLowerCase() : p.label.toLowerCase() + '?'));
+    },
+      iconoDe(p),
+      ' ' + (m.nombre
+        ? m.nombre + (m.solo ? ' solo' : '')
+        : (p.titular ? 'sin ' + p.label.toLowerCase() : p.label.toLowerCase() + '?')));
 
     return btn;
   }
