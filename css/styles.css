@@ -1337,6 +1337,9 @@ body.en-vivo { background: var(--live-fondo); }
 /* dentro de un medley la fila ya es chica: el guitarrista entra ahí,
    no compite con el título del tema */
 .live-guitarra.chica { font-size: .74em; }
+/* el bajo dibujado: se alinea con el texto como lo haría un emoji */
+.ico-bajo { display: inline-flex; vertical-align: -2px; }
+.ico-bajo svg { display: block; }
 
 /* la nota de uno, en el vivo: destacada pero sin robarle el lugar al tema */
 .live-nota {
@@ -1743,6 +1746,10 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
 /* El título y la sub-fila comparten el renglón. En esta vista el título
    se queda con lo que necesita y todo lo demás va para la banda: son
    siete nombres y cortados por la mitad no se entiende quién toca qué. */
+/* Acá no se edita el tema, se reparte la banda: los íconos de la
+   derecha —nota, cifra, medley, editar, sacar— se van y el renglón
+   entero queda para los nombres. Vuelven al apagar la vista. */
+.vista-musicos .sl-actions { display: none; }
 .vista-musicos .sl-title { flex: 0 1 auto; min-width: 0; }
 .sub-musicos { gap: 10px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
 .mu-linea { display: inline-flex; align-items: center; flex-wrap: nowrap; }

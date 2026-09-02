@@ -36,6 +36,20 @@ function append(node, children) {
   }
 }
 
+/* Un bajo, para donde la palabra no entra.
+   No hay emoji de bajo —Unicode tiene guitarra, banjo y violín, nada
+   de cuatro cuerdas—, así que va dibujado. Monocromo y en currentColor
+   a propósito: al lado de los 🎸 de color se distingue por eso tanto
+   como por la forma, que a 13px da poco de sí. */
+export const iconoBajo = () => h('span.ico-bajo', {
+  title: 'Bajo',
+  html: '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" '
+      + 'stroke="currentColor" stroke-width="2" stroke-linecap="round" '
+      + 'stroke-linejoin="round" aria-hidden="true">'
+      + '<circle cx="7" cy="17" r="4.6"/><path d="M10.4 13.7 19 5.2"/>'
+      + '<path d="M17.3 3.5 20.7 6.9"/></svg>',
+});
+
 export const frag = (...children) => { const f = document.createDocumentFragment(); append(f, children); return f; };
 export const $  = (s, r = document) => r.querySelector(s);
 export const $$ = (s, r = document) => [...r.querySelectorAll(s)];

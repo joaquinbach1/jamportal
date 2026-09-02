@@ -21,7 +21,7 @@
 import { store, esNueva } from '../store.js';
 import {
   h, frag, clear, toast, fechaLinda, copiar, hojaAcciones, confirmar,
-  descargarBlob, modal, field, input, poner,
+  descargarBlob, modal, field, input, poner, iconoBajo,
 } from '../ui.js';
 import { agenda, duracionLinda, largoLindo, horaMas } from '../duracion.js';
 import { linkSpotify } from '../spotify.js';
@@ -80,11 +80,12 @@ const verNuevas = () => localStorage.getItem(CLAVE_N) !== '0';
 
 /* Los puestos de la banda, en el orden en que se cargan en el editor.
    Acá solo se leen: el que está vacío no ocupa lugar en el renglón.
-   El bajo va con la palabra: no hay emoji de bajo y con la guitarra
-   quedaban tres 🎸 seguidos. */
+   El bajo lleva ícono propio: con la guitarra quedaban tres 🎸 seguidos
+   donde solo la posición decía cuál era cuál. */
+const BAJO = '@bajo';
 const PUESTOS_MOVIL = [
-  ['g1', '🎸'], ['g2', '🎸'], ['bajo', 'bajo'], ['bat', '🥁'],
-  ['percu', '🪘'], ['t1', '🎹'], ['t2', '🎹'],
+  ['g1', '🎸'], ['g2', '🎸'], ['bajo', BAJO], ['bat', '🥁'],
+  ['percu', '🪘'], ['t1', '🎹'], ['t2', '🎹'], ['saxo', '🎷'],
 ];
 
 function musicosEnFila(f) {
@@ -92,7 +93,10 @@ function musicosEnFila(f) {
   if (!m) return [];
   return PUESTOS_MOVIL
     .filter(([k]) => m[k] && m[k].nombre)
-    .map(([k, ico]) => ico + ' ' + m[k].nombre + (m[k].solo ? ' (solo)' : ''));
+    .map(([k, ico]) => {
+      const texto = ' ' + m[k].nombre + (m[k].solo ? ' (solo)' : '');
+      return ico === BAJO ? frag(iconoBajo(), texto) : ico + texto;
+    });
 }
 
 function instrumentosDe(f, s) {
@@ -102,7 +106,10 @@ function instrumentosDe(f, s) {
   if ((s.patches || []).length) partes.push('🎹 ' + s.patches.join(' '));
   (s.invitados || []).forEach(x => partes.push(x));
   if (!partes.length) return null;
-  return h('span.mv-instr', {}, ' ' + partes.join(' · '));
+  /* Los puntos van intercalados y no con join(): entre las partes puede
+     haber un ícono dibujado, que un join convertiría en "[object]". */
+  return h('span.mv-instr', {}, ' ',
+    ...partes.flatMap((x, i) => (i ? [' · ', x] : [x])));
 }
 
 /* ============================================================

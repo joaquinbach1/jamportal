@@ -10,7 +10,7 @@
 
 import { store } from '../store.js';
 import { notaDe } from '../notas.js';
-import { h, clear, frag, toast, fechaLinda, descargarBlob } from '../ui.js';
+import { h, clear, frag, toast, fechaLinda, descargarBlob, iconoBajo } from '../ui.js';
 import { setlistDocx } from '../docx.js';
 
 /** Aplana el setlist a filas dibujables, numerando solo los temas. */
@@ -38,12 +38,12 @@ export function filas(jam) {
 /* Los puestos de la banda en el orden del editor. El que está vacío no
    sale: en el vivo lo que no se toca no se lee.
 
-   El bajo lleva la palabra y no un dibujo: no hay emoji de bajo, y con
-   la guitarra puesta quedaban tres 🎸 seguidos donde solo la posición
-   decía cuál era cuál. */
+   El bajo lleva ícono propio: con la guitarra puesta quedaban tres 🎸
+   seguidos donde solo la posición decía cuál era cuál. */
+const BAJO = '@bajo';
 const PUESTOS_VIVO = [
-  ['g1', '🎸'], ['g2', '🎸'], ['bajo', 'bajo'], ['bat', '🥁'],
-  ['percu', '🪘'], ['t1', '🎹'], ['t2', '🎹'],
+  ['g1', '🎸'], ['g2', '🎸'], ['bajo', BAJO], ['bat', '🥁'],
+  ['percu', '🪘'], ['t1', '🎹'], ['t2', '🎹'], ['saxo', '🎷'],
 ];
 
 function puestosEnVivo(m, chica) {
@@ -51,7 +51,8 @@ function puestosEnVivo(m, chica) {
   return PUESTOS_VIVO
     .filter(([k]) => m[k] && m[k].nombre)
     .map(([k, ico]) => h('span.live-guitarra' + (chica ? '.chica' : '') + (m[k].solo ? '.solo' : ''), {},
-      ico + ' ' + m[k].nombre + (m[k].solo ? ' · solo' : '')));
+      ico === BAJO ? iconoBajo() : ico,
+      ' ' + m[k].nombre + (m[k].solo ? ' · solo' : '')));
 }
 
 export function vistaLive(jamId) {

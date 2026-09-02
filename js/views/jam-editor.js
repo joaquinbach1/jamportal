@@ -108,10 +108,11 @@ const PUESTOS = [
   { clave: 'g1',    label: 'G1',    titular: 'Tomi',  solo: true, gente: ['Tomi', 'Nano', 'Peter', 'Ale'] },
   { clave: 'g2',    label: 'G2',    titular: 'Nano',  solo: true, gente: ['Tomi', 'Nano', 'Peter', 'Ale'] },
   { clave: 'bajo',  label: 'Bajo',  titular: 'Nahue',             gente: ['Nahue'] },
-  { clave: 'bat',   label: 'Bat',   titular: 'Joaco',             gente: ['Joaco'] },
+  { clave: 'bat',   label: 'Bat',   titular: 'Joaco',             gente: ['Joaco', 'Fede', 'Fabo'] },
   { clave: 'percu', label: 'Percu', titular: '',                  gente: ['Fede', 'Fabo'] },
   { clave: 't1',    label: 'T1',    titular: 'Mati',              gente: ['Mati'] },
   { clave: 't2',    label: 'T2',    titular: 'Alva',              gente: ['Alva'] },
+  { clave: 'saxo',  label: 'Saxo',  titular: 'Fede',              gente: ['Fede'] },
 ];
 const INVITADO = 'Invitado';
 
