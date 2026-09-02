@@ -249,11 +249,11 @@ begin
   for it in select * from jsonb_array_elements(coalesce(j->'items', '[]')) loop
     iid := gen_random_uuid();
     insert into setlist_item (id, jam_id, parent_id, orden, tipo, song_id,
-                              titulo, label, minutos, notas, guitarras)
+                              titulo, label, minutos, notas, musicos)
     values (iid, j->>'id', null, pos, (it->>'tipo')::tipo_item,
             nullif(it->>'songId', ''), it->>'titulo', it->>'label',
             nullif(it->>'minutos', '')::smallint, coalesce(it->>'notas', ''),
-            coalesce(it->'guitarras', '[]'::jsonb));
+            coalesce(it->'musicos', '{}'::jsonb));
 
     insert into item_cantante (item_id, persona_id, orden)
     select iid, persona_id(x.v#>>'{}'), (x.nn - 1)::smallint
@@ -263,10 +263,10 @@ begin
     kpos := 0;
     for sub in select * from jsonb_array_elements(coalesce(it->'songs', '[]')) loop
       insert into setlist_item (id, jam_id, parent_id, orden, tipo, song_id,
-                                notas, guitarras)
+                                notas, musicos)
       values (gen_random_uuid(), j->>'id', iid, kpos, 'song',
               nullif(sub->>'songId', ''), coalesce(sub->>'notas', ''),
-              coalesce(sub->'guitarras', '[]'::jsonb))
+              coalesce(sub->'musicos', '{}'::jsonb))
       returning id into eid;
 
       insert into item_cantante (item_id, persona_id, orden)

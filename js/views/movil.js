@@ -83,11 +83,27 @@ const verNuevas = () => localStorage.getItem(CLAVE_N) !== '0';
 const LOGO_SPOTIFY = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">'
   + '<path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.56.3z"/></svg>';
 
+/* Los puestos de la banda, en el orden en que se cargan en el editor.
+   Acá solo se leen: el que está vacío no ocupa lugar en el renglón.
+   El bajo va con la palabra: no hay emoji de bajo y con la guitarra
+   quedaban tres 🎸 seguidos. */
+const PUESTOS_MOVIL = [
+  ['g1', '🎸'], ['g2', '🎸'], ['bajo', 'bajo'], ['bat', '🥁'],
+  ['percu', '🪘'], ['t1', '🎹'], ['t2', '🎹'],
+];
+
+function musicosEnFila(f) {
+  const m = f.musicos;
+  if (!m) return [];
+  return PUESTOS_MOVIL
+    .filter(([k]) => m[k] && m[k].nombre)
+    .map(([k, ico]) => ico + ' ' + m[k].nombre + (m[k].solo ? ' (solo)' : ''));
+}
+
 function instrumentosDe(f, s) {
   const partes = [];
   if (s.vientos) partes.push('🎺');
-  (f.guitarras || []).filter(g => g && g.nombre).forEach(g =>
-    partes.push('🎸 ' + g.nombre + (g.solo ? ' (solo)' : '')));
+  musicosEnFila(f).forEach(x => partes.push(x));
   if ((s.patches || []).length) partes.push('🎹 ' + s.patches.join(' '));
   (s.invitados || []).forEach(x => partes.push(x));
   if (!partes.length) return null;
@@ -416,7 +432,7 @@ export function vistaMovil(jamId) {
       { icono: '⊟', texto: 'Desarmarlo y dejar los temas sueltos', onClick: () => {
           jam.items.splice(pos, 1, ...f.songs.map(x => ({
             tipo: 'song', songId: x.songId, cantantes: x.cantantes || [], notas: '',
-            guitarras: x.guitarras || undefined })));
+            musicos: x.musicos || undefined })));
           guardar(); pintar();
           toast(`${f.songs.length} temas sueltos`, 'ok');
         } },
@@ -974,22 +990,25 @@ export function vistaMovil(jamId) {
    */
   function copiarCifras() {
     const plan = agenda(jam, id => store.song(id));
-    const urls = [];
-    let sin = 0;
+    const lineas = [];
+    let sin = 0, n = 0;
+    /* mismo recorrido y misma numeración corrida que la lista en pantalla:
+       cada línea lleva su número y su título, así el orden se ve solo */
     const mirar = s => {
+      n++;
       if (!s) return;
-      if (s.cifraUrl) { if (!urls.includes(s.cifraUrl)) urls.push(s.cifraUrl); }
+      if (s.cifraUrl) lineas.push(`${n}. ${s.titulo} — ${s.cifraUrl}`);
       else sin++;
     };
     plan.filas.forEach(f => {
       if (f.tipo === 'song') mirar(f.song);
       else if (f.tipo === 'medley') f.songs.forEach(x => mirar(x.song));
     });
-    if (!urls.length) {
+    if (!lineas.length) {
       toast('Ningún tema de la lista tiene la cifra cargada', 'err');
       return;
     }
-    copiar(urls.join('\n'));
+    copiar(lineas.join('\n'));
     if (sin) toast(`${sin} tema${sin === 1 ? '' : 's'} sin cifra quedaron afuera`);
   }
 

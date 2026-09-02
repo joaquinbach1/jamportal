@@ -1732,58 +1732,51 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
 }
 .btn.gremios:hover { border-color: var(--linea-fuerte); background: var(--hover); }
 
-/* guitarras: la fila cambia de contenido, no solo de qué esconde —
-   ver .sub-guitarras más abajo. */
-
-/* Sivibra y Bateros muestran todo por ahora: falta saber qué mira cada
-   uno. Existen como lente para no tener que rehacer el menú después. */
-
-/* los dos puestos de guitarra, con su check de solo */
-.sub-guitarras { gap: 12px; }
-
-/* En compacta la sub-fila va en una línea y sin envolver: los dos puestos
-   no entran. Acá se les da el ancho, se deja envolver, y se cae el artista
-   —que en esta vista no es lo que estás mirando. */
-.setlist.compacta .sl-sub.sub-guitarras {
-  flex-wrap: wrap; overflow: visible;
-  max-width: none; margin-left: auto;
-  gap: 8px; row-gap: 4px;
+/* ============================================================
+   Músicos view
+   ------------------------------------------------------------
+   Un renglón por tema con los siete puestos seguidos. El que
+   está donde siempre va en gris y el que se salió del molde en
+   negro: así la fila entera se lee de un saque y lo único que
+   salta a la vista es la excepción.
+   ============================================================ */
+/* El título y la sub-fila comparten el renglón. En esta vista el título
+   se queda con lo que necesita y todo lo demás va para la banda: son
+   siete nombres y cortados por la mitad no se entiende quién toca qué. */
+.vista-musicos .sl-title { flex: 0 1 auto; min-width: 0; }
+.sub-musicos { gap: 10px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
+.mu-linea { display: inline-flex; align-items: center; flex-wrap: nowrap; }
+.mu-nombre {
+  background: none; border: 0; padding: 1px 5px; border-radius: 4px;
+  font: inherit; font-size: 12.5px; color: var(--txt-3);
+  cursor: pointer; white-space: nowrap;
 }
-.setlist.compacta .sub-guitarras > span:first-child { display: none; }
-.setlist.compacta .sl-item:has(.sub-guitarras) { padding-top: 4px; padding-bottom: 4px; }
-.setlist.compacta .sub-guitarras .gt-puesto { padding: 1px 5px 1px 3px; }
-.setlist.compacta .sub-guitarras .gt-nombre { font-size: 12px; }
-.setlist.compacta .sub-guitarras .gt-solo { font-size: 10.5px; padding: 0 5px; }
-.gt-puesto {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 2px 6px 2px 4px;
-  border: 1px solid var(--line-soft); border-radius: 999px;
+/* el punto que separa se dibuja acá y no en el DOM: es puntuación,
+   no un elemento, y así no se puede tocar por error */
+.mu-linea .mu-nombre + .mu-nombre::before {
+  content: '·'; color: var(--txt-3); margin-right: 5px; opacity: .55;
 }
-.gt-rotulo {
-  font-size: 10px; font-weight: 700; letter-spacing: .5px;
-  color: var(--txt-3); font-family: var(--mono);
+.mu-nombre:hover { background: var(--panel-2); color: var(--txt); }
+.mu-nombre.propio { color: var(--txt); font-weight: 550; }
+.mu-nombre.solo { color: var(--acc); font-weight: 650; }
+/* el puesto que alguien vació a propósito: se queda, pero callado */
+.mu-nombre.vacio { color: var(--txt-3); font-style: italic; opacity: .7; }
+/* el que nunca tuvo titular pide nombre en vez de esconderse */
+.mu-nombre.falta {
+  color: var(--acc-2); background: var(--medley-badge);
+  border: 1px solid var(--medley-linea); font-size: 11.5px;
 }
-.gt-nombre {
-  background: none; border: none; cursor: pointer;
-  color: var(--txt-3); font-size: 12.5px; padding: 1px 4px;
-  border-radius: 5px; font-style: italic;
+/* La compacta recorta la sub-fila a 160px con puntos suspensivos, que
+   para "artista · categoría" está bien pero acá dejaba media banda
+   afuera. Los siete nombres ya son cortos: se muestran enteros. */
+.setlist.compacta .sub-musicos { gap: 8px; flex: 1 1 auto; overflow: visible; }
+/* la de Mati apunta a :nth-child(2), así que esta tiene que pesar más */
+.setlist.compacta .sl-sub.sub-musicos > span.mu-linea {
+  max-width: none; overflow: visible; flex: 0 0 auto;
 }
-.gt-nombre.puesto { color: var(--txt); font-style: normal; font-weight: 550; }
-.gt-nombre:hover { background: var(--panel-2); color: var(--txt); }
-
-.gt-solo {
-  display: inline-flex; align-items: center; gap: 4px;
-  cursor: pointer; font-size: 11px; color: var(--txt-3);
-  padding: 1px 6px; border-radius: 999px;
-  border: 1px solid transparent;
-  transition: color .12s, background .12s, border-color .12s;
-}
-.gt-solo input { width: auto; margin: 0; accent-color: var(--acc); }
-.gt-solo:hover { color: var(--txt-2); }
-.gt-solo.on {
-  color: var(--txt); background: var(--acc-tinte); border-color: var(--acc);
-  font-weight: 600;
-}
+.setlist.compacta .mu-nombre { font-size: 11.5px; padding: 0 4px; }
+.setlist.compacta .sl-item:has(.sub-musicos) { padding-top: 4px; padding-bottom: 4px; }
+.btn.gremios.on { border-color: var(--acc); color: var(--acc); }
 
 /* la trompeta: apagada en gris, encendida cuando el tema lleva vientos */
 .icon-btn.vientos {
