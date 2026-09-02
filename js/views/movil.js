@@ -920,6 +920,7 @@ export function vistaMovil(jamId) {
           pintar();
         } },
       { icono: '📋', texto: 'Copiar la lista como texto', onClick: () => copiar(comoTexto()) },
+      { icono: '🎼', texto: 'Copiar las URLs de las cifras (CifraClub)', onClick: copiarCifras },
       { icono: '⬇', texto: 'Bajar el setlist en Word', onClick: bajarDocx },
 
       /* Lo de abajo es de la banda. Por el link no aparece: LIVE VIEW y las
@@ -959,6 +960,32 @@ export function vistaMovil(jamId) {
         cont.dataset.d = d.v;
       },
     })));
+  }
+
+  /**
+   * Las URLs de las cifras de toda la lista, una por renglón y en orden,
+   * para pegarlas donde haga falta. Solo las que están cargadas: buscar
+   * las que faltan se hace tema por tema, desde la hoja de cada uno.
+   */
+  function copiarCifras() {
+    const plan = agenda(jam, id => store.song(id));
+    const urls = [];
+    let sin = 0;
+    const mirar = s => {
+      if (!s) return;
+      if (s.cifraUrl) { if (!urls.includes(s.cifraUrl)) urls.push(s.cifraUrl); }
+      else sin++;
+    };
+    plan.filas.forEach(f => {
+      if (f.tipo === 'song') mirar(f.song);
+      else if (f.tipo === 'medley') f.songs.forEach(x => mirar(x.song));
+    });
+    if (!urls.length) {
+      toast('Ningún tema de la lista tiene la cifra cargada', 'err');
+      return;
+    }
+    copiar(urls.join('\n'));
+    if (sin) toast(`${sin} tema${sin === 1 ? '' : 's'} sin cifra quedaron afuera`);
   }
 
   /** La lista en texto plano, numerada, como se pega en el WhatsApp. */
