@@ -19,6 +19,17 @@
 -- con control de concurrencia. Correr db/06 de nuevo después
 -- (es idempotente), o queda un doble pelado y con permisos de
 -- más.
+--
+-- Y otro ojo: los `drop function` de acá tiran los grants, y las
+-- funciones recreadas nacen con los defaults del proyecto — que
+-- incluyen a `anon`. Después de re-correr esto hay que volver a
+-- cerrar los permisos (los revoke de db/05, adaptados a que
+-- guardar_jam(jsonb) ya no existe):
+--
+--   revoke all on function guardar_catalogo(jsonb), borrar_jam(text),
+--     cerrar_jam(text, text), abrir_jam(text, text),
+--     persona_id(text), subir_revision()
+--     from public, anon;
 -- ============================================================
 
 -- Contador global de revisión: el sondeo pregunta por esto en vez
