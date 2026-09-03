@@ -2422,6 +2422,8 @@ body.modo-link .mv-btn-cab.mas { display: none; }
 .mv-quien { color: var(--acc); }
 .mv-nota { flex: none; font-size: 12px; opacity: .8; }
 .mv-dur { flex: none; font-family: var(--mono); font-size: 11px; color: var(--txt-3); }
+/* el tempo: ♩108, o ≈108 si es sugerido y no medido */
+.mv-bpm { flex: none; font-family: var(--mono); font-size: 10.5px; color: var(--txt-3); }
 .mv-fila:active { background: var(--hover); }
 
 /* ---------- la manija ----------

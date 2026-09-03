@@ -76,6 +76,11 @@ const verInstrumentos = () => localStorage.getItem(CLAVE_I) === '1';
    "solo nuevas". Apagado desde el ⋯, la lista queda limpia de
    marcas. Queda guardado en este teléfono.
    ============================================================ */
+/* El tempo de cada tema, a la vista. Prendido por defecto; se apaga
+   desde el ⋯ y queda guardado en este teléfono. */
+const CLAVE_T = 'jamportal.movil.tempo';
+const verTempo = () => localStorage.getItem(CLAVE_T) !== '0';
+
 const CLAVE_N = 'jamportal.movil.nuevas';
 const verNuevas = () => localStorage.getItem(CLAVE_N) !== '0';
 
@@ -969,6 +974,11 @@ export function vistaMovil(jamId) {
       { icono: '🕘', texto: 'Fecha, hora y lugar', onClick: dialogoHorario },
       { icono: '▤', texto: 'Tamaño de la lista: ' + DENSIDADES.find(d => d.v === densidad()).label.toLowerCase(),
         onClick: hojaDensidad },
+      { icono: '♩', texto: verTempo() ? 'Esconder el tempo' : 'Mostrar el tempo (bpm)',
+        onClick: () => {
+          localStorage.setItem(CLAVE_T, verTempo() ? '0' : '');
+          pintar();
+        } },
       /* Apagado, la lista queda sin marcas rojas y el timeline sin el
          porcentaje; el filtro de "solo nuevas" se apaga con él. */
       { icono: '🆕', texto: verNuevas()
@@ -1203,6 +1213,11 @@ export function vistaMovil(jamId) {
         instr),
       pill,
       s && notaDe(jam.id, s.id) ? h('span.mv-nota', {}, '📝') : null,
+      /* el tempo, con la ≈ de los sugeridos; se apaga desde el ⋯ */
+      verTempo() && s && s.bpm
+        ? h('span.mv-bpm', { title: 'Tempo' + (s.bpmFuente === 'sugerido' ? ' (sugerido)' : '') },
+            `${s.bpmFuente === 'sugerido' ? '≈' : '♩'}${s.bpm}`)
+        : null,
       /* A qué hora cae, no cuánto dura: parado frente a la lista la
          pregunta es "¿cuándo me toca?". Sale de la agenda —respiros,
          medleys a la mitad, breaks— y sin hora de arranque cargada
