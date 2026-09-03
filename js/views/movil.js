@@ -100,6 +100,7 @@ const musicosEnFila = f => {
 function instrumentosDe(f, s) {
   const partes = [];
   if (s.vientos) partes.push('🎺');
+  if (s.coros) partes.push('🎙 coros');
   musicosEnFila(f).forEach(x => partes.push(x));
   if ((s.patches || []).length) partes.push('🎹 ' + s.patches.join(' '));
   (s.invitados || []).forEach(x => partes.push(x));
@@ -328,6 +329,15 @@ export function vistaMovil(jamId) {
         ? { icono: '🎤', texto: cantantes ? `Cambiar quién canta (${cantantes})` : 'Elegir quién canta',
             onClick: () => dialogoCantantes(f, s, ponerCantantes) }
         : null,
+      /* Las notas de piano: el mismo campo "Patch de teclado" de la ficha
+         del tema, editable sin salir de la lista. Cambia el catálogo, así
+         que por el link no va. */
+      !store.publico
+        ? { icono: '🎹', texto: (s.patches || []).length
+              ? `Piano: ${s.patches.join(' · ')}`
+              : 'Anotar patch / notas de piano',
+            onClick: () => dialogoPiano(s) }
+        : null,
       /* La marca de "nueva" va y viene desde acá: la pill la apaga, y esto
          permite además volver a prenderla si alguien se apuró. Solo tiene
          sentido en temas que nunca sonaron, y por el link no viaja. */
@@ -350,6 +360,34 @@ export function vistaMovil(jamId) {
         ? { icono: '✕', texto: sacar.texto, peligro: true, onClick: sacar.hacer }
         : null,
     ], { detalle });
+  }
+
+  /* Las notas de piano de un tema: los patches ('a13, g52') y cualquier
+     apunte corto ('arranca sola', 'strings en el puente'). Separado por
+     comas, como en la ficha del tema — es el mismo campo. */
+  function dialogoPiano(s) {
+    const fNotas = input({
+      value: (s.patches || []).join(', '),
+      placeholder: 'a13, g52, arranca sola…',
+    });
+    const m = modal({
+      title: 'Piano — «' + s.titulo + '»',
+      body: [
+        h('div.method-hint', {},
+          'Separado por comas. Se ve en la lista con el 🎸 prendido, y es el '
+          + 'mismo campo Patch de teclado de la ficha del tema.'),
+        field('Patch y notas', fNotas),
+      ],
+      footer: [
+        h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
+        h('button.btn.primary', { onclick: () => {
+            store.updateSong(s.id, {
+              patches: fNotas.value.split(',').map(x => x.trim()).filter(Boolean),
+            });
+            m.close(); pintar(); toast('Piano anotado', 'ok');
+          } }, 'Guardar'),
+      ],
+    });
   }
 
   /* ============================================================
