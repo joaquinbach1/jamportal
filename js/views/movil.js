@@ -288,7 +288,7 @@ export function vistaMovil(jamId) {
    * @param {function} [ponerCantantes] recibe la lista nueva de nombres y la
    *                                 guarda en el ítem de esta jam
    */
-  function hojaTema(f, sacar, ponerCantantes) {
+  function hojaTema(f, sacar, ponerCantantes, alternarEnsayada) {
     const s = f.song;
     if (!s) return;
     const cantantes = (f.cantantes || []).join(', ');
@@ -327,6 +327,17 @@ export function vistaMovil(jamId) {
             window.open(urlBusqueda(s.titulo, s.artista), '_blank', 'noopener');
           }
         } },
+      /* Qué se ensayó es de ESTA jam: se marca acá y la fila queda verde.
+         La próxima jam arranca en blanco, como un ensayo de verdad. */
+      editable() && alternarEnsayada
+        ? { icono: f.ensayada ? '↺' : '✅',
+            texto: f.ensayada ? 'Ensayada ✓ — desmarcarla' : 'La ensayamos — marcarla',
+            onClick: () => {
+              alternarEnsayada();
+              guardar(); pintar();
+              toast(f.ensayada ? `«${s.titulo}» sin ensayar` : `«${s.titulo}» ensayada ✓`, 'ok');
+            } }
+        : null,
       /* Quién canta es de esta jam, no del tema: se guarda en el ítem del
          setlist. No pide el modo edición — abre un diálogo con su Guardar,
          así que no hay toque accidental posible. */
@@ -1198,7 +1209,7 @@ export function vistaMovil(jamId) {
 
     const instr = verInstrumentos() && s ? instrumentosDe(f, s) : null;
 
-    return h('div.mv-fila', {
+    return h('div.mv-fila' + (f.ensayada ? '.ensayada' : ''), {
       onclick: e => {
         if (e.target.closest('.mv-handle')) return;
         if (performance.now() - finArrastre < 300) return;
@@ -1415,7 +1426,8 @@ export function vistaMovil(jamId) {
                 guardar(); pintar(); toast('Sacado del medley');
               },
             } : null,
-            v => { jam.items[pos].songs[k].cantantes = v; }),
+            v => { jam.items[pos].songs[k].cantantes = v; },
+            () => { const x = jam.items[pos].songs[k]; x.ensayada = !x.ensayada; }),
           })))));
         return;
       }
@@ -1424,7 +1436,8 @@ export function vistaMovil(jamId) {
         conManija: true, pos,
         alTocar: () => hojaTema(f, puedeTocar()
           ? { texto: 'Sacar de la lista', hacer: quitar } : null,
-          v => { jam.items[pos].cantantes = v; }),
+          v => { jam.items[pos].cantantes = v; },
+          () => { const x = jam.items[pos]; x.ensayada = !x.ensayada; }),
       })));
     });
     cont.appendChild(lista);

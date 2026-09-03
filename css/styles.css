@@ -54,6 +54,7 @@
   --live-proximo: #0f1016;    --live-pista: #16161d;
   --spotify: #1db954;         --sombra-fab: rgba(0, 0, 0, .45);
   --nueva-fondo: #35181c;     --nueva-linea: #4a2226;
+  --ensayada-fondo: #16281c;  --ensayada-linea: #23422d;
   --break-fondo: #2a2109;     --break-linea: #4d3d10;
 
   --cat-intl-bg: #1e2b3d;     --cat-intl-fg: #7fb4ff;
@@ -114,6 +115,7 @@
   --live-proximo: #f7f7f3;    --live-pista: #e6e6e0;
   --spotify: #128a3e;         --sombra-fab: rgba(0, 0, 0, .22);
   --nueva-fondo: #fdeaea;     --nueva-linea: #f3cccc;
+  --ensayada-fondo: #e9f6ec;  --ensayada-linea: #cfe9d6;
   --break-fondo: #f8ecd0;     --break-linea: #ddc48a;
 
   --cat-intl-bg: #e3edfb;     --cat-intl-fg: #1f5fa8;
@@ -2722,6 +2724,13 @@ body.modo-link .view { padding: 20px 16px calc(96px + env(safe-area-inset-bottom
    dónde tocar. La pill se toca y marca el tema como sabido
    (song.noEsNueva), que apaga el rojo en todos lados.
    ============================================================ */
+/* Lo que ya se ensayó para esta jam: la fila en verde clarito. Se marca
+   desde la hoja del tema y se guarda en el ítem, no en el tema — la
+   próxima jam arranca en blanco. */
+.mv-fila.ensayada { background: var(--ensayada-fondo); }
+.mv-fila.ensayada:active { background: var(--ensayada-linea); }
+.mv-fila.ensayada + .mv-fila.ensayada { border-top-color: var(--ensayada-linea); }
+
 .mv-pill-nueva {
   flex: none; margin: 0; padding: 2px 8px 3px;
   background: var(--nueva-fondo); color: var(--err);

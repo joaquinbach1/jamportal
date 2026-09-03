@@ -73,10 +73,12 @@ language sql stable as $fn$
         'tipo', 'medley', 'titulo', i.titulo, 'notas', i.notas,
         'songs', (select coalesce(jsonb_agg(jsonb_build_object(
                     'songId', h.song_id, 'notas', h.notas,
+                    'ensayada', h.ensayada,
                     'cantantes', cantantes_de(h.id)) order by h.orden), '[]'::jsonb)
                   from setlist_item h where h.parent_id = i.id))
       else jsonb_build_object('tipo', 'song', 'songId', i.song_id,
-                              'notas', i.notas, 'cantantes', cantantes_de(i.id))
+                              'notas', i.notas, 'ensayada', i.ensayada,
+                              'cantantes', cantantes_de(i.id))
     end as item
     from setlist_item i
     where i.jam_id = jid and i.parent_id is null) x
