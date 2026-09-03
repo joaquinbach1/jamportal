@@ -9,7 +9,7 @@
 -- que la mueven en sus archivos de siempre. Ojo con el aviso del
 -- header de db/04 si se re-corre entero (permisos y db/06).
 --
---   psql "$CONN" -v ON_ERROR_STOP=1 -f db/23-coros.sql
+--   psql "$CONN" -v ON_ERROR_STOP=1 -f db/24-coros.sql
 --   psql "$CONN" -v ON_ERROR_STOP=1 -f db/03-app-estado.sql
 --   psql "$CONN" -v ON_ERROR_STOP=1 -f db/04-escritura.sql
 --   psql "$CONN" -v ON_ERROR_STOP=1 -f db/06-concurrencia.sql
