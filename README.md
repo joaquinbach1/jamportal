@@ -642,6 +642,7 @@ db/21-no-es-nueva.sql      marcar un tema nunca tocado como que ya lo saben
 db/22-musicos.sql          la banda entera puesto por puesto (guitarras → musicos)
 db/23-musicos-objeto.sql   musicos guarda un objeto, no una lista
 db/24-coros.sql            si el tema lleva coros
+db/25-ensayada.sql         qué se ensayó para esta jam, ítem por ítem
 ```
 
 **La regla que ordena el esquema: nada que se pueda calcular se guarda.** El

@@ -160,6 +160,7 @@ select jsonb_build_object(
                                  'songId',    h.song_id,
                                  'notas',     h.notas,
                                  'musicos',   h.musicos,
+                                 'ensayada',  h.ensayada,
                                  'cantantes', cantantes_de(h.id)
                                ) order by h.orden), '[]'::jsonb)
                                from setlist_item h where h.parent_id = i.id))
@@ -167,6 +168,7 @@ select jsonb_build_object(
                    else jsonb_build_object(
                      'tipo', 'song', 'songId', i.song_id, 'notas', i.notas,
                      'musicos', i.musicos,
+                     'ensayada', i.ensayada,
                      'cantantes', cantantes_de(i.id))
 
                  end as item
