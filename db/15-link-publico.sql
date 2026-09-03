@@ -235,6 +235,7 @@ select case when jam_del_token(t) is null then null else jsonb_build_object(
              'cifraConfianza', s.cifra_confianza,
              'duracionSec', s.duracion_sec, 'spotifyUrl', s.spotify_url,
              'album', s.album, 'albumId', s.album_id, 'cover', s.cover,
+             'vientos', s.vientos, 'coros', s.coros,
              'noEsNueva', s.no_es_nueva,
              'esIdea', s.estado = 'idea',
              'cantantes', (select coalesce(jsonb_agg(p.nombre order by sc.orden, p.nombre), '[]'::jsonb)

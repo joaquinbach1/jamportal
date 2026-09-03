@@ -44,6 +44,17 @@ export function dialogoCancion(pre = {}, onOk) {
                            placeholder: '4:00', style: { maxWidth: '90px' } });
   const fNotas   = h('textarea', { value: d.notas || '', placeholder: 'Tonalidad, arreglo, quién la propuso…' });
 
+  /* Si el tema lleva coros. Como los vientos, es del tema y no de la jam:
+     los arreglos de coros se ensayan una vez y quedan. */
+  let coros = !!d.coros;
+  const btnCoros = h('button.btn.sm', { onclick: () => { coros = !coros; pintarCoros(); } });
+  const pintarCoros = () => {
+    btnCoros.textContent = coros ? '🎙 Lleva coros ✓' : '🎙 Sin coros';
+    btnCoros.classList.toggle('primary', coros);
+    btnCoros.classList.toggle('ghost', !coros);
+  };
+  pintarCoros();
+
   let cantantes = [...(d.cantantes || [])];
   const pick = personPicker({
     opciones: store.cantantes.map(c => c.nombre),
@@ -104,6 +115,7 @@ export function dialogoCancion(pre = {}, onOk) {
       generoWeb: d.generoWeb || '',
       cantantes,
       patches: fPatches.value.split(',').map(s => s.trim()).filter(Boolean),
+      coros,
       notas: fNotas.value.trim(),
       origen: d.origen,
       bpmFuente: esSugerido() ? 'sugerido' : '',
@@ -152,7 +164,7 @@ export function dialogoCancion(pre = {}, onOk) {
               width: '44px', height: '44px', borderRadius: '5px', objectFit: 'cover', flex: 'none' } })
           : null,
         fAlbum)),
-      h('div.grid-2', {}, field('Patch de teclado', fPatches)),
+      h('div.grid-2', {}, field('Patch de teclado', fPatches), field('Coros', btnCoros)),
       field('Cifra / acordes', h('div', { style: { display: 'flex', gap: '8px' } },
         fCifra,
         h('button.btn.sm', {

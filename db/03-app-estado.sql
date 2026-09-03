@@ -77,6 +77,7 @@ select jsonb_build_object(
              'albumId',         s.album_id,
              'cover',           s.cover,
              'vientos',         s.vientos,
+             'coros',           s.coros,
              'noEsNueva',       s.no_es_nueva,
              'esIdea',    s.estado = 'idea',
              'cantantes', (select coalesce(jsonb_agg(p.nombre order by sc.orden, p.nombre), '[]'::jsonb)

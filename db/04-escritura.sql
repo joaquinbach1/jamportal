@@ -131,7 +131,7 @@ begin
                       bpm_fuente, anio, notas, origen, genero_web,
                       cifra_url, cifra_artista, cifra_confianza,
                       duracion_sec, spotify_url,
-                      album, album_id, cover, vientos, no_es_nueva,
+                      album, album_id, cover, vientos, coros, no_es_nueva,
                       patches, actualizada)
     values (e->>'id', e->>'titulo', e->>'artista', cid,
             case when coalesce((e->>'esIdea')::boolean, false)
@@ -145,6 +145,7 @@ begin
             coalesce(e->>'album', ''), nullif(e->>'albumId', '')::bigint,
             coalesce(e->>'cover', ''),
             coalesce((e->>'vientos')::boolean, false),
+            coalesce((e->>'coros')::boolean, false),
             coalesce((e->>'noEsNueva')::boolean, false),
             coalesce((select array_agg(x#>>'{}')
                         from jsonb_array_elements(e->'patches') x), '{}'),
@@ -160,7 +161,8 @@ begin
       cifra_confianza = excluded.cifra_confianza,
       duracion_sec = excluded.duracion_sec, spotify_url = excluded.spotify_url,
       album = excluded.album, album_id = excluded.album_id, cover = excluded.cover,
-      vientos = excluded.vientos, no_es_nueva = excluded.no_es_nueva,
+      vientos = excluded.vientos, coros = excluded.coros,
+      no_es_nueva = excluded.no_es_nueva,
       patches = excluded.patches, actualizada = now()
     -- El WHERE es lo que hace que `actualizada` signifique algo. Sin él,
     -- cambiar un título marcaba los 551 temas como actualizados y no
@@ -183,6 +185,7 @@ begin
        or song.album_id        is distinct from excluded.album_id
        or song.cover           is distinct from excluded.cover
        or song.vientos         is distinct from excluded.vientos
+       or song.coros           is distinct from excluded.coros
        or song.no_es_nueva     is distinct from excluded.no_es_nueva
        or song.cifra_url       is distinct from excluded.cifra_url
        or song.cifra_artista   is distinct from excluded.cifra_artista
