@@ -1128,6 +1128,10 @@ export function vistaEditor(jamId) {
               ? (ms.cantantes || []).map(n => h('span.chip.sel', {}, n))
               : chipsPersonas(ms.cantantes || [], opcionesGente(), v => { ms.cantantes = v; guardar(); pintarTodo(); }, (s && s.cantantes) || []),
             bloqueada() ? null : h('div.sl-actions', { style: { marginLeft: 'auto' } },
+              /* La nota va por tema, no por lugar en la lista: un tema
+                 dentro de un medley la necesita igual —o más, que son
+                 los que se tocan a medias y hay algo que recordar. */
+              s ? botonNota(s) : null,
               s ? botonCifra(s, () => pintarTodo()) : null,
               k > 0 ? h('button.icon-btn', { title: 'Subir', onclick: () => { const [x] = it.songs.splice(k, 1); it.songs.splice(k - 1, 0, x); guardar(); pintarTodo(); } }, '↑') : null,
               k < it.songs.length - 1 ? h('button.icon-btn', { title: 'Bajar', onclick: () => { const [x] = it.songs.splice(k, 1); it.songs.splice(k + 1, 0, x); guardar(); pintarTodo(); } }, '↓') : null,
