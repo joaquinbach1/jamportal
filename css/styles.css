@@ -2929,9 +2929,8 @@ tr:hover .ens-x { opacity: .6; }
 .mv-fila { flex-wrap: wrap; }
 .mv-notas { flex-basis: 100%; margin: 4px 0 2px 28px; display: flex; flex-direction: column; gap: 3px; }
 .mv-nota-txt {
-  font-size: 12.5px; line-height: 1.4; color: var(--txt-2);
-  border-left: 2px solid var(--acc); padding: 2px 0 2px 8px;
+  font-size: 12.5px; line-height: 1.4; color: var(--txt);
+  border-left: 2px solid var(--acc-2); padding: 2px 0 2px 8px;
   white-space: pre-wrap;
 }
-/* la de todos en otro color que la tuya, igual que en el vivo */
-.mv-nota-txt.publica { border-left-color: var(--acc-2); color: var(--txt); }
+
