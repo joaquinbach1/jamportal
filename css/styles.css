@@ -1247,6 +1247,20 @@ body.en-vivo { background: var(--live-fondo); }
   border-bottom: 1px solid var(--line);
 }
 .live-jam { font-size: 19px; font-weight: 700; letter-spacing: -.3px; }
+/* La guitarra que trae a los músicos. Apagada es un contorno más:
+   apagada es el estado normal, y no tiene que competir con el nombre
+   de la jam. */
+.live-guita {
+  margin-left: 10px; vertical-align: 2px;
+  background: none; border: 1px solid var(--linea); border-radius: 6px;
+  padding: 1px 7px; font-size: 14px; line-height: 1.5;
+  cursor: pointer; opacity: .45; filter: grayscale(1);
+}
+.live-guita:hover { opacity: .8; filter: none; border-color: var(--linea-fuerte); }
+.live-guita.on {
+  opacity: 1; filter: none;
+  border-color: var(--acc); background: var(--acc-tinte);
+}
 .live-fecha { font-size: 12px; color: var(--txt-3); margin-top: 2px; }
 .live-count {
   font-family: var(--mono); font-size: 15px; color: var(--acc);
@@ -1298,9 +1312,17 @@ body.en-vivo { background: var(--live-fondo); }
 .live-artista { color: var(--txt-3); }
 .live-cantante { color: var(--acc-2); font-weight: 650; }
 .live-row.actual .live-cantante { font-size: 19px; }
-.live-bpm { font-family: var(--mono); color: var(--txt-2); }
-.live-bpm.sug { color: var(--txt-3); font-style: italic; }
-.live-bpm.sug::after { content: ' (sug.)'; font-size: 11px; }
+/* El tempo es lo último que se mira antes de contar, y se mira de
+   lejos: va más grande que el resto del renglón y al máximo contraste
+   que tenga el tema. */
+.live-bpm {
+  font-family: var(--mono); color: var(--txt);
+  font-size: 1.25em; font-weight: 800; letter-spacing: -.5px;
+}
+.live-bpm.sug { color: var(--txt-2); font-style: italic; font-weight: 700; }
+.live-bpm.sug::after { content: ' (sug.)'; font-size: 11px; font-weight: 400; }
+/* dentro del medley el renglón ya es chico: se destaca sin agrandarse */
+.live-sub-song .live-bpm { font-size: 1em; }
 .live-patch { font-family: var(--mono); color: var(--txt-3); font-size: 13px; }
 .live-cifra { color: var(--low); text-decoration: underline; font-size: 14px; }
 .live-cifra:hover { color: var(--low); }

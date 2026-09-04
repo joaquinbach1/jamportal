@@ -13,6 +13,7 @@ import { notaDe } from '../notas.js';
 import { h, clear, frag, toast, fechaLinda, descargarBlob } from '../ui.js';
 import { PUESTOS, puestosOcupados, iconoDe } from '../musicos.js';
 import { setlistDocx } from '../docx.js';
+import { refrescar } from '../app.js';
 
 /** Aplana el setlist a filas dibujables, numerando solo los temas. */
 export function filas(jam) {
@@ -100,6 +101,20 @@ function avisoDeCambio(cambios, chica) {
     h('span.live-cambio-tag', {}, 'CAMBIO'),
     cambios.map(c => h('span.live-cambio-item', {}, iconoDe(c.p), ' ', c.p.label + ': ' + c.texto)));
 }
+
+/* ============================================================
+   Ver quién toca qué
+   ------------------------------------------------------------
+   Apagado por default. Parado frente a la gente lo que se busca
+   es el tema, quién canta y a qué velocidad entra; la formación
+   entera casi siempre es la misma y ocupa el renglón sin decir
+   nada nuevo. Lo que sí cambia —los cambios de músico— ya sale
+   solo, en verde, cuando hay alguno.
+
+   Se prende con la guitarra de arriba y queda en este equipo.
+   ============================================================ */
+const CLAVE_MUSICOS = 'jamportal.live.musicos';
+const verMusicos = () => localStorage.getItem(CLAVE_MUSICOS) === '1';
 
 export function vistaLive(jamId) {
   const jam = store.jam(jamId);
@@ -203,8 +218,8 @@ export function vistaLive(jamId) {
               h('div.live-sub-song', {},
                 h('span', {}, x.song ? x.song.titulo : '—'),
                 x.cantantes.length ? h('span.live-cantante', {}, x.cantantes.join(', ')) : null,
-                ...puestosEnVivo(x.musicos, true),
                 x.song && x.song.bpm ? h('span.live-bpm', {}, x.song.bpm) : null,
+                verMusicos() ? puestosEnVivo(x.musicos, true) : null,
                 x.song && notaDe(jam.id, x.song.id)
                   ? h('span.live-nota.chica', {}, notaDe(jam.id, x.song.id)) : null,
                 avisoDeCambio(x.cambios, true)))))));
@@ -219,14 +234,12 @@ export function vistaLive(jamId) {
           h('div.live-meta', {},
             s ? h('span.live-artista', {}, s.artista) : null,
             f.cantantes.length ? h('span.live-cantante', {}, '🎤 ' + f.cantantes.join(', ')) : null,
-            /* quién toca qué, con el que hace el solo destacado: parado
-               frente a la gente eso es lo que hay que saber de un vistazo */
-            ...puestosEnVivo(f.musicos),
+            /* El tempo pegado al cantante y en grande: es lo último que
+               se mira antes de contar, y de lejos tiene que entrar de
+               un vistazo. */
             s && s.bpm ? h('span.live-bpm' + (s.bpmFuente === 'sugerido' ? '.sug' : ''), {}, s.bpm + ' bpm') : null,
-            s && (s.patches || []).length ? h('span.live-patch', {}, '🎹 ' + s.patches.join(' ')) : null,
-            s && s.cifraUrl
-              ? h('a.live-cifra', { href: s.cifraUrl, target: '_blank', rel: 'noopener', onclick: e => e.stopPropagation() }, '🎸 cifra')
-              : null),
+            verMusicos() ? puestosEnVivo(f.musicos) : null,
+            s && (s.patches || []).length ? h('span.live-patch', {}, '🎹 ' + s.patches.join(' ')) : null),
           avisoDeCambio(f.cambios),
           /* la nota es tuya y de esta máquina: nadie más la ve */
           s && notaDe(jam.id, s.id) ? h('div.live-nota', {}, notaDe(jam.id, s.id)) : null)));
@@ -246,7 +259,16 @@ export function vistaLive(jamId) {
   return frag(
     h('div.live-head', {},
       h('div', { style: { minWidth: 0 } },
-        h('div.live-jam', {}, jam.nombre || 'Jam'),
+        h('div.live-jam', {},
+          jam.nombre || 'Jam',
+          h('button.live-guita' + (verMusicos() ? '.on' : ''), {
+            title: verMusicos() ? 'Ocultar quién toca cada tema' : 'Ver quién toca cada tema',
+            onclick: e => {
+              e.stopPropagation();
+              localStorage.setItem(CLAVE_MUSICOS, verMusicos() ? '' : '1');
+              refrescar();
+            },
+          }, '🎸')),
         h('div.live-fecha', {}, [jam.fecha ? fechaLinda(jam.fecha) : '', jam.hora, jam.lugar].filter(Boolean).join(' · '))),
       contador,
       h('div.live-acciones', {},
