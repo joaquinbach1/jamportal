@@ -2835,7 +2835,27 @@ body.modo-link .view { padding: 20px 16px calc(96px + env(safe-area-inset-bottom
 
 /* la pregunta que abre todo */
 .ens-vienen { margin-bottom: 20px; }
-.ens-vienen-cab { font-size: 12px; color: var(--txt-3); margin-bottom: 8px; letter-spacing: .3px; }
+.ens-grupo { margin-bottom: 22px; }
+.ens-grupo-cab { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.ens-grupo-cab h3 { margin: 0; font-size: 13.5px; letter-spacing: .2px; }
+.ens-grupo-cab .dim { font-size: 12px; }
+.ens-pendientes {
+  font-size: 11px; padding: 1px 8px; border-radius: 999px;
+  color: var(--acc-2); border: 1px solid var(--acc-2);
+}
+.ens-quien { font-weight: 550; }
+.ens-celda { display: flex; align-items: center; gap: 6px; }
+.ens-x {
+  background: none; border: 0; color: var(--txt-3); cursor: pointer;
+  font-size: 11px; padding: 0 3px; opacity: 0;
+}
+tr:hover .ens-x { opacity: .6; }
+.ens-x:hover { opacity: 1; color: var(--err); }
+.ens-noviene { font-size: 11px; color: var(--txt-3); font-style: italic; }
+/* si falta alguien de la base no se puede tocar nada: eso no es un dato
+   más, es el motivo de que el plan salga vacío */
+.ens-noviene.falla { color: var(--err); font-style: normal; cursor: pointer; }
+.ens-noviene.falla:hover { text-decoration: underline; }
 .ens-tabla { border-collapse: collapse; }
 .ens-tabla th, .ens-tabla td { padding: 5px 10px; text-align: left; font-size: 12.5px; }
 .ens-tabla thead th { color: var(--txt-3); font-weight: 500; border-bottom: 1px solid var(--linea); }

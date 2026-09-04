@@ -20,8 +20,10 @@
 import { store } from '../store.js';
 import { h, clear, poner, toast, fechaLinda, copiar } from '../ui.js';
 import { ESTADOS } from '../ensayada.js';
+import { PUESTOS } from '../musicos.js';
 import {
-  unidades, cantantesDelSetlist, planificar, planATexto, MINUTOS_POR_PASADA,
+  unidades, cantantesDelSetlist, musicosDelSetlist, planificar, planATexto,
+  MINUTOS_POR_PASADA, BANDA_BASE,
 } from '../ensayos-plan.js';
 
 /* Lo que dijo cada cantante, por jam. Vive en este equipo: es la
@@ -116,6 +118,7 @@ export function vistaEnsayosAdmin(jamId) {
   function pintarPlan() {
     const unis = unidades(alDia(), id => store.song(id));
     const gente = cantantesDelSetlist(unis);
+    const musicos = musicosDelSetlist(alDia());
     const ensayos = alDia().ensayos || [];
 
     clear(panelPlan);
@@ -152,27 +155,29 @@ export function vistaEnsayosAdmin(jamId) {
           }),
           h('span', {}, 'minutos'))),
 
-      /* la pregunta que abre todo: a qué hora puede venir cada uno */
+      /* la pregunta que abre todo: a qué hora puede venir cada uno.
+         Van en dos tablas y no en una: los cantantes mueven el orden
+         del día y los músicos no, así que mezclarlos hacía pensar que
+         poner una hora ahí cambiaba algo del plan. */
       h('div.ens-vienen', {},
-        h('div.ens-vienen-cab', {}, 'A qué hora puede venir cada cantante'),
-        h('table.ens-tabla', {},
-          h('thead', {}, h('tr', {},
-            h('th', {}, ''),
-            ensayos.map((e, i) => h('th', {},
-              e.fecha ? fechaLinda(e.fecha) : `Ensayo ${i + 1}`,
-              h('div.dim', {}, [e.hora, e.horaFin].filter(Boolean).join('–') || 'sin horario'))))),
-          h('tbody', {}, gente.map(p => h('tr', {},
-            h('th', {}, p.nombre, h('span.dim', {}, ` ${p.temas}`)),
-            ensayos.map((e, i) => h('td', {},
-              h('input.ens-hora', {
-                type: 'time', value: (vienen[i] || {})[p.nombre] || '',
-                title: 'Vacío quiere decir que ese día no viene',
-                onchange: ev => {
-                  vienen[i] = { ...(vienen[i] || {}), [p.nombre]: ev.target.value };
-                  guardarVienen(jamId, vienen);
-                  pintarPlan();
-                },
-              }))))))),
+        /* El orden es el del ensayo real: primero los que ya están,
+           después los que caen, y al final los que vienen a cantar
+           un rato. */
+        tablaDeHorarios('🥁 Banda base',
+          'Vienen desde que arranca salvo que digas otra cosa.',
+          BANDA_BASE.map(nombre => ({ nombre, detalle: puestoDe(nombre) })),
+          ensayos, true),
+        tablaDeHorarios('🎸 Invitados',
+          'A estos hay que preguntarles. Sin hora, ese día no vienen —y sus temas no se pueden tocar.',
+          musicos.map(p => ({
+            ...p,
+            detalle: p.puestos.length ? p.puestos.join(', ') : 'sin puesto en esta jam',
+          })),
+          ensayos),
+        tablaDeHorarios('🎤 Cantantes',
+          'Sus temas se agendan cuando llegan: es el eje del ensayo.',
+          gente.map(p => ({ ...p, detalle: `${p.temas} tema${p.temas === 1 ? '' : 's'}` })),
+          ensayos)),
 
       falta.length
         ? h('div.ens-falta', {},
@@ -188,8 +193,125 @@ export function vistaEnsayosAdmin(jamId) {
         h('button.btn.primary', { onclick: () => aplicar(plan) },
           '✓ Guardar en la jam'),
         h('span.dim', {},
-          'Escribe el orden del día en las notas de cada ensayo y pone la hora de llegada de cada cantante. Las convocatorias salen desde la jam, como siempre.'))));
+          'Escribe el orden del día en las notas de cada ensayo y pone la hora de llegada de cada cantante. Las convocatorias salen desde la jam, como siempre.')));
   }
+
+  /* ============================================================
+     Una tabla de horarios
+     ------------------------------------------------------------
+     Cargar esto a mano era lo más pesado de la pantalla: una
+     grilla de inputs vacíos donde no se sabía qué faltaba. Ahora
+     cada renglón dice quién es y en qué anda, el vacío se lee
+     como «no viene» en vez de como un descuido, y hay un botón
+     para repetir la misma hora en todos los días, que es lo que
+     pasa casi siempre.
+     ============================================================ */
+  function tablaDeHorarios(titulo, bajada, filas, ensayos, esBase = false) {
+    if (!filas.length) return null;
+
+    const dicho = (i, nombre) => (vienen[i] || {})[nombre];
+    /* A la banda base no se le pregunta: si no dijo nada, viene cuando
+       arranca el ensayo. Para el resto, no haber dicho nada es no venir.
+       Por eso la ausencia de la base se marca a propósito con ''. */
+    const leer = (i, nombre) => {
+      const v = dicho(i, nombre);
+      if (v !== undefined) return v;
+      return esBase ? (ensayos[i].hora || '') : '';
+    };
+    const escribir = (i, nombre, valor) => {
+      vienen[i] = { ...(vienen[i] || {}), [nombre]: valor };
+      guardarVienen(jamId, vienen);
+      pintarPlan();
+    };
+    const soltar = (i, nombre) => {
+      const copia = { ...(vienen[i] || {}) };
+      delete copia[nombre];
+      vienen[i] = copia;
+      guardarVienen(jamId, vienen);
+      pintarPlan();
+    };
+
+    const sinResponder = esBase ? 0
+      : filas.filter(p => ensayos.every((_, i) => !leer(i, p.nombre))).length;
+
+    return h('div.ens-grupo', {},
+      h('div.ens-grupo-cab', {},
+        h('h3', {}, titulo),
+        h('span.dim', {}, bajada),
+        sinResponder
+          ? h('span.ens-pendientes', {}, `${sinResponder} sin contestar`)
+          : null),
+
+      h('table.ens-tabla', {},
+        h('thead', {}, h('tr', {},
+          h('th', {}, ''),
+          ensayos.map((e, i) => h('th', {},
+            e.fecha ? fechaLinda(e.fecha) : `Ensayo ${i + 1}`,
+            h('div.dim', {}, [e.hora, e.horaFin].filter(Boolean).join('–') || 'sin horario'))),
+          h('th', {}, ''))),
+
+        h('tbody', {}, filas.map(p => h('tr', {},
+          h('th', {},
+            h('div.ens-quien', {}, p.nombre),
+            h('div.dim', {}, p.detalle)),
+
+          ensayos.map((e, i) => h('td', {},
+            h('div.ens-celda', {},
+              h('input.ens-hora', {
+                type: 'time', value: leer(i, p.nombre),
+                onchange: ev => escribir(i, p.nombre, ev.target.value),
+              }),
+              /* El vacío tiene que decir algo: si no, no se distingue
+                 «no viene» de «todavía no le preguntamos». */
+              leer(i, p.nombre)
+                ? h('button.ens-x', {
+                    title: 'Ese día no viene',
+                    onclick: () => escribir(i, p.nombre, ''),
+                  }, '✕')
+                : h('span.ens-noviene' + (esBase ? '.falla' : ''), {
+                    title: esBase ? 'Sin él no se puede tocar nada — tocá para que vuelva' : '',
+                    onclick: esBase ? () => soltar(i, p.nombre) : null,
+                  }, 'no viene')))),
+
+          h('td', {},
+            /* Casi siempre viene a la misma hora todos los días. */
+            ensayos.length > 1
+              ? h('button.btn.xs.ghost', {
+                  title: 'Repetir la hora del primer día en todos',
+                  onclick: () => {
+                    const h0 = leer(0, p.nombre);
+                    if (!h0) { toast('Poné primero la hora del primer día', ''); return; }
+                    ensayos.forEach((_, i) => {
+                      vienen[i] = { ...(vienen[i] || {}), [p.nombre]: h0 };
+                    });
+                    guardarVienen(jamId, vienen);
+                    pintarPlan();
+                  },
+                }, '↔ todos')
+              : null))))));
+  }
+
+  /** En qué puesto está alguien en esta jam, para el renglón de la tabla. */
+  function puestoDe(nombre) {
+    const cuenta = new Map();
+    const mirar = it => {
+      const m = it && it.musicos;
+      if (!m || typeof m !== 'object' || Array.isArray(m)) return;
+      for (const p of PUESTOS) {
+        if (m[p.clave] && m[p.clave].nombre === nombre) cuenta.set(p.label, (cuenta.get(p.label) || 0) + 1);
+      }
+    };
+    for (const it of alDia().items || []) {
+      if (it.tipo === 'medley') (it.songs || []).forEach(mirar);
+      else if (it.tipo === 'song') mirar(it);
+    }
+    const puestos = [...cuenta.entries()].sort((a, b) => b[1] - a[1]).map(([l]) => l);
+    return puestos.length ? puestos.join(', ') : 'sin puesto en esta jam';
+  }
+
+  /* Canta, toca, o las dos: el mismo nombre puede estar en las dos
+     listas y el llamado tiene que decir a qué viene. */
+  const iconoDe = c => (c.canta && c.toca ? '🎤🎸' : c.canta ? '🎤' : '🎸');
 
   function diaDelPlan(d) {
     const caja = h('div.ens-dia');
@@ -208,7 +330,7 @@ export function vistaEnsayosAdmin(jamId) {
               title: c.sinTemas
                 ? 'Ese día no le toca ningún tema — no hace falta que venga'
                 : `Dijo que podía ${c.dijo}; sus temas empiezan ${c.hora}`,
-            }, `🎤 ${c.nombre} ${c.sinTemas ? 'no hace falta' : c.hora}`)))
+            }, `${iconoDe(c)} ${c.nombre} ${c.sinTemas ? 'no hace falta' : c.hora}`)))
         : null,
 
       d.pasadas.length
@@ -238,7 +360,7 @@ export function vistaEnsayosAdmin(jamId) {
       d.llamados.filter(c => !c.sinTemas).forEach(c => {
         const ya = e.convocados.find(x => x.nombre === c.nombre);
         if (ya) ya.hora = c.hora;
-        else e.convocados.push({ nombre: c.nombre, hora: c.hora, instrumento: '🎤', aviso: '' });
+        else e.convocados.push({ nombre: c.nombre, hora: c.hora, instrumento: iconoDe(c), aviso: '' });
       });
       tocados++;
     });
