@@ -26,7 +26,7 @@ import {
 import { puestosOcupados, iconoDe, formacionPorDefecto } from '../musicos.js';
 import { agenda, duracionLinda, largoLindo, horaMas } from '../duracion.js';
 import { linkSpotify } from '../spotify.js';
-import { notaDe } from '../notas.js';
+import { notaDe, ponerNota } from '../notas.js';
 import { estaListo } from '../ensayada.js';
 import { anotarIdea } from './ideas.js';
 import { dialogoCancion } from './song-form.js';
@@ -267,6 +267,11 @@ function tira(plan, alTocar, alCambiarModo, extras = {}) {
    ============================================================ */
 export function vistaMovil(jamId) {
   const jam = store.jam(jamId);
+  /* La jam del store, no la que agarramos al abrir. Al sincronizar, el
+     store reemplaza las jams por objetos nuevos y la referencia vieja
+     queda huérfana: lo que se escribe ahí se dibuja pero no lo guarda
+     nadie. Igual que en el cockpit. */
+  const alDia = () => store.jam(jamId) || jam;
   if (!jam) {
     return h('div.empty', {}, h('b', {}, 'Esa jam no existe'),
       h('a.btn.sm', { href: '#/jams', style: { marginTop: '12px' } }, 'Volver'));
@@ -303,12 +308,52 @@ export function vistaMovil(jamId) {
    * @param {function} [ponerCantantes] recibe la lista nueva de nombres y la
    *                                 guarda en el ítem de esta jam
    */
-  function hojaTema(f, sacar, ponerCantantes, alternarEnsayada) {
+  /* ============================================================
+     Las dos notas, acá mismo
+     ------------------------------------------------------------
+     Se escriben en la hoja del tema y no en una ventana aparte:
+     ya estás mirando ese tema, y abrir otra cosa para anotar dos
+     renglones es una ceremonia de más en el celular.
+
+     Se guardan al salir del campo. No hay botón de guardar
+     porque no hay nada que confirmar: es texto libre, y si te
+     arrepentís lo borrás.
+     ============================================================ */
+  function camposDeNota(s, traerItem) {
+    const campo = (valor, alSalir, ph) => h('textarea.hd-area', {
+      value: valor, placeholder: ph, rows: 2,
+      onchange: e => alSalir(e.target.value.trim()),
+    });
+
+    return h('div.hd-notas', {},
+      traerItem
+        ? frag(
+            h('div.hd-nota-cab', {}, h('b', {}, '📣 Para todos'),
+              h('span', {}, 'la ve toda la banda')),
+            campo((traerItem() || {}).notas || '',
+              v => {
+                /* El ítem se busca recién ahora: la hoja estuvo abierta un
+                   rato y en el medio pudo entrar una sincronización. */
+                const it = traerItem();
+                if (!it) return;
+                it.notas = v;
+                guardar(); pintar();
+              },
+              'Corte al final · entra el saxo en el segundo estribillo…'))
+        : null,
+
+      h('div.hd-nota-cab', {}, h('b', {}, '🔒 Solo para vos'),
+        h('span', {}, 'nadie más la ve')),
+      campo(notaDe(jam.id, s.id),
+        v => { ponerNota(jam.id, s.id, v); pintar(); },
+        'Entro en el segundo · ojo con el corte…'));
+  }
+
+  function hojaTema(f, sacar, ponerCantantes, alternarEnsayada, traerItem) {
     const s = f.song;
     if (!s) return;
     const cantantes = (f.cantantes || []).join(', ');
     const url = linkSpotify(s);
-    const nota = notaDe(jam.id, s.id);
 
     const detalle = h('div.hoja-detalle', {},
       h('div.hd-fila', {}, h('span', {}, 'Artista'), h('b', {}, s.artista || '—')),
@@ -324,7 +369,7 @@ export function vistaMovil(jamId) {
             : h('b', {}, 'nunca — pero ya la saben')),
       s.bpm ? h('div.hd-fila', {}, h('span', {}, 'Tempo'),
         h('b', {}, `${s.bpmFuente === 'sugerido' ? '≈ ' : ''}${s.bpm} bpm`)) : null,
-      nota ? h('div.hd-nota', {}, '📝 ' + nota) : null);
+      camposDeNota(s, traerItem));
 
     hojaAcciones(s.titulo, [
       url ? { icono: '♫', clase: 'spotify',
@@ -1378,8 +1423,10 @@ export function vistaMovil(jamId) {
       }
       nuevos.forEach(({ f, pos, k }) => lista.appendChild(renglon(f, f.numero, {
         alTocar: () => hojaTema(f, null, k == null
-          ? v => { jam.items[pos].cantantes = v; }
-          : v => { jam.items[pos].songs[k].cantantes = v; }),
+          ? v => { alDia().items[pos].cantantes = v; }
+          : v => { alDia().items[pos].songs[k].cantantes = v; },
+          null,
+          k == null ? () => alDia().items[pos] : () => (alDia().items[pos].songs || [])[k]),
       })));
       cont.appendChild(lista);
       return;
@@ -1458,8 +1505,9 @@ export function vistaMovil(jamId) {
                 guardar(); pintar(); toast('Sacado del medley');
               },
             } : null,
-            v => { jam.items[pos].songs[k].cantantes = v; },
-            () => { const x = jam.items[pos].songs[k]; x.ensayada = estaListo(x) ? 'no' : 'listo'; }),
+            v => { alDia().items[pos].songs[k].cantantes = v; },
+            () => { const x = alDia().items[pos].songs[k]; x.ensayada = estaListo(x) ? 'no' : 'listo'; },
+            () => (alDia().items[pos].songs || [])[k]),
           })))));
         return;
       }
@@ -1468,8 +1516,9 @@ export function vistaMovil(jamId) {
         conManija: true, pos,
         alTocar: () => hojaTema(f, puedeTocar()
           ? { texto: 'Sacar de la lista', hacer: quitar } : null,
-          v => { jam.items[pos].cantantes = v; },
-          () => { const x = jam.items[pos]; x.ensayada = estaListo(x) ? 'no' : 'listo'; }),
+          v => { alDia().items[pos].cantantes = v; },
+          () => { const x = alDia().items[pos]; x.ensayada = estaListo(x) ? 'no' : 'listo'; },
+          () => alDia().items[pos]),
       })));
     });
     cont.appendChild(lista);

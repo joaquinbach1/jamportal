@@ -2934,3 +2934,16 @@ tr:hover .ens-x { opacity: .6; }
   white-space: pre-wrap;
 }
 
+
+/* las dos notas dentro de la hoja del tema, en el celular */
+.hd-notas { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--linea); }
+.hd-nota-cab {
+  display: flex; align-items: baseline; gap: 8px; margin: 10px 0 5px;
+  font-size: 12.5px;
+}
+.hd-nota-cab:first-child { margin-top: 0; }
+.hd-nota-cab span { font-size: 11.5px; color: var(--txt-3); }
+.hd-area {
+  width: 100%; font-size: 14px; line-height: 1.4; resize: vertical;
+  min-height: 52px;
+}
