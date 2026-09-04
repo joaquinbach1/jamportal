@@ -70,6 +70,17 @@ const CLAVE_I = 'jamportal.movil.instrumentos';
 const verInstrumentos = () => localStorage.getItem(CLAVE_I) === '1';
 
 /* ============================================================
+   Ver las notas enteras
+   ------------------------------------------------------------
+   Apagado, cada tema con nota muestra un 📣 o un 📝 y hay que
+   abrirlo para leerla. Prendido, el texto va debajo del título:
+   sirve para repasar la lista entera de un scroll, que es cuando
+   uno se pregunta qué habíamos dicho de cada tema.
+   ============================================================ */
+const CLAVE_NOTAS = 'jamportal.movil.notas';
+const verNotas = () => localStorage.getItem(CLAVE_NOTAS) === '1';
+
+/* ============================================================
    Modo nuevas
    ------------------------------------------------------------
    Prendido (el default): la pill roja en cada tema nuevo, el
@@ -1224,8 +1235,9 @@ export function vistaMovil(jamId) {
         cantantes ? h('span.mv-quien', {}, ` (${cantantes})`) : null,
         instr),
       pill,
-      f.publica ? h('span.mv-nota.publica', { title: f.publica }, '📣') : null,
-      s && notaDe(jam.id, s.id) ? h('span.mv-nota', {}, '📝') : null,
+      /* Con las notas desplegadas la marca sobra: el texto ya está ahí. */
+      !verNotas() && f.publica ? h('span.mv-nota.publica', { title: f.publica }, '📣') : null,
+      !verNotas() && s && notaDe(jam.id, s.id) ? h('span.mv-nota', {}, '📝') : null,
       /* el tempo, con la ≈ de los sugeridos; se apaga desde el ⋯ */
       verTempo() && s && s.bpm
         ? h('span.mv-bpm', { title: 'Tempo' + (s.bpmFuente === 'sugerido' ? ' (sugerido)' : '') },
@@ -1248,7 +1260,14 @@ export function vistaMovil(jamId) {
             },
           })
         : null,
-      puedeTocar() && pos != null ? botonInsertar(pos) : null);
+      puedeTocar() && pos != null ? botonInsertar(pos) : null,
+      /* Van al final y a todo el ancho: el renglón envuelve y el texto
+         queda debajo del título, no apretado contra la hora. */
+      verNotas() && (f.publica || (s && notaDe(jam.id, s.id)))
+        ? h('div.mv-notas', {},
+            f.publica ? h('div.mv-nota-txt.publica', {}, f.publica) : null,
+            s && notaDe(jam.id, s.id) ? h('div.mv-nota-txt', {}, notaDe(jam.id, s.id)) : null)
+        : null);
   }
 
   function pintar() {
@@ -1304,6 +1323,14 @@ export function vistaMovil(jamId) {
               pintar();
             },
           }, '🎸'),
+          /* leer las notas también es leer: va aunque la jam esté cerrada */
+          h('button.mv-btn-cab.icono' + (verNotas() ? '.on' : ''), {
+            title: 'Mostrar las notas de cada tema',
+            onclick: () => {
+              localStorage.setItem(CLAVE_NOTAS, verNotas() ? '' : '1');
+              pintar();
+            },
+          }, '📝'),
           editable() ? h('button.mv-btn-cab', {
             title: 'Sumar un tema o un medley',
             onclick: () => dialogoAgregar(),
