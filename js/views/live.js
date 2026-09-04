@@ -27,12 +27,13 @@ export function filas(jam) {
       out.push({ tipo: 'medley', n, titulo: it.titulo, i,
         songs: (it.songs || []).map(ms => ({
           song: store.song(ms.songId), cantantes: ms.cantantes || [],
-          musicos: ms.musicos || null })) });
+          musicos: ms.musicos || null, publica: ms.notas || '' })) });
       return;
     }
     n++;
     out.push({ tipo: 'song', n, i, song: store.song(it.songId),
-      cantantes: it.cantantes || [], musicos: it.musicos || null });
+      cantantes: it.cantantes || [], musicos: it.musicos || null,
+      publica: it.notas || '' });
   });
   return out;
 }
@@ -220,6 +221,7 @@ export function vistaLive(jamId) {
                 x.cantantes.length ? h('span.live-cantante', {}, x.cantantes.join(', ')) : null,
                 x.song && x.song.bpm ? h('span.live-bpm', {}, x.song.bpm) : null,
                 verMusicos() ? puestosEnVivo(x.musicos, true) : null,
+                x.publica ? h('span.live-nota.chica.publica', {}, x.publica) : null,
                 x.song && notaDe(jam.id, x.song.id)
                   ? h('span.live-nota.chica', {}, notaDe(jam.id, x.song.id)) : null,
                 avisoDeCambio(x.cambios, true)))))));
@@ -241,7 +243,9 @@ export function vistaLive(jamId) {
             verMusicos() ? puestosEnVivo(f.musicos) : null,
             s && (s.patches || []).length ? h('span.live-patch', {}, '🎹 ' + s.patches.join(' ')) : null),
           avisoDeCambio(f.cambios),
-          /* la nota es tuya y de esta máquina: nadie más la ve */
+          /* dos notas: la que dejó alguien para todos y la tuya. La de
+             todos va primero, que es la que puede no haber leído. */
+          f.publica ? h('div.live-nota.publica', {}, f.publica) : null,
           s && notaDe(jam.id, s.id) ? h('div.live-nota', {}, notaDe(jam.id, s.id)) : null)));
     });
 

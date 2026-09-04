@@ -1224,6 +1224,7 @@ export function vistaMovil(jamId) {
         cantantes ? h('span.mv-quien', {}, ` (${cantantes})`) : null,
         instr),
       pill,
+      f.publica ? h('span.mv-nota.publica', { title: f.publica }, '📣') : null,
       s && notaDe(jam.id, s.id) ? h('span.mv-nota', {}, '📝') : null,
       /* el tempo, con la ≈ de los sugeridos; se apaga desde el ⋯ */
       verTempo() && s && s.bpm

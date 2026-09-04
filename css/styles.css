@@ -1377,6 +1377,10 @@ body.en-vivo { background: var(--live-fondo); }
   border-radius: 0 6px 6px 0;
 }
 .live-nota.chica { font-size: 14px; margin-top: 4px; padding: 4px 9px; display: block; }
+/* la que dejó alguien para todos, en otro color que la tuya: leyendo
+   de reojo hay que saber si es algo que decidió la banda o algo que
+   anotaste vos */
+.live-nota.publica { border-left-color: var(--acc-2); background: var(--medley-badge); color: var(--txt); }
 
 /* ============================================================
    El aviso de cambio de músico
@@ -2912,3 +2916,11 @@ tr:hover .ens-x { opacity: .6; }
   .ens-estados { width: 100%; }
   .ens-est { flex: 1; }
 }
+
+/* la nota de todos, en el editor y en el celular */
+.icon-btn.nota.publica { color: var(--acc-2); }
+.mv-nota.publica { color: var(--acc-2); }
+.nota-bloque { margin-bottom: 16px; }
+.nota-cab { display: flex; align-items: baseline; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
+.nota-cab b { font-size: 13px; }
+.nota-cab .dim { font-size: 11.5px; }

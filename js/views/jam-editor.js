@@ -781,61 +781,99 @@ export function vistaEditor(jamId) {
   /* ---------- nota privada ----------
      Es tuya y de esta máquina: no va a la base compartida. Se escribe
      acá y se lee en el LIVE VIEW, que es cuando hace falta. */
-  function botonNota(s) {
+  function botonNota(s, traer) {
     const btn = h('button.icon-btn.nota', {
-      onclick: e => { e.stopPropagation(); dialogoNota(s, () => pintarNota()); },
-    });
+      onclick: e => { e.stopPropagation(); dialogoNota(s, traer, () => pintarNota()); },
+    }, '📝');
     function pintarNota() {
-      const hay = !!notaDe(jam.id, s.id);
-      btn.classList.toggle('tiene', hay);
-      btn.textContent = hay ? '📝' : '📝';
-      btn.title = hay
-        ? `Tu nota: ${notaDe(jam.id, s.id)}`
-        : 'Escribir una nota tuya — solo la ves vos, y aparece en el LIVE VIEW';
+      const mia = notaDe(jam.id, s.id);
+      const publica = ((traer && traer()) || {}).notas || '';
+      btn.classList.toggle('tiene', !!(mia || publica));
+      btn.classList.toggle('publica', !!publica);
+      btn.title = [
+        publica ? `Para todos: ${publica}` : '',
+        mia ? `Tuya: ${mia}` : '',
+      ].filter(Boolean).join('\n') || 'Escribir una nota';
     }
     pintarNota();
     return btn;
   }
 
-  function dialogoNota(s, alGuardar) {
-    const area = h('textarea', {
-      value: notaDe(jam.id, s.id),
-      placeholder: 'Entro en el segundo estribillo · afinar medio tono abajo · ojo con el corte…',
-      style: { minHeight: '120px' },
+  /* ============================================================
+     Las dos notas de un tema
+     ------------------------------------------------------------
+     La misma ventana escribe las dos porque son la misma decisión:
+     estás mirando un tema y se te ocurre algo. Lo que cambia es
+     quién lo lee, y eso se elige acá y no en dos lugares
+     distintos.
+
+     La de todos vive en el ítem del setlist —viaja a la base con
+     la jam, la ve cualquiera que la abra— y la tuya en la tabla
+     de notas, con tu mail.
+     ============================================================ */
+  function dialogoNota(s, traer, alGuardar) {
+    const it = () => (traer && traer()) || {};
+
+    const publica = h('textarea', {
+      value: it().notas || '',
+      placeholder: 'Corte al final · entra el saxo en el segundo estribillo · lo bajamos medio tono…',
+      style: { minHeight: '90px' },
     });
+    const mia = h('textarea', {
+      value: notaDe(jam.id, s.id),
+      placeholder: 'Entro en el segundo estribillo · ojo con el corte…',
+      style: { minHeight: '90px' },
+    });
+
+    const hayAlgo = () => !!(it().notas || notaDe(jam.id, s.id));
+
     const m = modal({
-      title: 'Tu nota para « ' + s.titulo + ' »',
+      title: 'Notas de « ' + s.titulo + ' »',
       body: [
-        h('div.method-hint', {},
-          'Es tuya: no la ve el resto de la banda y no viaja a la base compartida. ',
-          'Aparece en el ', h('b', {}, 'LIVE VIEW'), ', que es donde la vas a necesitar. ',
-          h('span.dim', {}, 'Vive en este navegador, así que no te sigue a otro dispositivo.')),
-        h('div', { style: { marginTop: '12px' } }, area),
+        h('div.nota-bloque', {},
+          h('div.nota-cab', {}, h('b', {}, '📣 Para todos'),
+            h('span.dim', {}, 'la ve toda la banda, en el LIVE VIEW y en el celular')),
+          traer
+            ? publica
+            : h('div.method-hint', {}, 'Desde acá no se puede escribir la de todos: abrila desde la lista de la jam.')),
+
+        h('div.nota-bloque', {},
+          h('div.nota-cab', {}, h('b', {}, '🔒 Solo para vos'),
+            h('span.dim', {}, 'nadie más la ve, y te sigue a cualquier dispositivo donde entres')),
+          mia),
       ],
       footer: [
         h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
-        notaDe(jam.id, s.id)
+        hayAlgo()
           ? h('button.btn.sm.danger', {
-              onclick: () => { ponerNota(jam.id, s.id, ''); m.close(); alGuardar(); toast('Nota borrada'); },
-            }, 'Borrar')
+              onclick: () => {
+                ponerNota(jam.id, s.id, '');
+                const x = it(); if (x) x.notas = '';
+                guardar(); m.close(); alGuardar(); toast('Notas borradas');
+              },
+            }, 'Borrar las dos')
           : null,
         h('button.btn.primary', {
           onclick: () => {
-            ponerNota(jam.id, s.id, area.value);
+            ponerNota(jam.id, s.id, mia.value);
+            /* El ítem se busca recién ahora: la ventana estuvo abierta
+               un rato y en el medio pudo entrar una sincronización. */
+            const x = it();
+            if (traer && x) { x.notas = publica.value.trim(); guardar(); }
             m.close(); alGuardar();
-            toast(area.value.trim() ? 'Nota guardada' : 'Nota borrada', 'ok');
+            toast('Guardado', 'ok');
           },
         }, 'Guardar'),
       ],
     });
-    setTimeout(() => area.focus(), 60);
+    setTimeout(() => (traer ? publica : mia).focus(), 60);
   }
 
   /** Las acciones del tema, con nombre, para el dedo. */
   function hojaDeTema(s, i) {
     hojaAcciones(s.titulo, [
-      { icono: '📝', texto: notaDe(jam.id, s.id) ? 'Editar mi nota' : 'Escribir una nota mía',
-        onClick: () => dialogoNota(s, () => pintarTodo()) },
+      { icono: '📝', texto: 'Notas del tema',
+        onClick: () => dialogoNota(s, () => items()[i], () => pintarTodo()) },
       { icono: '🎸', texto: s.cifraUrl ? 'Abrir la cifra' : 'Buscar la cifra',
         onClick: async () => {
           if (s.cifraUrl) { window.open(s.cifraUrl, '_blank', 'noopener'); return; }
@@ -932,9 +970,9 @@ export function vistaEditor(jamId) {
             : chipsPersonas(it.cantantes || [], opcionesGente(), v => { it.cantantes = v; guardar(); pintarTodo(); }, s.cantantes || []),
         )),
       bloqueada()
-        ? h('div.sl-actions', {}, botonNota(s), botonCifra(s, () => pintarTodo()))
+        ? h('div.sl-actions', {}, botonNota(s, () => items()[i]), botonCifra(s, () => pintarTodo()))
         : h('div.sl-actions', {},
-        botonNota(s),
+        botonNota(s, () => items()[i]),
         botonCifra(s, () => pintarTodo()),
         h('button.icon-btn', { title: 'Unir en medley con el siguiente', onclick: () => unirEnMedley(i) }, '⛓'),
         h('button.icon-btn', { title: 'Editar el tema en DBSongs', onclick: () => dialogoCancion(s, () => pintarTodo()) }, '✎'),
@@ -1131,7 +1169,7 @@ export function vistaEditor(jamId) {
               /* La nota va por tema, no por lugar en la lista: un tema
                  dentro de un medley la necesita igual —o más, que son
                  los que se tocan a medias y hay algo que recordar. */
-              s ? botonNota(s) : null,
+              s ? botonNota(s, () => (items()[i].songs || [])[k]) : null,
               s ? botonCifra(s, () => pintarTodo()) : null,
               k > 0 ? h('button.icon-btn', { title: 'Subir', onclick: () => { const [x] = it.songs.splice(k, 1); it.songs.splice(k - 1, 0, x); guardar(); pintarTodo(); } }, '↑') : null,
               k < it.songs.length - 1 ? h('button.icon-btn', { title: 'Bajar', onclick: () => { const [x] = it.songs.splice(k, 1); it.songs.splice(k + 1, 0, x); guardar(); pintarTodo(); } }, '↓') : null,
