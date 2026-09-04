@@ -269,7 +269,7 @@ begin
             nullif(it->>'songId', ''), it->>'titulo', it->>'label',
             nullif(it->>'minutos', '')::smallint, coalesce(it->>'notas', ''),
             coalesce(it->'musicos', '{}'::jsonb),
-            coalesce((it->>'ensayada')::boolean, false));
+            coalesce(nullif(it->>'ensayada', ''), 'no'));
 
     insert into item_cantante (item_id, persona_id, orden)
     select iid, persona_id(x.v#>>'{}'), (x.nn - 1)::smallint
@@ -283,7 +283,7 @@ begin
       values (gen_random_uuid(), j->>'id', iid, kpos, 'song',
               nullif(sub->>'songId', ''), coalesce(sub->>'notas', ''),
               coalesce(sub->'musicos', '{}'::jsonb),
-              coalesce((sub->>'ensayada')::boolean, false))
+              coalesce(nullif(sub->>'ensayada', ''), 'no'))
       returning id into eid;
 
       insert into item_cantante (item_id, persona_id, orden)

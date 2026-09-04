@@ -99,7 +99,7 @@ export function agenda(jam, song) {
         if (!s || !s.duracionSec) sinDato++;
         temas++;
         return { song: s, cantantes: ms.cantantes || [], songId: ms.songId,
-                 musicos: ms.musicos || null, ensayada: !!ms.ensayada,
+                 musicos: ms.musicos || null, ensayada: ms.ensayada,
                  seg: segundosDeTema(s, true) };
       });
       const seg = songs.reduce((a, x) => a + x.seg, 0);
@@ -116,7 +116,7 @@ export function agenda(jam, song) {
     const seg = segundosDeTema(s);
     n++; temas++;
     filas.push({ tipo: 'song', n, song: s, songId: it.songId, cantantes: it.cantantes || [],
-                 musicos: it.musicos || null, ensayada: !!it.ensayada,
+                 musicos: it.musicos || null, ensayada: it.ensayada,
                  desde: t, hora: horaMas(inicio, t), seg });
     t += seg; musica += seg;
     ultimoConRespiro = filas.length - 1;

@@ -2788,3 +2788,107 @@ body.modo-link .view { padding: 20px 16px calc(96px + env(safe-area-inset-bottom
   padding: 6px 8px calc(10px + env(safe-area-inset-bottom));
   overflow-y: auto; overscroll-behavior: contain; display: block;
 }
+
+
+/* ============================================================
+   Ensayos Admin
+   ------------------------------------------------------------
+   Dos paneles: cómo viene cada tema y el plan que sale de eso.
+   Los estados usan los mismos colores en los dos, para que la
+   lista de arriba y el plan de abajo se lean como una cosa.
+   ============================================================ */
+.ens-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+.ens-head h1 { margin: 0; font-size: 22px; flex: 1; }
+.ens-panel { margin-bottom: 28px; }
+.ens-cab { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+.ens-cab h2 { margin: 0; font-size: 16px; letter-spacing: .2px; }
+.ens-resumen { display: flex; gap: 8px; }
+
+.ens-pill {
+  font-size: 12px; padding: 2px 9px; border-radius: 999px;
+  border: 1px solid var(--linea); color: var(--txt-2);
+}
+.ens-pill.e-falta { border-color: var(--acc-2); color: var(--acc-2); }
+.ens-pill.e-listo { border-color: var(--ok); color: var(--ok); background: var(--ok-fondo); }
+
+.ens-temas { display: flex; flex-direction: column; gap: 4px; }
+.ens-tema {
+  display: flex; align-items: center; gap: 12px;
+  padding: 7px 12px; border-radius: 7px;
+  background: var(--panel); border-left: 3px solid var(--linea);
+}
+.ens-tema.e-falta { border-left-color: var(--acc-2); }
+.ens-tema.e-listo { border-left-color: var(--ok); background: var(--ok-fondo); }
+.ens-tema-txt { flex: 1; min-width: 0; }
+.ens-tema-tit { font-size: 14px; font-weight: 550; }
+.ens-tema-sub { font-size: 11.5px; color: var(--txt-3); display: flex; gap: 10px; }
+.ens-canta { color: var(--acc-2); }
+
+.ens-estados { display: flex; gap: 4px; flex-shrink: 0; }
+.ens-est {
+  background: none; border: 1px solid var(--linea); border-radius: 5px;
+  padding: 3px 9px; font-size: 11.5px; color: var(--txt-3); cursor: pointer;
+  white-space: nowrap;
+}
+.ens-est:hover { border-color: var(--linea-fuerte); color: var(--txt); }
+.ens-est.on { border-color: var(--acc); color: var(--acc); background: var(--acc-tinte); font-weight: 600; }
+
+/* la pregunta que abre todo */
+.ens-vienen { margin-bottom: 20px; }
+.ens-vienen-cab { font-size: 12px; color: var(--txt-3); margin-bottom: 8px; letter-spacing: .3px; }
+.ens-tabla { border-collapse: collapse; }
+.ens-tabla th, .ens-tabla td { padding: 5px 10px; text-align: left; font-size: 12.5px; }
+.ens-tabla thead th { color: var(--txt-3); font-weight: 500; border-bottom: 1px solid var(--linea); }
+.ens-tabla tbody th { font-weight: 550; }
+.ens-hora { width: 108px; }
+
+.ens-falta {
+  margin-bottom: 18px; padding: 10px 14px; border-radius: 7px;
+  background: var(--acc-tinte); border-left: 3px solid var(--acc-2);
+}
+.ens-falta-item { display: inline-block; margin-right: 12px; font-size: 12.5px; }
+.ens-falta p { margin: 6px 0 0; font-size: 12px; }
+
+.ens-dias { display: flex; flex-direction: column; gap: 18px; }
+.ens-dia { border: 1px solid var(--linea); border-radius: 9px; padding: 12px 14px; }
+.ens-dia-cab { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.ens-dia-cab .dim { font-size: 12px; }
+
+.ens-llamados { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.ens-llamado {
+  font-size: 12px; padding: 2px 9px; border-radius: 999px;
+  background: var(--acc-tinte); color: var(--acc-2); border: 1px solid var(--acc-2);
+}
+.ens-llamado.vacio { background: none; color: var(--txt-3); border-color: var(--linea); }
+
+.ens-pasadas { display: flex; flex-direction: column; gap: 2px; }
+.ens-pasada {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 3px 8px; border-radius: 5px; font-size: 13px;
+}
+/* con cantante se destaca: es la parte del ensayo que tiene horario y
+   no se puede correr, y de un vistazo hay que ver dónde empieza */
+.ens-pasada.con { background: var(--acc-tinte); }
+.ens-hora-txt { font-family: var(--mono); color: var(--txt-3); font-size: 12px; min-width: 44px; }
+.ens-pasada-tit { flex: 1; min-width: 0; }
+.ens-veces { font-family: var(--mono); font-size: 11px; color: var(--txt-3); }
+.ens-con { color: var(--acc-2); font-weight: 550; font-size: 12px; }
+
+.ens-min { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--txt-3); }
+.ens-min input { width: 62px; }
+.ens-acciones { display: flex; align-items: center; gap: 14px; margin-top: 20px; flex-wrap: wrap; }
+.ens-acciones .dim { font-size: 12px; max-width: 460px; }
+
+.ens-jams { display: flex; flex-direction: column; gap: 6px; max-width: 560px; }
+.ens-jam {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 14px;
+  padding: 11px 14px; border: 1px solid var(--linea); border-radius: 8px;
+  text-decoration: none; color: inherit;
+}
+.ens-jam:hover { border-color: var(--acc); background: var(--hover); }
+
+@media (max-width: 720px) {
+  .ens-tema { flex-wrap: wrap; }
+  .ens-estados { width: 100%; }
+  .ens-est { flex: 1; }
+}

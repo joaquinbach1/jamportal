@@ -27,6 +27,7 @@ import { puestosOcupados, iconoDe, formacionPorDefecto } from '../musicos.js';
 import { agenda, duracionLinda, largoLindo, horaMas } from '../duracion.js';
 import { linkSpotify } from '../spotify.js';
 import { notaDe } from '../notas.js';
+import { estaListo } from '../ensayada.js';
 import { anotarIdea } from './ideas.js';
 import { dialogoCancion } from './song-form.js';
 import { songAutocomplete } from '../ui.js';
@@ -330,12 +331,12 @@ export function vistaMovil(jamId) {
       /* Qué se ensayó es de ESTA jam: se marca acá y la fila queda verde.
          La próxima jam arranca en blanco, como un ensayo de verdad. */
       editable() && alternarEnsayada
-        ? { icono: f.ensayada ? '↺' : '✅',
-            texto: f.ensayada ? 'Ensayada ✓ — desmarcarla' : 'La ensayamos — marcarla',
+        ? { icono: estaListo(f) ? '↺' : '✅',
+            texto: estaListo(f) ? 'Ensayada ✓ — desmarcarla' : 'La ensayamos — marcarla',
             onClick: () => {
               alternarEnsayada();
               guardar(); pintar();
-              toast(f.ensayada ? `«${s.titulo}» sin ensayar` : `«${s.titulo}» ensayada ✓`, 'ok');
+              toast(estaListo(f) ? `«${s.titulo}» sin ensayar` : `«${s.titulo}» ensayada ✓`, 'ok');
             } }
         : null,
       /* Quién canta es de esta jam, no del tema: se guarda en el ítem del
@@ -1209,7 +1210,7 @@ export function vistaMovil(jamId) {
 
     const instr = verInstrumentos() && s ? instrumentosDe(f, s) : null;
 
-    return h('div.mv-fila' + (f.ensayada ? '.ensayada' : ''), {
+    return h('div.mv-fila' + (estaListo(f) ? '.ensayada' : ''), {
       onclick: e => {
         if (e.target.closest('.mv-handle')) return;
         if (performance.now() - finArrastre < 300) return;
@@ -1427,7 +1428,7 @@ export function vistaMovil(jamId) {
               },
             } : null,
             v => { jam.items[pos].songs[k].cantantes = v; },
-            () => { const x = jam.items[pos].songs[k]; x.ensayada = !x.ensayada; }),
+            () => { const x = jam.items[pos].songs[k]; x.ensayada = estaListo(x) ? 'no' : 'listo'; }),
           })))));
         return;
       }
@@ -1437,7 +1438,7 @@ export function vistaMovil(jamId) {
         alTocar: () => hojaTema(f, puedeTocar()
           ? { texto: 'Sacar de la lista', hacer: quitar } : null,
           v => { jam.items[pos].cantantes = v; },
-          () => { const x = jam.items[pos]; x.ensayada = !x.ensayada; }),
+          () => { const x = jam.items[pos]; x.ensayada = estaListo(x) ? 'no' : 'listo'; }),
       })));
     });
     cont.appendChild(lista);
