@@ -19,11 +19,14 @@
    así se ve de un vistazo por dónde va la noche sin perder el
    renglón. Se guarda en este equipo, no en la base: es cómo va
    siguiendo la lista quien la mira, no un dato de la banda.
+
+   La nota técnica sí va a la base, y es una tercera nota: no es
+   la de la banda ni la de cada uno. Acá se anota lo que pasa
+   fuera del escenario.
    ============================================================ */
 
 import { store } from '../store.js';
 import { h, clear, poner, toast, fechaLinda, copiar, modal } from '../ui.js';
-import { notaDe, ponerNota } from '../notas.js';
 
 /* Los que ya pasaron, por jam. Se guardan por número y no por tema: es
    una marca de por dónde va la lista esta noche, y si mañana se
@@ -88,7 +91,7 @@ function renglones(jam) {
           vientos: !!(s && s.vientos),
           cantantes: (ms.cantantes || []).join(', '),
           musicos: ms.musicos,
-          notas: ms.notas || '',
+          nota: ms.notaTecnica || '',
         });
       }
       return;
@@ -104,7 +107,7 @@ function renglones(jam) {
       vientos: !!(s && s.vientos),
       cantantes: (it.cantantes || []).join(', '),
       musicos: it.musicos,
-      notas: it.notas || '',
+      nota: it.notaTecnica || '',
     });
   });
 
@@ -130,11 +133,12 @@ function renglones(jam) {
 /** La planilla en texto, con tabulaciones: se pega en una hoja de cálculo. */
 function comoTexto(jam, filas) {
   const L = [[jam.nombre || 'Jam', ...COLUMNAS.map(c => c.titulo)].join('\t')];
-  L[0] = ['#', 'Tema', 'Canta', ...COLUMNAS.map(c => c.titulo)].join('\t');
+  L[0] = ['#', 'Tema', 'Canta', ...COLUMNAS.map(c => c.titulo), 'Nota técnica'].join('\t');
   for (const r of filas) {
     if (r.tipo === 'corte') { L.push('', r.texto); continue; }
     L.push([r.n || '', r.titulo, r.cantantes || '',
-      ...COLUMNAS.map(c => nombreEn(r.musicos, c.clave) || '—')].join('\t'));
+      ...COLUMNAS.map(c => nombreEn(r.musicos, c.clave) || '—'),
+      (r.nota || '').replace(/\n/g, ' ')].join('\t'));
   }
   return L.join('\n');
 }
@@ -164,52 +168,50 @@ export function vistaTecnica(jamId) {
   };
 
   /* ============================================================
-     Las notas del tema, desde la planilla
+     La nota técnica
      ------------------------------------------------------------
-     Las mismas dos de siempre: la de la banda va en el ítem y
-     viaja a la base con la jam; la tuya en la tabla de notas, con
-     tu mail. Se escriben desde acá porque acá es donde se está
-     mirando la lista entera antes de tocar.
+     Es una tercera nota, distinta de las dos que ya había, y por
+     eso vive en su propia columna:
+
+       la de la banda    lo musical, «corte seco al final»
+       la tuya           la de cada uno, con su mail
+       esta              lo que pasa fuera del escenario: canal
+                         del saxo, monitores, luces, playback
+
+     Meterlas en la misma era perder las dos. Quien lee la
+     planilla técnica no quiere leer «entro en el segundo
+     estribillo», y quien canta no quiere leer «monitor 3 al 60».
      ============================================================ */
   function dialogoNota(r) {
-    const it = traer(r);
-    const publica = h('textarea', {
-      value: (it || {}).notas || '',
-      placeholder: 'Corte al final · entra el saxo en el segundo estribillo…',
-      style: { minHeight: '90px' },
-    });
-    const mia = h('textarea', {
-      value: notaDe(jamId, r.songId),
-      placeholder: 'Ojo con el corte · subir el bajo acá…',
-      style: { minHeight: '90px' },
+    const area = h('textarea', {
+      value: (traer(r) || {}).notaTecnica || '',
+      placeholder: 'Saxo por el canal 7 · monitores arriba en el estribillo · arranca a oscuras…',
+      style: { minHeight: '110px' },
     });
 
     const m = modal({
-      title: `Notas de « ${r.titulo} »`,
+      title: `Nota técnica de « ${r.titulo} »`,
       body: [
-        h('div.nota-bloque', {},
-          h('div.nota-cab', {}, h('b', {}, '📣 Para todos'),
-            h('span.dim', {}, 'la ve toda la banda')),
-          publica),
-        h('div.nota-bloque', {},
-          h('div.nota-cab', {}, h('b', {}, '🔒 Solo para vos'),
-            h('span.dim', {}, 'nadie más la ve')),
-          mia),
+        h('div.method-hint', {},
+          'Lo que hay que hacer fuera del escenario. La ve toda la banda y ',
+          'sale impresa en la planilla, debajo del título.'),
+        h('div', { style: { marginTop: '12px' } }, area),
       ],
       footer: [
         h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
         h('button.btn.primary', {
           onclick: () => {
-            ponerNota(jamId, r.songId, mia.value.trim());
-            const vivo = traer(r);
-            if (vivo) { vivo.notas = publica.value.trim(); r.notas = vivo.notas; store.commit(); }
+            /* El ítem se busca recién ahora: entre que se abrió la
+               ventana y se aprieta Guardar pudo entrar una sync. */
+            const it = traer(r);
+            if (it) { it.notaTecnica = area.value.trim(); r.nota = it.notaTecnica; store.commit(); }
             m.close(); pintar();
-            toast('Guardado', 'ok');
+            toast(area.value.trim() ? 'Nota guardada' : 'Nota borrada', 'ok');
           },
         }, 'Guardar'),
       ],
     });
-    setTimeout(() => publica.focus(), 60);
+    setTimeout(() => area.focus(), 60);
   }
 
   function tabla() {
@@ -233,14 +235,11 @@ export function vistaTecnica(jamId) {
             pintar();
           },
         });
-        const mia = notaDe(jamId, r.songId);
-        const hay = !!(r.notas || mia);
+        const hay = !!r.nota;
         return poner(tr,
           h('td.tec-nota', {},
             h('button.tec-nota-btn' + (hay ? '.tiene' : ''), {
-              title: hay
-                ? [r.notas ? `Para todos: ${r.notas}` : '', mia ? `Tuya: ${mia}` : ''].filter(Boolean).join('\n')
-                : 'Escribir una nota',
+              title: hay ? r.nota : 'Escribir una nota técnica',
               /* sin esto el clic también marcaría el tema como pasado */
               onclick: e => { e.stopPropagation(); dialogoNota(r); },
             }, '📝')),
@@ -248,7 +247,7 @@ export function vistaTecnica(jamId) {
           h('td.tec-tema', {},
             r.titulo,
             /* En papel el ícono no dice nada: ahí va el texto. */
-            r.notas ? h('span.tec-nota-papel', {}, r.notas) : null,
+            r.nota ? h('span.tec-nota-papel', {}, r.nota) : null,
             /* El tema pide vientos pero el puesto está vacío: eso es un
                agujero de la planilla, no un dato de color. */
             r.vientos && !nombreEn(r.musicos, 'saxo')

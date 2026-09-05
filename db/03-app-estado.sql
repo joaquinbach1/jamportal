@@ -12,8 +12,8 @@
 -- la comparación de cambios del driver no vea diferencias falsas.
 --
 -- Este archivo está al día con las columnas de las migraciones
--- (db/13, db/14, db/20, db/21, db/22): correrlas primero, y esto
--- después.
+-- (db/13, db/14, db/20, db/21, db/22, db/26, db/27): correrlas
+-- primero, y esto después.
 --
 -- `musicos` sale tanto en el tema suelto como en cada tema de un
 -- medley: la columna es la misma, son todos setlist_item.
@@ -161,6 +161,7 @@ select jsonb_build_object(
                                  'notas',     h.notas,
                                  'musicos',   h.musicos,
                                  'ensayada',  h.ensayada,
+                                 'notaTecnica', h.nota_tecnica,
                                  'cantantes', cantantes_de(h.id)
                                ) order by h.orden), '[]'::jsonb)
                                from setlist_item h where h.parent_id = i.id))
@@ -169,6 +170,7 @@ select jsonb_build_object(
                      'tipo', 'song', 'songId', i.song_id, 'notas', i.notas,
                      'musicos', i.musicos,
                      'ensayada', i.ensayada,
+                     'notaTecnica', i.nota_tecnica,
                      'cantantes', cantantes_de(i.id))
 
                  end as item

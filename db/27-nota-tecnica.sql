@@ -1,0 +1,33 @@
+-- ============================================================
+-- JAM PORTAL — la nota técnica
+-- ------------------------------------------------------------
+-- Una tercera nota por tema, y es tercera a propósito: las que
+-- ya había son de otra cosa.
+--
+--   notas          lo musical, para toda la banda: «corte seco
+--                  al final», «lo bajamos medio tono»
+--   nota (tabla)   la de cada uno, con su mail
+--   nota_tecnica   esto: lo que pasa fuera del escenario —canal
+--                  del saxo, monitores, luces, playback
+--
+-- Mezclarlas en una sola era perder las dos: la planilla técnica
+-- se lee buscando otra cosa que la lista de temas, y quien la
+-- mira no quiere leer «entro en el segundo estribillo».
+--
+-- Va en el ítem del setlist, como las otras: es de ESTA jam. La
+-- próxima arranca limpia.
+--
+-- Es idempotente: correrlo dos veces no rompe nada.
+--
+-- Después de esto, las funciones que la mueven:
+--
+--   psql "$CONN" -v ON_ERROR_STOP=1 -f db/03-app-estado.sql
+--   psql "$CONN" -v ON_ERROR_STOP=1 -f db/06-concurrencia.sql
+--
+-- db/04 también la nombra, pero su guardar_jam lo reemplaza
+-- db/06: alcanza con esa, y así no hay que volver a cerrar los
+-- permisos que db/04 abre al dropear sus funciones.
+-- ============================================================
+
+alter table setlist_item
+  add column if not exists nota_tecnica text not null default '';

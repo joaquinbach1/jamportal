@@ -264,12 +264,13 @@ begin
   for it in select * from jsonb_array_elements(coalesce(j->'items', '[]')) loop
     iid := gen_random_uuid();
     insert into setlist_item (id, jam_id, parent_id, orden, tipo, song_id,
-                              titulo, label, minutos, notas, musicos, ensayada)
+                              titulo, label, minutos, notas, musicos, ensayada, nota_tecnica)
     values (iid, j->>'id', null, pos, (it->>'tipo')::tipo_item,
             nullif(it->>'songId', ''), it->>'titulo', it->>'label',
             nullif(it->>'minutos', '')::smallint, coalesce(it->>'notas', ''),
             coalesce(it->'musicos', '{}'::jsonb),
-            coalesce(nullif(it->>'ensayada', ''), 'no'));
+            coalesce(nullif(it->>'ensayada', ''), 'no'),
+            coalesce(it->>'notaTecnica', ''));
 
     insert into item_cantante (item_id, persona_id, orden)
     select iid, persona_id(x.v#>>'{}'), (x.nn - 1)::smallint
@@ -279,11 +280,12 @@ begin
     kpos := 0;
     for sub in select * from jsonb_array_elements(coalesce(it->'songs', '[]')) loop
       insert into setlist_item (id, jam_id, parent_id, orden, tipo, song_id,
-                                notas, musicos, ensayada)
+                                notas, musicos, ensayada, nota_tecnica)
       values (gen_random_uuid(), j->>'id', iid, kpos, 'song',
               nullif(sub->>'songId', ''), coalesce(sub->>'notas', ''),
               coalesce(sub->'musicos', '{}'::jsonb),
-              coalesce(nullif(sub->>'ensayada', ''), 'no'))
+              coalesce(nullif(sub->>'ensayada', ''), 'no'),
+              coalesce(sub->>'notaTecnica', ''))
       returning id into eid;
 
       insert into item_cantante (item_id, persona_id, orden)
