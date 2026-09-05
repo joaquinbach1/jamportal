@@ -1813,6 +1813,10 @@ export function vistaEditor(jamId) {
       title: 'Minimalist view — la lista liviana, la del celular',
       onclick: () => { location.hash = `#/jams/${jam.id}/lista`; },
     }, '▤ Minimalist'),
+    h('button.btn.sm.secundaria', {
+      title: 'La planilla técnica: un puesto por columna, para imprimir o pegar en el atril',
+      onclick: () => { location.hash = `#/tecnica/${jam.id}`; },
+    }, '⊞ Técnica'),
     h('button.btn.sm.secundaria', { onclick: () => copiar(comoTexto()) }, '📋 Copiar lista'),
     /* En el celular estos dos están en el ⋯, que arriba de 820px no existe:
        la barra de acciones es el único lugar donde se los ve con el mouse. */

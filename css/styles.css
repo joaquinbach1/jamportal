@@ -2970,3 +2970,66 @@ tr:hover .ens-x { opacity: .6; }
   width: 100%; font-size: 14px; line-height: 1.4; resize: vertical;
   min-height: 52px;
 }
+
+
+/* ============================================================
+   Vista técnica
+   ------------------------------------------------------------
+   Una planilla: un tema por renglón, un puesto por columna. Lo
+   que importa no es la grilla sino lo que resalta —la celda que
+   cambia respecto del tema de arriba—, así que el resto se
+   apaga a propósito.
+   ============================================================ */
+.tec-head { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.tec-head h1 { margin: 0; font-size: 22px; }
+.tec-head > div:nth-child(2) { flex: 1; min-width: 0; }
+.tec-head .dim { font-size: 12.5px; margin-top: 2px; }
+.tec-acciones { display: flex; gap: 8px; }
+
+/* La tabla es ancha por naturaleza: se desplaza sola en vez de apretar
+   las columnas hasta que los nombres no entren. */
+.tec-scroll { overflow-x: auto; border: 1px solid var(--linea); border-radius: 9px; }
+.tec-tabla { border-collapse: collapse; width: 100%; font-size: 13px; }
+.tec-tabla th, .tec-tabla td { padding: 6px 10px; text-align: left; white-space: nowrap; }
+.tec-tabla thead th {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--panel); color: var(--txt-3);
+  font-weight: 600; font-size: 11px; letter-spacing: .6px; text-transform: uppercase;
+  border-bottom: 1px solid var(--linea);
+}
+.tec-tabla tbody tr { border-bottom: 1px solid var(--line-soft); }
+.tec-tabla tbody tr:hover { background: var(--hover); }
+.tec-n { color: var(--txt-3); font-family: var(--mono); font-size: 11px; width: 34px; }
+.tec-tema { font-weight: 550; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.tec-tabla tr.dentro .tec-tema { padding-left: 26px; font-weight: 400; }
+/* lo que no cambió: presente, pero fuera del camino */
+.tec-tabla td { color: var(--txt-2); }
+.tec-tabla td.vacio { color: var(--txt-3); }
+
+/* el cambio, que es a lo que se viene a esta pantalla */
+.tec-tabla td.cambia {
+  background: var(--acc-tinte); color: var(--txt); font-weight: 650;
+  box-shadow: inset 2px 0 0 var(--acc);
+}
+
+.tec-corte td {
+  background: var(--panel); color: var(--txt-3);
+  font-size: 10.5px; letter-spacing: 2px; font-weight: 700;
+  padding: 5px 10px;
+}
+.tec-falta { margin-left: 6px; opacity: .8; }
+
+.tec-pie { font-size: 12px; color: var(--txt-3); margin-top: 12px; }
+.tec-muestra {
+  background: var(--acc-tinte); color: var(--txt); font-weight: 650;
+  box-shadow: inset 2px 0 0 var(--acc); padding: 1px 7px; border-radius: 3px;
+}
+
+/* Impresa es una hoja para el atril: sin cromo y con la grilla marcada,
+   que en papel el color de fondo casi no se ve. */
+@media print {
+  .tec-head .tec-acciones, .tec-head .btn { display: none; }
+  .tec-scroll { overflow: visible; border: 0; }
+  .tec-tabla th, .tec-tabla td { border: 1px solid #bbb; }
+  .tec-tabla td.cambia { background: #eee !important; color: #000; }
+}

@@ -12,6 +12,10 @@
    Después ofrece a los suplentes de ESE puesto —no la banda
    entera— más "Invitado", para el que cae esa noche.
 
+   La percu es la excepción: no tiene titular. Es el puesto que de
+   verdad cambia de tema en tema, así que arranca pidiendo nombre
+   en vez de suponerlo.
+
    Se guarda en el ítem de la lista y no en el tema: quién agarra
    qué es cosa de esta jam, no del tema para siempre.
    ============================================================ */
@@ -27,6 +31,7 @@ export const PUESTOS = [
   { clave: 'g2',   label: 'G2',   ico: '🎸', titular: 'Nano',  solo: true, gente: ['Tomi', 'Nano', 'Peter', 'Ale', 'Cacho'] },
   { clave: 'bajo', label: 'Bajo', ico: BAJO, titular: 'Nahue',             gente: ['Nahue', 'Charly'] },
   { clave: 'bat',  label: 'Bat',  ico: '🥁', titular: 'Joaco',             gente: ['Joaco', 'Fede', 'Fabo'] },
+  { clave: 'percu', label: 'Percu', ico: '🪘', titular: '',                gente: ['Fede', 'Fabo'] },
   { clave: 't1',   label: 'T1',   ico: '🎹', titular: 'Mati',              gente: ['Mati'] },
   { clave: 't2',   label: 'T2',   ico: '🎹', titular: 'Alva',              gente: ['Alva'] },
   { clave: 'saxo', label: 'Saxo', ico: '🎷', titular: 'Fede',              gente: ['Fede'] },

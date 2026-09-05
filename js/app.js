@@ -15,6 +15,7 @@ import { vistaLyrics, vistaLetrasCompartidas } from './views/lyrics.js';
 import { desempaquetar } from './compartir.js';
 import { vistaSongs }   from './views/songs.js';
 import { vistaEnsayosAdmin } from './views/ensayos-admin.js';
+import { vistaTecnica } from './views/tecnica.js';
 import { vistaIdeas }   from './views/ideas.js';
 import { vistaSingers } from './views/singers.js';
 import { vistaStats }   from './views/stats.js';
@@ -37,6 +38,7 @@ const RUTAS = [
      sin abrir el editor entero. */
   [/^\/jams\/(.+)\/editar$/, (m) => vistaEditor(m[1]), 'jams'],
   [/^\/jams\/(.+)\/lista$/,  (m) => vistaMovil(m[1]),  'jams'],
+  [/^\/tecnica\/(.+)$/,     (m) => vistaTecnica(m[1]), 'jams'],
   [/^\/jams\/(.+)$/, (m) => (enCelular() ? vistaMovil(m[1]) : vistaEditor(m[1])), 'jams'],
   [/^\/jams$/,       () => vistaJams(),        'jams'],
   [/^\/nueva$/,      () => vistaNueva(),       'jams'],  // sin ítem propio: se llega desde Jams
