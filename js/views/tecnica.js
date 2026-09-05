@@ -22,7 +22,8 @@
    ============================================================ */
 
 import { store } from '../store.js';
-import { h, clear, poner, toast, fechaLinda, copiar } from '../ui.js';
+import { h, clear, poner, toast, fechaLinda, copiar, modal } from '../ui.js';
+import { notaDe, ponerNota } from '../notas.js';
 
 /* Los que ya pasaron, por jam. Se guardan por número y no por tema: es
    una marca de por dónde va la lista esta noche, y si mañana se
@@ -69,9 +70,9 @@ const nombreEn = (musicos, clave) => {
 function renglones(jam) {
   const out = [];
   let n = 0;
-  for (const it of jam.items || []) {
-    if (it.tipo === 'bloque') { out.push({ tipo: 'corte', texto: (it.label || 'BLOQUE').toUpperCase() }); continue; }
-    if (it.tipo === 'break') { out.push({ tipo: 'corte', texto: `BREAK ${it.minutos || ''}′`.trim() }); continue; }
+  (jam.items || []).forEach((it, i) => {
+    if (it.tipo === 'bloque') { out.push({ tipo: 'corte', texto: (it.label || 'BLOQUE').toUpperCase() }); return; }
+    if (it.tipo === 'break') { out.push({ tipo: 'corte', texto: `BREAK ${it.minutos || ''}′`.trim() }); return; }
 
     if (it.tipo === 'medley') {
       /* El medley encabeza pero no se lleva un número: los números son
@@ -81,27 +82,31 @@ function renglones(jam) {
         const s = store.song(ms.songId);
         n++;
         out.push({
-          tipo: 'tema', dentro: true, n,
+          tipo: 'tema', dentro: true, n, i, k: (it.songs || []).indexOf(ms),
+          songId: ms.songId,
           titulo: s ? s.titulo : '(tema borrado)',
           vientos: !!(s && s.vientos),
           cantantes: (ms.cantantes || []).join(', '),
           musicos: ms.musicos,
+          notas: ms.notas || '',
         });
       }
-      continue;
+      return;
     }
 
-    if (it.tipo !== 'song') continue;
+    if (it.tipo !== 'song') return;
     n++;
     const s = store.song(it.songId);
     out.push({
-      tipo: 'tema', n,
+      tipo: 'tema', n, i, k: null,
+      songId: it.songId,
       titulo: s ? s.titulo : '(tema borrado)',
       vientos: !!(s && s.vientos),
       cantantes: (it.cantantes || []).join(', '),
       musicos: it.musicos,
+      notas: it.notas || '',
     });
-  }
+  });
 
   /* Marcar los cambios. Se compara contra el tema anterior de verdad,
      salteando bloques y breaks: un break no cambia quién toca. El
@@ -148,9 +153,69 @@ export function vistaTecnica(jamId) {
   const pasados = pasadosDe(jamId);
   const cont = h('div.tec');
 
+  /* El ítem se busca contra el store al momento de escribir, no al de
+     dibujar: entre que se abre la ventana y se guarda pudo entrar una
+     sincronización, y el store reemplaza las jams por objetos nuevos. */
+  const alDia = () => store.jam(jamId) || jam;
+  const traer = r => {
+    const it = (alDia().items || [])[r.i];
+    if (!it) return null;
+    return r.k == null ? it : (it.songs || [])[r.k];
+  };
+
+  /* ============================================================
+     Las notas del tema, desde la planilla
+     ------------------------------------------------------------
+     Las mismas dos de siempre: la de la banda va en el ítem y
+     viaja a la base con la jam; la tuya en la tabla de notas, con
+     tu mail. Se escriben desde acá porque acá es donde se está
+     mirando la lista entera antes de tocar.
+     ============================================================ */
+  function dialogoNota(r) {
+    const it = traer(r);
+    const publica = h('textarea', {
+      value: (it || {}).notas || '',
+      placeholder: 'Corte al final · entra el saxo en el segundo estribillo…',
+      style: { minHeight: '90px' },
+    });
+    const mia = h('textarea', {
+      value: notaDe(jamId, r.songId),
+      placeholder: 'Ojo con el corte · subir el bajo acá…',
+      style: { minHeight: '90px' },
+    });
+
+    const m = modal({
+      title: `Notas de « ${r.titulo} »`,
+      body: [
+        h('div.nota-bloque', {},
+          h('div.nota-cab', {}, h('b', {}, '📣 Para todos'),
+            h('span.dim', {}, 'la ve toda la banda')),
+          publica),
+        h('div.nota-bloque', {},
+          h('div.nota-cab', {}, h('b', {}, '🔒 Solo para vos'),
+            h('span.dim', {}, 'nadie más la ve')),
+          mia),
+      ],
+      footer: [
+        h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
+        h('button.btn.primary', {
+          onclick: () => {
+            ponerNota(jamId, r.songId, mia.value.trim());
+            const vivo = traer(r);
+            if (vivo) { vivo.notas = publica.value.trim(); r.notas = vivo.notas; store.commit(); }
+            m.close(); pintar();
+            toast('Guardado', 'ok');
+          },
+        }, 'Guardar'),
+      ],
+    });
+    setTimeout(() => publica.focus(), 60);
+  }
+
   function tabla() {
     return h('table.tec-tabla', {},
       h('thead', {}, h('tr', {},
+        h('th.tec-nota', {}, ''),
         h('th.tec-n', {}, '#'),
         h('th.tec-tema', {}, 'Tema'),
         h('th', {}, 'Canta'),
@@ -158,7 +223,7 @@ export function vistaTecnica(jamId) {
 
       h('tbody', {}, filas.map(r => {
         if (r.tipo === 'corte') {
-          return h('tr.tec-corte', {}, h('td', { colSpan: 3 + COLUMNAS.length }, r.texto));
+          return h('tr.tec-corte', {}, h('td', { colSpan: 4 + COLUMNAS.length }, r.texto));
         }
         const tr = h('tr' + (r.dentro ? '.dentro' : '') + (pasados.has(r.n) ? '.pasado' : ''), {
           title: pasados.has(r.n) ? 'Ya pasó — tocá para desmarcarlo' : 'Tocá cuando el tema ya pasó',
@@ -168,10 +233,22 @@ export function vistaTecnica(jamId) {
             pintar();
           },
         });
+        const mia = notaDe(jamId, r.songId);
+        const hay = !!(r.notas || mia);
         return poner(tr,
+          h('td.tec-nota', {},
+            h('button.tec-nota-btn' + (hay ? '.tiene' : ''), {
+              title: hay
+                ? [r.notas ? `Para todos: ${r.notas}` : '', mia ? `Tuya: ${mia}` : ''].filter(Boolean).join('\n')
+                : 'Escribir una nota',
+              /* sin esto el clic también marcaría el tema como pasado */
+              onclick: e => { e.stopPropagation(); dialogoNota(r); },
+            }, '📝')),
           h('td.tec-n', {}, r.n || ''),
           h('td.tec-tema', {},
             r.titulo,
+            /* En papel el ícono no dice nada: ahí va el texto. */
+            r.notas ? h('span.tec-nota-papel', {}, r.notas) : null,
             /* El tema pide vientos pero el puesto está vacío: eso es un
                agujero de la planilla, no un dato de color. */
             r.vientos && !nombreEn(r.musicos, 'saxo')

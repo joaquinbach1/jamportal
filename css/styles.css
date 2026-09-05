@@ -3000,6 +3000,20 @@ tr:hover .ens-x { opacity: .6; }
 .tec-tabla tbody tr { border-bottom: 1px solid var(--line-soft); }
 .tec-tabla tbody tr:hover { background: var(--hover); }
 .tec-n { color: var(--txt-3); font-family: var(--mono); font-size: 11px; width: 34px; }
+
+/* La nota: apagada casi siempre, encendida cuando hay algo escrito. Es
+   una columna angosta a la izquierda del número, así se recorre la
+   lista de arriba a abajo y se ve dónde hay algo anotado. */
+.tec-nota { width: 30px; padding-right: 0 !important; }
+.tec-nota-btn {
+  background: none; border: 0; cursor: pointer; padding: 2px 4px;
+  font-size: 13px; line-height: 1;
+  opacity: .22; filter: grayscale(1);
+  transition: opacity .12s, filter .12s;
+}
+.tec-nota-btn:hover { opacity: .7; filter: none; }
+.tec-nota-btn.tiene { opacity: 1; filter: none; }
+.tec-nota-papel { display: none; }
 .tec-tema { font-weight: 550; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
 .tec-tabla tr.dentro .tec-tema { padding-left: 26px; font-weight: 400; }
 /* lo que no cambió: presente, pero fuera del camino */
@@ -3018,6 +3032,7 @@ tr:hover .ens-x { opacity: .6; }
 .tec-tabla tbody tr { cursor: pointer; }
 .tec-tabla tbody tr.pasado td { color: var(--txt-3); }
 .tec-tabla tbody tr.pasado .tec-tema { text-decoration: line-through; text-decoration-thickness: 1px; }
+.tec-tabla tbody tr.pasado .tec-nota-btn { opacity: .22; filter: grayscale(1); }
 .tec-tabla tbody tr.pasado td.cambia {
   background: none; color: var(--txt-3); font-weight: 400;
   box-shadow: inset 2px 0 0 var(--linea);
@@ -3046,4 +3061,11 @@ tr:hover .ens-x { opacity: .6; }
   .tec-tabla th, .tec-tabla td { border: 1px solid #bbb; }
   .tec-tabla td.cambia { background: #eee !important; color: #000; }
   .tec-tabla tbody tr.pasado td { color: #888; }
+  /* el ícono no se imprime; la nota, sí, que es para lo que está la hoja */
+  .tec-nota { display: none; }
+  .tec-nota-papel {
+    display: block; font-weight: 400; font-size: 10px; color: #444;
+    white-space: normal; margin-top: 2px;
+  }
+  .tec-tema { white-space: normal; }
 }
