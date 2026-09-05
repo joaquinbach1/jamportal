@@ -452,94 +452,46 @@ export function vistaEditor(jamId) {
     return m;
   }
 
-  /* ---------- cerrar / reabrir con código ---------- */
+  /* ============================================================
+     Cerrar y volver a abrir
+     ------------------------------------------------------------
+     Cerrar congela la lista para pasarla en vivo. Antes pedía un
+     código para reabrirla, y no funcionaba: la base devuelve el
+     código enmascarado —«·····», nunca el real— así que la
+     comparación del cliente no podía dar bien salvo en la misma
+     sesión en la que se había cerrado.
 
-  /** Cerrarla: queda lista para el vivo y nadie la toca sin el código. */
-  /** Cierra sin preguntar nada: ya sabemos con qué código. */
-  function cerrarCon(cod) {
+     Se podría haber arreglado moviendo la verificación al
+     servidor, pero no valía la pena: el candado no está para
+     defenderse de nadie, está para que no se toque algo sin
+     querer con el teléfono en el bolsillo. Para eso alcanza con
+     preguntar.
+     ============================================================ */
+
+  async function dialogoCerrar() {
+    if (!await confirmar(
+      'La lista queda como está para pasarla en vivo: no se van a poder agregar, ' +
+      'sacar ni reordenar temas, ni cambiar los datos. Se puede volver a abrir cuando quieras.',
+      { titulo: 'Cerrar la jam', okText: '🔒 Cerrar jam' })) return;
+
     jam.cerrada = true;
-    jam.codigo = cod;
+    /* El código viejo se va con ella: ya no lo mira nadie, y dejarlo
+       escrito haría creer que todavía hace falta. */
+    jam.codigo = '';
     store.commit();
     desbloqueadas.delete(jam.id);
     refrescar();
     toast('Jam cerrada — lista para el vivo', 'ok');
   }
 
-  function dialogoCerrar() {
-    /* Si ya la habías cerrado antes, lo más común es volver a cerrarla
-       con el mismo código: no te lo hacemos escribir de nuevo. */
-    if (jam.codigo) {
-      const m = modal({
-        title: 'Cerrar la jam',
-        body: [h('div.method-hint', {},
-          'Ya tiene un código de antes. Podés cerrarla con ese mismo, o poner uno nuevo.')],
-        footer: [
-          h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
-          h('button.btn.sm', { onclick: () => { m.close(); jam.codigo = ''; dialogoCerrar(); } }, 'Con otro código'),
-          h('button.btn.primary', { onclick: () => { m.close(); cerrarCon(jam.codigo); } }, '🔒 Con el mismo'),
-        ],
-      });
-      return;
-    }
+  async function desbloquear() {
+    if (!await confirmar(
+      'Está cerrada para pasarla en vivo. Si la abrís vas a poder cambiar la lista.',
+      { titulo: '¿Desbloquear la jam?', okText: 'Sí, desbloquear' })) return;
 
-    const fCod = input({ placeholder: 'Ej: 1234', maxLength: 20 });
-    const fCod2 = input({ placeholder: 'Repetilo', maxLength: 20 });
-    const m = modal({
-      title: 'Cerrar la jam',
-      body: [
-        h('div.method-hint', {},
-          'La lista queda como está para pasarla en vivo: no se van a poder ',
-          'agregar, sacar ni reordenar temas, ni cambiar los datos. ',
-          h('b', {}, 'Para volver a editarla hay que poner este código'), ', así que ',
-          'elegí uno que se acuerde toda la banda.'),
-        h('div.grid-2', { style: { marginTop: '12px' } },
-          field('Código', fCod), field('Otra vez', fCod2)),
-      ],
-      footer: [
-        h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
-        h('button.btn.primary', {
-          onclick: () => {
-            const cod = fCod.value.trim();
-            if (cod.length < 3) { toast('Poné un código de al menos 3 caracteres', 'err'); fCod.focus(); return; }
-            if (cod !== fCod2.value.trim()) { toast('Los dos códigos no coinciden', 'err'); fCod2.focus(); return; }
-            m.close();
-            cerrarCon(cod);
-          },
-        }, '🔒 Cerrar jam'),
-      ],
-    });
-    setTimeout(() => fCod.focus(), 60);
-  }
-
-  /** Reabrirla: hay que saber el código con el que se cerró. */
-  function dialogoCodigo() {
-    const fCod = input({
-      placeholder: 'Código', maxLength: 20,
-      onkeydown: e => { if (e.key === 'Enter') { e.preventDefault(); abrir(); } },
-    });
-    const abrir = () => {
-      if (fCod.value.trim() !== (jam.codigo || '')) {
-        toast('Código incorrecto', 'err');
-        fCod.select();
-        return;
-      }
-      desbloqueadas.add(jam.id);
-      m.close();
-      refrescar();
-      toast('Jam desbloqueada', '');
-    };
-    const m = modal({
-      title: 'Desbloquear la jam',
-      body: [
-        h('div.method-hint', {}, 'Está cerrada para pasarla en vivo. Poné el código con el que se cerró.'),
-        h('div', { style: { marginTop: '12px' } }, field('Código', fCod)),
-      ],
-      footer: [
-        h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
-        h('button.btn.primary', { onclick: abrir }, '🔓 Desbloquear'),
-      ],
-    });
-    setTimeout(() => fCod.focus(), 60);
+    desbloqueadas.add(jam.id);
+    refrescar();
+    toast('Jam desbloqueada', '');
   }
 
   /* ---------- contenedores ---------- */
@@ -1308,10 +1260,10 @@ export function vistaEditor(jamId) {
       sidePanel.append(
         h('h2.sec', {}, 'Jam cerrada'),
         h('div.method-hint', {},
-          'La lista está congelada para pasarla en vivo. Para volver a editarla ',
-          'hace falta el código con el que se cerró.'),
+          'La lista está congelada para pasarla en vivo. Se puede desbloquear ',
+          'cuando quieras — te va a preguntar antes, para que no pase de casualidad.'),
         h('button.btn.primary', { style: { width: '100%', justifyContent: 'center' },
-          onclick: dialogoCodigo }, '🔓 Desbloquear con código'),
+          onclick: desbloquear }, '🔓 Desbloquear'),
         h('button.btn.ghost', { style: { width: '100%', justifyContent: 'center', marginTop: '8px' },
           onclick: () => { const j = store.duplicateJam(jam.id); if (j) { toast('Jam duplicada', 'ok'); location.hash = '#/jams/' + j.id; } } },
           '⧉ Duplicar para editar'));
@@ -1341,7 +1293,7 @@ export function vistaEditor(jamId) {
     /* abierta a mano: dejamos a mano también el volver a cerrarla */
     if (jam.historica || jam.cerrada) {
       sidePanel.append(h('div.method-hint', { style: { marginBottom: '10px' } },
-        jam.historica ? 'Estás editando una jam histórica. ' : 'Esta jam está cerrada y la abriste con el código. ',
+        jam.historica ? 'Estás editando una jam histórica. ' : 'Esta jam está cerrada y la desbloqueaste. ',
         h('a', { href: '#', onclick: e => {
           e.preventDefault();
           desbloqueadas.delete(jam.id);
@@ -1937,11 +1889,11 @@ export function vistaEditor(jamId) {
         h('p.sub', {}, bloqueada()
           ? (jam.historica
               ? 'Jam histórica: es el registro de lo que se tocó esa noche, así que está cerrada. Duplicala para usarla de base.'
-              : '🔒 Jam cerrada: la lista está congelada para el vivo. Para editarla hace falta el código.')
+              : '🔒 Jam cerrada: la lista está congelada para el vivo. Desbloqueala para editarla.')
           : jam.historica
             ? '🔓 Jam histórica desbloqueada: lo que cambies acá cambia el registro y las estadísticas.'
             : jam.cerrada
-              ? '🔓 Jam cerrada, abierta con el código: acordate de volver a cerrarla antes del vivo.'
+              ? '🔓 Jam cerrada y desbloqueada: acordate de volver a cerrarla antes del vivo.'
               : 'Armá la lista con cualquiera de los tres métodos del panel derecho.')),
       acciones),
 
