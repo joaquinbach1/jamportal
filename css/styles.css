@@ -2982,7 +2982,7 @@ tr:hover .ens-x { opacity: .6; }
    ============================================================ */
 .tec-head { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
 .tec-head h1 { margin: 0; font-size: 22px; }
-.tec-head > div:nth-child(2) { flex: 1; min-width: 0; }
+
 .tec-head .dim { font-size: 12.5px; margin-top: 2px; }
 .tec-acciones { display: flex; gap: 8px; }
 
@@ -3012,6 +3012,19 @@ tr:hover .ens-x { opacity: .6; }
   box-shadow: inset 2px 0 0 var(--acc);
 }
 
+/* El que ya pasó: se apaga entero, marcas de cambio incluidas. Durante
+   la jam lo que importa es lo que falta, y un renglón tachado que
+   sigue gritando en ámbar compite con el que viene. */
+.tec-tabla tbody tr { cursor: pointer; }
+.tec-tabla tbody tr.pasado td { color: var(--txt-3); }
+.tec-tabla tbody tr.pasado .tec-tema { text-decoration: line-through; text-decoration-thickness: 1px; }
+.tec-tabla tbody tr.pasado td.cambia {
+  background: none; color: var(--txt-3); font-weight: 400;
+  box-shadow: inset 2px 0 0 var(--linea);
+}
+.tec-tabla tbody tr.pasado:hover { background: var(--hover); }
+.tec-titulo { flex: 1; min-width: 0; }
+
 .tec-corte td {
   background: var(--panel); color: var(--txt-3);
   font-size: 10.5px; letter-spacing: 2px; font-weight: 700;
@@ -3032,4 +3045,5 @@ tr:hover .ens-x { opacity: .6; }
   .tec-scroll { overflow: visible; border: 0; }
   .tec-tabla th, .tec-tabla td { border: 1px solid #bbb; }
   .tec-tabla td.cambia { background: #eee !important; color: #000; }
+  .tec-tabla tbody tr.pasado td { color: #888; }
 }

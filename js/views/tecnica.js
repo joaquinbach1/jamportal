@@ -14,10 +14,33 @@
 
    Eso deja la hoja llena de gris con unas pocas marcas: exacto,
    esas pocas son el trabajo de la noche.
+
+   Y durante la jam se toca cada tema que ya pasó: queda apagado,
+   así se ve de un vistazo por dónde va la noche sin perder el
+   renglón. Se guarda en este equipo, no en la base: es cómo va
+   siguiendo la lista quien la mira, no un dato de la banda.
    ============================================================ */
 
 import { store } from '../store.js';
 import { h, clear, poner, toast, fechaLinda, copiar } from '../ui.js';
+
+/* Los que ya pasaron, por jam. Se guardan por número y no por tema: es
+   una marca de por dónde va la lista esta noche, y si mañana se
+   reordena la jam, la marca ya no quiere decir nada. Por eso también
+   está el botón de limpiar. */
+const CLAVE_PASADOS = 'jamportal.tecnica.pasados';
+
+function pasadosDe(jamId) {
+  try { return new Set(JSON.parse(localStorage.getItem(CLAVE_PASADOS) || '{}')[jamId] || []); }
+  catch { return new Set(); }
+}
+
+function guardarPasados(jamId, set) {
+  let todo = {};
+  try { todo = JSON.parse(localStorage.getItem(CLAVE_PASADOS) || '{}'); } catch { /* vacío */ }
+  if (set.size) todo[jamId] = [...set]; else delete todo[jamId];
+  try { localStorage.setItem(CLAVE_PASADOS, JSON.stringify(todo)); } catch { /* lleno */ }
+}
 
 /* El orden y los nombres son los de la planilla, no los de la app: acá
    se lee de corrido y «Bass» o «Drums» es como los nombra la banda. */
@@ -51,12 +74,14 @@ function renglones(jam) {
     if (it.tipo === 'break') { out.push({ tipo: 'corte', texto: `BREAK ${it.minutos || ''}′`.trim() }); continue; }
 
     if (it.tipo === 'medley') {
-      n++;
-      out.push({ tipo: 'corte', texto: `MEDLEY ${it.titulo || ''}`.trim(), n });
+      /* El medley encabeza pero no se lleva un número: los números son
+         de los temas, y adentro del medley se tocan uno por uno. */
+      out.push({ tipo: 'corte', texto: `MEDLEY ${it.titulo || ''}`.trim() });
       for (const ms of it.songs || []) {
         const s = store.song(ms.songId);
+        n++;
         out.push({
-          tipo: 'tema', dentro: true,
+          tipo: 'tema', dentro: true, n,
           titulo: s ? s.titulo : '(tema borrado)',
           vientos: !!(s && s.vientos),
           cantantes: (ms.cantantes || []).join(', '),
@@ -120,54 +145,81 @@ export function vistaTecnica(jamId) {
   const temas = filas.filter(r => r.tipo === 'tema');
   const conCambios = temas.filter(r => r.cuantosCambios > 0).length;
 
-  const tabla = h('table.tec-tabla', {},
-    h('thead', {}, h('tr', {},
-      h('th.tec-n', {}, '#'),
-      h('th.tec-tema', {}, 'Tema'),
-      h('th', {}, 'Canta'),
-      COLUMNAS.map(c => h('th', {}, c.titulo)))),
+  const pasados = pasadosDe(jamId);
+  const cont = h('div.tec');
 
-    h('tbody', {}, filas.map(r => {
-      if (r.tipo === 'corte') {
-        return h('tr.tec-corte', {}, h('td', { colSpan: 3 + COLUMNAS.length }, r.texto));
-      }
-      return h('tr' + (r.dentro ? '.dentro' : ''), {},
-        h('td.tec-n', {}, r.n || ''),
-        h('td.tec-tema', {},
-          r.titulo,
-          /* El tema pide vientos pero el puesto está vacío: eso es un
-             agujero de la planilla, no un dato de color. */
-          r.vientos && !nombreEn(r.musicos, 'saxo')
-            ? h('span.tec-falta', { title: 'Lleva vientos y no hay nadie puesto' }, '🎺') : null),
-        h('td' + (r.cambiaCanta ? '.cambia' : ''), {}, r.cantantes || '—'),
-        COLUMNAS.map(c => {
-          const nombre = nombreEn(r.musicos, c.clave);
-          return h('td' + (r.cambia[c.clave] ? '.cambia' : '') + (nombre ? '' : '.vacio'), {},
-            nombre || '—');
-        }));
-    })));
+  function tabla() {
+    return h('table.tec-tabla', {},
+      h('thead', {}, h('tr', {},
+        h('th.tec-n', {}, '#'),
+        h('th.tec-tema', {}, 'Tema'),
+        h('th', {}, 'Canta'),
+        COLUMNAS.map(c => h('th', {}, c.titulo)))),
 
-  return h('div.tec', {},
-    h('div.tec-head', {},
-      h('a.btn.sm', { href: `#/jams/${jam.id}/editar` }, '← Volver'),
-      h('div', {},
-        h('h1', {}, jam.nombre || 'Jam'),
-        h('div.dim', {}, [
-          jam.fecha ? fechaLinda(jam.fecha) : '',
-          `${temas.length} temas`,
-          conCambios ? `${conCambios} con cambio de músico` : 'sin cambios de músico',
-        ].filter(Boolean).join(' · '))),
-      h('div.tec-acciones', {},
-        h('button.btn.sm', {
-          onclick: () => { copiar(comoTexto(jam, filas)); toast('Copiada — se pega en una planilla', 'ok'); },
-        }, '📋 Copiar'),
-        h('button.btn.sm', { onclick: () => window.print() }, '🖨 Imprimir'))),
+      h('tbody', {}, filas.map(r => {
+        if (r.tipo === 'corte') {
+          return h('tr.tec-corte', {}, h('td', { colSpan: 3 + COLUMNAS.length }, r.texto));
+        }
+        const tr = h('tr' + (r.dentro ? '.dentro' : '') + (pasados.has(r.n) ? '.pasado' : ''), {
+          title: pasados.has(r.n) ? 'Ya pasó — tocá para desmarcarlo' : 'Tocá cuando el tema ya pasó',
+          onclick: () => {
+            if (pasados.has(r.n)) pasados.delete(r.n); else pasados.add(r.n);
+            guardarPasados(jamId, pasados);
+            pintar();
+          },
+        });
+        return poner(tr,
+          h('td.tec-n', {}, r.n || ''),
+          h('td.tec-tema', {},
+            r.titulo,
+            /* El tema pide vientos pero el puesto está vacío: eso es un
+               agujero de la planilla, no un dato de color. */
+            r.vientos && !nombreEn(r.musicos, 'saxo')
+              ? h('span.tec-falta', { title: 'Lleva vientos y no hay nadie puesto' }, '🎺') : null),
+          h('td' + (r.cambiaCanta ? '.cambia' : ''), {}, r.cantantes || '—'),
+          COLUMNAS.map(c => {
+            const nombre = nombreEn(r.musicos, c.clave);
+            return h('td' + (r.cambia[c.clave] ? '.cambia' : '') + (nombre ? '' : '.vacio'), {},
+              nombre || '—');
+          }));
+      })));
+  }
 
-    temas.length
-      ? h('div.tec-scroll', {}, tabla)
-      : h('div.empty', {}, h('b', {}, 'Esta jam no tiene temas todavía')),
+  function pintar() {
+    clear(cont);
+    poner(cont,
+      h('div.tec-head', {},
+        h('a.btn.sm', { href: `#/jams/${jam.id}/editar` }, '← Volver'),
+        h('div.tec-titulo', {},
+          h('h1', {}, jam.nombre || 'Jam'),
+          h('div.dim', {}, [
+            jam.fecha ? fechaLinda(jam.fecha) : '',
+            `${temas.length} temas`,
+            conCambios ? `${conCambios} con cambio de músico` : 'sin cambios de músico',
+            pasados.size ? `${pasados.size} ya pasaron` : '',
+          ].filter(Boolean).join(' · '))),
+        h('div.tec-acciones', {},
+          /* Limpiar solo aparece si hay algo que limpiar: el resto de las
+             noches el botón sería ruido. */
+          pasados.size
+            ? h('button.btn.sm', {
+                onclick: () => { pasados.clear(); guardarPasados(jamId, pasados); pintar(); },
+              }, '↺ Empezar de nuevo')
+            : null,
+          h('button.btn.sm', {
+            onclick: () => { copiar(comoTexto(jam, filas)); toast('Copiada — se pega en una planilla', 'ok'); },
+          }, '📋 Copiar'),
+          h('button.btn.sm', { onclick: () => window.print() }, '🖨 Imprimir'))),
 
-    h('p.tec-pie', {},
-      h('span.tec-muestra', {}, 'así'), ' se marca cuando alguien cambia respecto del tema anterior. ',
-      'El resto de la planilla es la misma formación de siempre.'));
+      temas.length
+        ? h('div.tec-scroll', {}, tabla())
+        : h('div.empty', {}, h('b', {}, 'Esta jam no tiene temas todavía')),
+
+      h('p.tec-pie', {},
+        h('span.tec-muestra', {}, 'así'), ' se marca cuando alguien cambia respecto del tema anterior. ',
+        'Tocá un renglón para apagarlo cuando el tema ya pasó.'));
+  }
+
+  pintar();
+  return cont;
 }
