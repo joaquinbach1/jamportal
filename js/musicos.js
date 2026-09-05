@@ -23,9 +23,9 @@ import { iconoBajo } from './ui.js';
 const BAJO = '@bajo';
 
 export const PUESTOS = [
-  { clave: 'g1',   label: 'G1',   ico: '🎸', titular: 'Tomi',  solo: true, gente: ['Tomi', 'Nano', 'Peter', 'Ale'] },
-  { clave: 'g2',   label: 'G2',   ico: '🎸', titular: 'Nano',  solo: true, gente: ['Tomi', 'Nano', 'Peter', 'Ale'] },
-  { clave: 'bajo', label: 'Bajo', ico: BAJO, titular: 'Nahue',             gente: ['Nahue'] },
+  { clave: 'g1',   label: 'G1',   ico: '🎸', titular: 'Tomi',  solo: true, gente: ['Tomi', 'Nano', 'Peter', 'Ale', 'Cacho'] },
+  { clave: 'g2',   label: 'G2',   ico: '🎸', titular: 'Nano',  solo: true, gente: ['Tomi', 'Nano', 'Peter', 'Ale', 'Cacho'] },
+  { clave: 'bajo', label: 'Bajo', ico: BAJO, titular: 'Nahue',             gente: ['Nahue', 'Charly'] },
   { clave: 'bat',  label: 'Bat',  ico: '🥁', titular: 'Joaco',             gente: ['Joaco', 'Fede', 'Fabo'] },
   { clave: 't1',   label: 'T1',   ico: '🎹', titular: 'Mati',              gente: ['Mati'] },
   { clave: 't2',   label: 'T2',   ico: '🎹', titular: 'Alva',              gente: ['Alva'] },
