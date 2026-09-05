@@ -69,6 +69,13 @@ function densidad() {
 const CLAVE_I = 'jamportal.movil.instrumentos';
 const verInstrumentos = () => localStorage.getItem(CLAVE_I) === '1';
 
+/* Solo las notas de teclado (el patch y los apuntes de piano), sin el
+   resto de la banda: es lo que mira quien está sentado en las teclas.
+   Independiente del 🎸 — con los dos apagados no se ve nada, con
+   cualquiera de los dos prendido el 🎹 aparece. */
+const CLAVE_K = 'jamportal.movil.teclado';
+const verTeclado = () => localStorage.getItem(CLAVE_K) === '1';
+
 /* ============================================================
    Ver las notas enteras
    ------------------------------------------------------------
@@ -119,11 +126,15 @@ const musicosEnFila = f => {
 
 function instrumentosDe(f, s) {
   const partes = [];
-  if (s.vientos) partes.push('🎺');
-  if (s.coros) partes.push('🎙 coros');
-  musicosEnFila(f).forEach(x => partes.push(x));
-  if ((s.patches || []).length) partes.push('🎹 ' + s.patches.join(' '));
-  (s.invitados || []).forEach(x => partes.push(x));
+  if (verInstrumentos()) {
+    if (s.vientos) partes.push('🎺');
+    if (s.coros) partes.push('🎙 coros');
+    musicosEnFila(f).forEach(x => partes.push(x));
+  }
+  if ((verInstrumentos() || verTeclado()) && (s.patches || []).length) {
+    partes.push('🎹 ' + s.patches.join(' '));
+  }
+  if (verInstrumentos()) (s.invitados || []).forEach(x => partes.push(x));
   if (!partes.length) return null;
   /* Los puntos van intercalados y no con join(): entre las partes puede
      haber un ícono dibujado, que un join convertiría en "[object]". */
@@ -1267,7 +1278,7 @@ export function vistaMovil(jamId) {
         }, 'nueva')
       : null;
 
-    const instr = verInstrumentos() && s ? instrumentosDe(f, s) : null;
+    const instr = (verInstrumentos() || verTeclado()) && s ? instrumentosDe(f, s) : null;
 
     return h('div.mv-fila' + (estaListo(f) ? '.ensayada' : ''), {
       onclick: e => {
@@ -1379,6 +1390,13 @@ export function vistaMovil(jamId) {
               pintar();
             },
           }, '🎸'),
+          h('button.mv-btn-cab.icono' + (verTeclado() ? '.on' : ''), {
+            title: 'Mostrar las notas de teclado',
+            onclick: () => {
+              localStorage.setItem(CLAVE_K, verTeclado() ? '' : '1');
+              pintar();
+            },
+          }, '🎹'),
           editable() ? h('button.mv-btn-cab', {
             title: 'Sumar un tema o un medley',
             onclick: () => dialogoAgregar(),
