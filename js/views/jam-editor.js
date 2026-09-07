@@ -484,6 +484,15 @@ export function vistaEditor(jamId) {
     toast('Jam cerrada — lista para el vivo', 'ok');
   }
 
+  /* Una histórica no se «cierra»: ya está cerrada por lo que es, y su
+     candado no vive en la jam sino en esta pantalla. Volver a cerrarla
+     es sacarle el permiso que se le dio a mano, no escribir nada. */
+  function volverACerrar() {
+    desbloqueadas.delete(jam.id);
+    refrescar();
+    toast('Jam cerrada de nuevo', 'ok');
+  }
+
   async function desbloquear() {
     if (!await confirmar(
       'Está cerrada para pasarla en vivo. Si la abrís vas a poder cambiar la lista.',
@@ -1294,12 +1303,8 @@ export function vistaEditor(jamId) {
     if (jam.historica || jam.cerrada) {
       sidePanel.append(h('div.method-hint', { style: { marginBottom: '10px' } },
         jam.historica ? 'Estás editando una jam histórica. ' : 'Esta jam está cerrada y la desbloqueaste. ',
-        h('a', { href: '#', onclick: e => {
-          e.preventDefault();
-          desbloqueadas.delete(jam.id);
-          refrescar();
-          toast('Jam cerrada de nuevo');
-        } }, 'Volver a cerrarla')));
+        h('a', { href: '#', onclick: e => { e.preventDefault(); volverACerrar(); } },
+          'Volver a cerrarla')));
     }
 
     sidePanel.append(
@@ -1828,11 +1833,20 @@ export function vistaEditor(jamId) {
       title: 'Volver la lista a como estaba antes de un cambio',
       onclick: () => dialogoRespaldos(jam, refrescar),
     }, '↩ Versiones'),
-    (jam.historica || bloqueada()) ? null
-      : h('button.btn.sm.secundaria', {
-          title: 'Congelar la lista para pasarla en vivo',
-          onclick: dialogoCerrar,
-        }, '🔒 Cerrar jam'),
+    /* Estando desbloqueada siempre tiene que haber cómo volver a cerrar.
+       Antes esto se escondía con jam.historica, así que una histórica
+       abierta a mano se quedaba abierta: bloqueada() ya era falso y el
+       botón no volvía nunca. */
+    bloqueada() ? null
+      : jam.historica
+        ? h('button.btn.sm.secundaria', {
+            title: 'Volver a poner el candado de la jam histórica',
+            onclick: volverACerrar,
+          }, '🔒 Volver a cerrar')
+        : h('button.btn.sm.secundaria', {
+            title: 'Congelar la lista para pasarla en vivo',
+            onclick: dialogoCerrar,
+          }, '🔒 Cerrar jam'),
     h('button.btn.sm.secundaria', { onclick: () => { const j = store.duplicateJam(jam.id); if (j) { toast('Jam duplicada', 'ok'); location.hash = '#/jams/' + j.id; } } }, '⧉ Duplicar'),
     h('button.btn.sm.danger.secundaria', { onclick: () => borrarJam(jam) }, 'Borrar'),
 
@@ -1852,8 +1866,10 @@ export function vistaEditor(jamId) {
          apuntando a la versión vieja y redibujarla no muestra nada nuevo. */
       { icono: '↩', texto: 'Versiones anteriores de la lista',
         onClick: () => dialogoRespaldos(jam, refrescar) },
-      (jam.historica || bloqueada()) ? null
-        : { icono: '🔒', texto: 'Cerrar la jam', onClick: dialogoCerrar },
+      bloqueada() ? null
+        : jam.historica
+          ? { icono: '🔒', texto: 'Volver a cerrar la jam histórica', onClick: volverACerrar }
+          : { icono: '🔒', texto: 'Cerrar la jam', onClick: dialogoCerrar },
       { icono: '⧉', texto: 'Duplicar', onClick: () => { const j = store.duplicateJam(jam.id); if (j) { toast('Jam duplicada', 'ok'); location.hash = '#/jams/' + j.id; } } },
       { icono: '✕', texto: 'Borrar la jam', peligro: true, onClick: () => borrarJam(jam) },
     ]);
