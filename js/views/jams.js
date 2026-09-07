@@ -87,6 +87,33 @@ function barraFranjas(jam) {
       : null));
 }
 
+/* ============================================================
+   Cuándo una jam deja de estar «en preparación»
+   ------------------------------------------------------------
+   Cuando le pasó la fecha. Hasta ahora eso había que marcarlo a
+   mano poniéndola histórica, y mientras tanto la jam del mes
+   pasado seguía arriba de todo compitiendo con la que se está
+   armando.
+
+   La fecha de hoy se arma con el reloj local y no con toISOString,
+   que da UTC: acá son tres horas menos, así que a las nueve de la
+   noche UTC ya es mañana y la jam de mañana se habría ido a
+   «anteriores» justo mientras se está tocando.
+
+   Y es estrictamente anterior: la jam de hoy se queda arriba todo
+   el día, que es cuando más se la mira.
+
+   Solo cambia dónde se muestra. No la marca histórica ni la
+   cierra: eso sigue siendo una decisión de alguien, y mientras
+   tanto se puede seguir editando —que es lo que pasa el día
+   después, cuando se corrige lo que de verdad se tocó. */
+function yaPaso(jam) {
+  if (!jam.fecha) return false;
+  const d = new Date();
+  const hoy = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return jam.fecha < hoy;
+}
+
 function tarjeta(jam, onCambio) {
   const { temas, breaks, medleys } = contarItems(jam);
   return h('div.jam-card' + (jam.historica ? '.hist' : ''), {
@@ -97,11 +124,15 @@ function tarjeta(jam, onCambio) {
       jam.historica
         ? h('span.jc-tag', { title: 'Cerrada: es el registro de lo que se tocó' }, '🔒 histórica')
         : jam.cerrada
-          ? h('span.jc-tag', { title: 'Congelada para el vivo: se abre con el código' }, '🔒 cerrada')
-          : h('button.icon-btn', {
-              title: 'Editar nombre y fecha',
-              onclick: e => { e.stopPropagation(); dialogoDatosJam(jam, onCambio); },
-            }, '✎')),
+          ? h('span.jc-tag', { title: 'Congelada para el vivo: se desbloquea desde adentro' }, '🔒 cerrada')
+          /* Está en «anteriores» por la fecha, no por estar cerrada: sin
+             decirlo, el candado de al lado hace pensar que no se toca. */
+          : yaPaso(jam)
+            ? h('span.jc-tag.pasada', { title: 'Ya pasó la fecha — se puede seguir editando' }, 'ya pasó')
+            : h('button.icon-btn', {
+                title: 'Editar nombre y fecha',
+                onclick: e => { e.stopPropagation(); dialogoDatosJam(jam, onCambio); },
+              }, '✎')),
     h('h3', {}, jam.nombre || 'Jam sin nombre'),
     h('div.jc-date', {}, jam.fecha ? fechaLinda(jam.fecha) + (jam.hora ? ' · ' + jam.hora : '') : (jam.historica ? 'Sin fecha registrada' : 'Sin fecha')),
     h('div.jc-meta', {},
@@ -119,6 +150,15 @@ export function vistaJams() {
   const resumen = h('p.sub');
   const vacío = h('div');
 
+  /* La sección se esconde con hidden en vez de no dibujarse: al mover una
+     jam de una lista a la otra aparece sola, sin rearmar la página. */
+  const seccionHist = h('div', { style: { marginTop: '32px' } },
+    h('div', { style: { display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '12px' } },
+      h('h2.sec', { style: { margin: 0 } }, 'Jams anteriores'),
+      h('span.dim', { style: { fontSize: '12px' } },
+        'las que ya pasaron · las históricas están cerradas, duplicalas para usarlas de base')),
+    gridHist);
+
   /** Las que tienen fecha primero (más recientes arriba); el resto por tamaño. */
   const ordenar = arr => [...arr].sort((a, b) => {
     if (a.fecha && b.fecha) return b.fecha.localeCompare(a.fecha);
@@ -128,10 +168,10 @@ export function vistaJams() {
   });
 
   function pintar() {
-    const proximas = ordenar(store.jams.filter(j => !j.historica));
-    const historicas = ordenar(store.jams.filter(j => j.historica));
+    const proximas = ordenar(store.jams.filter(j => !j.historica && !yaPaso(j)));
+    const anteriores = ordenar(store.jams.filter(j => j.historica || yaPaso(j)));
 
-    resumen.textContent = `${proximas.length} en preparación · ${historicas.length} históricas · ${store.repertorio.length} temas en Canciones DB`;
+    resumen.textContent = `${proximas.length} en preparación · ${anteriores.length} anteriores · ${store.repertorio.length} temas en Canciones DB`;
 
     clear(gridProx);
     proximas.forEach(j => gridProx.appendChild(tarjeta(j, pintar)));
@@ -146,7 +186,8 @@ export function vistaJams() {
     }
 
     clear(gridHist);
-    historicas.forEach(j => gridHist.appendChild(tarjeta(j, pintar)));
+    anteriores.forEach(j => gridHist.appendChild(tarjeta(j, pintar)));
+    seccionHist.hidden = !anteriores.length;
   }
 
   pintar();
@@ -161,11 +202,7 @@ export function vistaJams() {
     vacío,
     gridProx,
 
-    store.jams.some(j => j.historica) ? h('div', { style: { marginTop: '32px' } },
-      h('div', { style: { display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '12px' } },
-        h('h2.sec', { style: { margin: 0 } }, 'Jams anteriores'),
-        h('span.dim', { style: { fontSize: '12px' } }, 'cerradas para no romper el registro · duplicalas para usarlas de base')),
-      gridHist) : null,
+    seccionHist,
   );
 }
 

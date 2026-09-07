@@ -3069,3 +3069,7 @@ tr:hover .ens-x { opacity: .6; }
   }
   .tec-tema { white-space: normal; }
 }
+
+/* «ya pasó»: está en anteriores por la fecha, no por estar cerrada, así
+   que no lleva candado ni el gris de las históricas */
+.jc-tag.pasada { color: var(--txt-3); border-color: var(--linea); background: none; font-style: italic; }
