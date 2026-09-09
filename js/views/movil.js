@@ -18,7 +18,7 @@
    completa, y el editor completo existe en #/jams/:id/editar
    ============================================================ */
 
-import { store, esNueva } from '../store.js';
+import { store, esNueva, norm } from '../store.js';
 import {
   h, frag, clear, toast, fechaLinda, copiar, hojaAcciones, confirmar,
   descargarBlob, modal, field, input, poner,
@@ -667,6 +667,61 @@ export function vistaMovil(jamId) {
                 : `Medley de ${m.temas.length} temas agregado`,
     pos);
 
+  /** Como insertarItem, pero de a varios: una sección entra en bloque. */
+  function insertarVarios(items, aviso, pos = null) {
+    const idx = (pos == null || pos > jam.items.length) ? jam.items.length : pos;
+    jam.items = [...jam.items.slice(0, idx), ...items, ...jam.items.slice(idx)];
+    guardar(); pintar();
+    toast(aviso, 'ok');
+    const el = lista.querySelector(`[data-i="${idx}"]`);
+    if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  /**
+   * Las secciones de las jams anteriores: de cada bloque hasta el
+   * siguiente, con sus temas y medleys (los breaks no viajan: son del
+   * horario de aquella noche, no del repertorio). Para repetir el
+   * arranque rockero de la jam pasada sin armarlo tema por tema.
+   */
+  function seccionesAnteriores(q = '') {
+    const n = norm(q);
+    const out = [];
+    for (const j of store.jams) {
+      if (j.id === jam.id) continue;
+      let actual = null;
+      for (const it of j.items || []) {
+        if (it.tipo === 'bloque') {
+          actual = { jamNombre: j.nombre || 'Jam', fecha: j.fecha || '', label: it.label || 'BLOQUE', items: [] };
+          out.push(actual);
+          continue;
+        }
+        if (it.tipo === 'break' || !actual) continue;
+        actual.items.push(it);
+      }
+    }
+    const conTitulos = out.filter(sec => sec.items.length).map(sec => ({
+      ...sec,
+      titulos: sec.items.flatMap(it =>
+        it.tipo === 'medley'
+          ? (it.songs || []).map(x => store.song(x.songId)).filter(Boolean).map(s => s.titulo)
+          : [store.song(it.songId)].filter(Boolean).map(s => s.titulo)),
+    })).filter(sec => sec.titulos.length);
+
+    return conTitulos.filter(sec => !n
+      || norm(sec.label).includes(n)
+      || norm(sec.jamNombre).includes(n)
+      || sec.titulos.some(t => norm(t).includes(n)));
+  }
+
+  /** Copia la sección entera: el rótulo y sus temas, cantantes incluidos. */
+  const sumarSeccion = (sec, pos = null) => insertarVarios([
+    { tipo: 'bloque', label: sec.label },
+    ...sec.items.map(it => it.tipo === 'medley'
+      ? { tipo: 'medley', titulo: it.titulo || 'Medley', notas: '',
+          songs: (it.songs || []).map(x => ({ songId: x.songId, cantantes: [...(x.cantantes || [])] })) }
+      : { tipo: 'song', songId: it.songId, cantantes: [...(it.cantantes || [])], notas: '' }),
+  ], `«${sec.label}» — ${sec.titulos.length} temas agregados`, pos);
+
   /** El ＋ de una línea: qué va justo abajo — tema/medley, break o bloque. */
   function hojaInsertar(pos) {
     hojaAcciones('Agregar justo abajo', [
@@ -703,7 +758,7 @@ export function vistaMovil(jamId) {
    * y pasa a ser el cuerpo de la pantalla: se lleva todo el alto que
    * quede libre, que con el teclado abierto es justo el que hay.
    */
-  function panelBuscar({ titulo, ayuda, alElegir, alCrearWeb, alEscribir, alElegirMedley }) {
+  function panelBuscar({ titulo, ayuda, alElegir, alCrearWeb, alEscribir, alElegirMedley, alElegirSeccion }) {
     const cerrar = () => { panel.remove(); document.removeEventListener('keydown', esc); };
     const esc = e => { if (e.key === 'Escape') cerrar(); };
 
@@ -720,7 +775,10 @@ export function vistaMovil(jamId) {
 
     const pills = h('div.bf-pills');
     function pintarPills() {
-      poner(clear(pills), pill('temas', '♪ Temas'), pill('medleys', '⛓ Medleys'));
+      poner(clear(pills),
+        pill('temas', '♪ Temas'),
+        alElegirMedley ? pill('medleys', '⛓ Medleys') : null,
+        alElegirSeccion ? pill('secciones', '▤ Secciones') : null);
     }
 
     /* ---- modo temas: el buscador de siempre ---- */
@@ -783,9 +841,49 @@ export function vistaMovil(jamId) {
       return h('div.ac-wrap', {}, busca, lista);
     }
 
+    /* ---- modo secciones: los bloques de las jams anteriores ---- */
+    function vistaSecciones() {
+      const todas = seccionesAnteriores();
+      const lista = h('div.ac-menu.bf-lista');
+      const busca = h('input', {
+        type: 'search', placeholder: `Filtrar ${todas.length} secciones…`,
+        autocomplete: 'off', spellcheck: false,
+      });
+
+      function pintarLista() {
+        clear(lista);
+        const hay = seccionesAnteriores(busca.value);
+        if (!hay.length) {
+          lista.appendChild(h('div.ac-loading', {}, todas.length
+            ? 'Ninguna sección con ese filtro'
+            : 'Las jams anteriores no tienen bloques todavía: las secciones '
+              + 'salen de ahí.'));
+          return;
+        }
+        hay.forEach(sec => lista.appendChild(h('div.ac-item.ac-medley', {
+          onclick: () => { cerrar(); alElegirSeccion(sec); },
+        },
+          h('div', { style: { minWidth: 0 } },
+            h('div.ac-t', {}, '▤ ' + sec.label),
+            h('div.ac-s.entera', {},
+              [sec.jamNombre, sec.fecha ? fechaLinda(sec.fecha) : ''].filter(Boolean).join(' · ')
+              + ' — ' + sec.titulos.join(' · '))),
+          h('div.ac-r', {},
+            h('span.chip', {}, sec.titulos.length + ' temas')))));
+      }
+
+      busca.addEventListener('input', pintarLista);
+      pintarLista();
+      setTimeout(() => busca.focus(), 60);
+      return h('div.ac-wrap', {}, busca, lista);
+    }
+
     function pintar() {
       pintarPills();
-      poner(clear(cuerpo), modo === 'temas' ? vistaTemas() : vistaMedleys());
+      poner(clear(cuerpo),
+        modo === 'temas' ? vistaTemas()
+        : modo === 'medleys' ? vistaMedleys()
+        : vistaSecciones());
     }
 
     const panel = h('div.buscador-full', {},
@@ -793,7 +891,7 @@ export function vistaMovil(jamId) {
         h('button.tb-btn', { onclick: cerrar, title: 'Cerrar' }, '✕'),
         h('div.mv-ed-tit', {}, titulo)),
       h('div.bf-ayuda', {}, ayuda),
-      alElegirMedley ? pills : null,
+      (alElegirMedley || alElegirSeccion) ? pills : null,
       cuerpo);
 
     pintar();
@@ -806,9 +904,12 @@ export function vistaMovil(jamId) {
     panelBuscar({
       titulo: 'Sumar a ' + (jam.nombre || 'la jam'),
       ayuda: 'Busco en el repertorio y después en internet; si no aparece, se '
-           + 'agrega con lo que escribas. Para sumar un medley entero, tocá Medleys.',
+           + 'agrega con lo que escribas. Medleys suma uno armado, y Secciones '
+           + 'trae un bloque entero de una jam anterior, con sus temas.',
       alElegir: s => sumarTema(s, pos),
       alElegirMedley: m => sumarMedley(m, pos),
+      /* por el link llega una sola jam: no hay jams anteriores que ofrecer */
+      alElegirSeccion: store.publico ? null : sec => sumarSeccion(sec, pos),
       alCrearWeb: r => {
         const s = store.addSong(webAResultado(r));
         sumarTema(s, pos);
