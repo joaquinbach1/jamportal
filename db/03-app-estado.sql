@@ -12,7 +12,7 @@
 -- la comparación de cambios del driver no vea diferencias falsas.
 --
 -- Este archivo está al día con las columnas de las migraciones
--- (db/13, db/14, db/20, db/21, db/22, db/26, db/27): correrlas
+-- (db/13, db/14, db/20, db/21, db/22, db/26, db/27, db/28): correrlas
 -- primero, y esto después.
 --
 -- `musicos` sale tanto en el tema suelto como en cada tema de un
@@ -162,6 +162,8 @@ select jsonb_build_object(
                                  'musicos',   h.musicos,
                                  'ensayada',  h.ensayada,
                                  'notaTecnica', h.nota_tecnica,
+                                 'agregadoPor', h.agregado_por,
+                                 'agregadoEl',  coalesce(to_char(h.agregado_el at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), ''),
                                  'cantantes', cantantes_de(h.id)
                                ) order by h.orden), '[]'::jsonb)
                                from setlist_item h where h.parent_id = i.id))
@@ -171,6 +173,8 @@ select jsonb_build_object(
                      'musicos', i.musicos,
                      'ensayada', i.ensayada,
                      'notaTecnica', i.nota_tecnica,
+                     'agregadoPor', i.agregado_por,
+                     'agregadoEl',  coalesce(to_char(i.agregado_el at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), ''),
                      'cantantes', cantantes_de(i.id))
 
                  end as item

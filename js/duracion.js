@@ -100,6 +100,7 @@ export function agenda(jam, song) {
         temas++;
         return { song: s, cantantes: ms.cantantes || [], songId: ms.songId,
                  musicos: ms.musicos || null, ensayada: ms.ensayada, publica: ms.notas || '',
+                 agregadoPor: ms.agregadoPor || '', agregadoEl: ms.agregadoEl || '',
                  seg: segundosDeTema(s, true) };
       });
       const seg = songs.reduce((a, x) => a + x.seg, 0);
@@ -117,6 +118,7 @@ export function agenda(jam, song) {
     n++; temas++;
     filas.push({ tipo: 'song', n, song: s, songId: it.songId, cantantes: it.cantantes || [],
                  musicos: it.musicos || null, ensayada: it.ensayada, publica: it.notas || '',
+                 agregadoPor: it.agregadoPor || '', agregadoEl: it.agregadoEl || '',
                  desde: t, hora: horaMas(inicio, t), seg });
     t += seg; musica += seg;
     ultimoConRespiro = filas.length - 1;

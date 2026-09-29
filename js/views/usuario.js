@@ -10,7 +10,7 @@
    ============================================================ */
 
 import { store } from '../store.js';
-import { h, clear, modal, input, toast, avatar } from '../ui.js';
+import { h, clear, modal, input, toast, avatar, nombreDeMail } from '../ui.js';
 
 /* ---------- cambiar la propia contraseña ---------- */
 export function dialogoClave() {
@@ -52,7 +52,7 @@ export function montarUsuario(slot) {
   if (!store.email) return;
 
   const mail = store.email;
-  const nombre = mail.split('@')[0].replace(/[._-]+/g, ' ');
+  const nombre = nombreDeMail(mail);
 
   const menu = h('div.umenu', { hidden: true },
     h('div.umenu-mail', {}, mail),

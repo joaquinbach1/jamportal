@@ -186,6 +186,13 @@ export function franjaDot(franja) {
    desde el CSS para que el texto blanco encima siga leyéndose. */
 const AV_COLORS = ['var(--av-1)', 'var(--av-2)', 'var(--av-3)', 'var(--av-4)',
                    'var(--av-5)', 'var(--av-6)', 'var(--av-7)', 'var(--av-8)'];
+/* El nombre que mostramos de alguien: la parte de antes del arroba, con
+   los puntos y guiones convertidos en espacios. No hay tabla de nombres
+   y pedirle a cada uno que cargue el suyo para ver «Ale» en vez de
+   «ale» no vale la molestia. */
+export const nombreDeMail = mail =>
+  (mail || '').split('@')[0].replace(/[._-]+/g, ' ');
+
 export function avatar(nombre) {
   const iniciales = (nombre || '?').split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
   let hash = 0;

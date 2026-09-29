@@ -560,12 +560,15 @@ table.tbl tr.elegida td:first-child { box-shadow: inset 2px 0 0 var(--acc); }
    JAM EDITOR
    ============================================================ */
 
+/* Sin el asistente abierto la lista se lleva todo el ancho, que es donde
+   se pasa el tiempo. Con el asistente vuelve la columna de siempre. */
 .editor-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 384px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-items: start;
 }
+body.con-asistente .editor-grid { grid-template-columns: minmax(0, 1fr) 384px; }
 .editor-grid > * { min-width: 0; }
 .editor-side { position: sticky; top: 22px; }
 
@@ -3073,3 +3076,9 @@ tr:hover .ens-x { opacity: .6; }
 /* «ya pasó»: está en anteriores por la fecha, no por estar cerrada, así
    que no lleva candado ni el gris de las históricas */
 .jc-tag.pasada { color: var(--txt-3); border-color: var(--linea); background: none; font-style: italic; }
+
+/* El asistente: el botón que trae los tres métodos de cargar temas.
+   Vive abajo a la derecha, fuera del camino de la lista. */
+.fab-asist { font-size: 22px; }
+.fab-asist.on { background: var(--panel-2); color: var(--txt); border: 1px solid var(--linea-fuerte); }
+@media print { .fab-asist { display: none; } }

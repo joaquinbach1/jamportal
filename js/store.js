@@ -195,6 +195,21 @@ export const store = {
   get email() { return auth && auth.email; },
 
   /**
+   * Firma un ítem del setlist con quién lo sumó y cuándo.
+   *
+   * Solo si no venía firmado: los ítems viajan enteros de ida y de
+   * vuelta en cada guardado —guardar_jam borra e inserta todo— así que
+   * volver a firmarlos le sacaría el crédito al que lo puso de verdad.
+   */
+  firmar(it) {
+    if (it && !it.agregadoPor) {
+      it.agregadoPor = this.email || '';
+      it.agregadoEl = new Date().toISOString();
+    }
+    return it;
+  },
+
+  /**
    * Guarda a qué base apuntamos, sin conectarse.
    *
    * Va separado de conectarNube() por un problema de orden: validar la

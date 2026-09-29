@@ -21,7 +21,7 @@
 import { store, esNueva, norm } from '../store.js';
 import {
   h, frag, clear, toast, fechaLinda, copiar, hojaAcciones, confirmar,
-  descargarBlob, modal, field, input, poner,
+  descargarBlob, modal, field, input, poner, nombreDeMail,
 } from '../ui.js';
 import { puestosOcupados, iconoDe, formacionPorDefecto } from '../musicos.js';
 import { agenda, duracionLinda, largoLindo, horaMas } from '../duracion.js';
@@ -372,6 +372,11 @@ export function vistaMovil(jamId) {
         h('b', {}, duracionLinda(f.seg)),
         s.duracionSec ? null : h('em', {}, ' estimado')),
       h('div.hd-fila', {}, h('span', {}, 'Canta'), h('b', {}, cantantes || '—')),
+      f.agregadoPor
+        ? h('div.hd-fila', {}, h('span', {}, 'Lo sumó'),
+            h('b', {}, nombreDeMail(f.agregadoPor)),
+            f.agregadoEl ? h('em', {}, ' ' + fechaLinda(f.agregadoEl.slice(0, 10))) : null)
+        : null,
       h('div.hd-fila', {}, h('span', {}, 'Tocada'),
         (s.jams || []).length
           ? h('b', {}, `${s.jams.length} ${s.jams.length === 1 ? 'vez' : 'veces'}`)
@@ -655,14 +660,14 @@ export function vistaMovil(jamId) {
   }
 
   const sumarTema = (song, pos = null) => insertarItem(
-    { tipo: 'song', songId: song.id, cantantes: [], notas: '' },
+    store.firmar({ tipo: 'song', songId: song.id, cantantes: [], notas: '' }),
     pos == null ? `«${song.titulo}» al final de la lista` : `«${song.titulo}» agregada`,
     pos);
 
   /** Un medley que ya se armó antes, entero: sus temas y sus cantantes. */
   const sumarMedley = (m, pos = null) => insertarItem(
-    { tipo: 'medley', titulo: m.titulo, notas: '',
-      songs: m.songs.map(x => ({ songId: x.songId, cantantes: [...(x.cantantes || [])] })) },
+    store.firmar({ tipo: 'medley', titulo: m.titulo, notas: '',
+      songs: m.songs.map(x => ({ songId: x.songId, cantantes: [...(x.cantantes || [])] })) }),
     pos == null ? `Medley de ${m.temas.length} temas al final de la lista`
                 : `Medley de ${m.temas.length} temas agregado`,
     pos);
@@ -716,10 +721,12 @@ export function vistaMovil(jamId) {
   /** Copia la sección entera: el rótulo y sus temas, cantantes incluidos. */
   const sumarSeccion = (sec, pos = null) => insertarVarios([
     { tipo: 'bloque', label: sec.label },
-    ...sec.items.map(it => it.tipo === 'medley'
+    /* Copiados de otra jam, pero sumados acá y ahora por quien los
+       trajo: la firma es de este setlist, no del original. */
+    ...sec.items.map(it => store.firmar(it.tipo === 'medley'
       ? { tipo: 'medley', titulo: it.titulo || 'Medley', notas: '',
           songs: (it.songs || []).map(x => ({ songId: x.songId, cantantes: [...(x.cantantes || [])] })) }
-      : { tipo: 'song', songId: it.songId, cantantes: [...(it.cantantes || [])], notas: '' }),
+      : { tipo: 'song', songId: it.songId, cantantes: [...(it.cantantes || [])], notas: '' })),
   ], `«${sec.label}» — ${sec.titulos.length} temas agregados`, pos);
 
   /** El ＋ de una línea: qué va justo abajo — tema/medley, break o bloque. */

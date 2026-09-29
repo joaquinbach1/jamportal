@@ -11,7 +11,7 @@ import { store, norm, esNueva, FRANJA_LABEL } from '../store.js';
 import { PUESTOS, INVITADO, iconoDe, formacionPorDefecto, musicosDe } from '../musicos.js';
 import {
   h, frag, clear, poner, field, input, select, personPicker, toast, modal, confirmar, songAutocomplete, hojaAcciones,
-  catPill, catCorta, franjaDot, fechaLinda, copiar, debounce,
+  catPill, catCorta, franjaDot, fechaLinda, copiar, debounce, nombreDeMail, avatar,
 } from '../ui.js';
 import { buscarEnWeb, webAResultado, temasDeArtista } from '../lookup.js';
 import { buscarCifra, urlBusqueda } from '../cifra.js';
@@ -508,6 +508,48 @@ export function vistaEditor(jamId) {
   const energyCont  = h('div.energy');
   const statsCont   = h('div.chips', { style: { marginBottom: '10px' } });
   const sidePanel   = h('div.card');
+
+  /* ============================================================
+     El asistente
+     ------------------------------------------------------------
+     Los tres métodos para cargar temas —pegar, MagicList,
+     sugerencias— vivían en una columna fija de 384px que se
+     comía un tercio de la pantalla todo el tiempo. Pero se usan
+     en ráfagas: se carga la lista y después se pasan horas
+     acomodándola, con el panel ahí sin hacer nada.
+
+     Ahora entra por un botón flotante y se va cuando terminás.
+     La lista se queda con el ancho entero, que es donde se pasa
+     el tiempo de verdad.
+
+     Queda guardado en este equipo: quien lo prefiera abierto lo
+     deja abierto. */
+  const CLAVE_ASIST = 'jamportal.asistente';
+  const asistenteAbierto = () => localStorage.getItem(CLAVE_ASIST) === '1';
+
+  const lateral = h('div.editor-side', { hidden: !asistenteAbierto() }, sidePanel);
+
+  const fab = h('button.fab.fab-asist', {
+    title: 'Cargar temas: pegar una lista, MagicList o sugerencias',
+    onclick: () => {
+      const abrir = !asistenteAbierto();
+      localStorage.setItem(CLAVE_ASIST, abrir ? '1' : '');
+      aplicarAsistente();
+      if (abrir) lateral.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    },
+  }, '🎵');
+
+  function aplicarAsistente() {
+    const on = asistenteAbierto();
+    lateral.hidden = !on;
+    document.body.classList.toggle('con-asistente', on);
+    fab.classList.toggle('on', on);
+    fab.textContent = on ? '✕' : '🎵';
+    fab.title = on
+      ? 'Cerrar el asistente y devolverle el ancho a la lista'
+      : 'Cargar temas: pegar una lista, MagicList o sugerencias';
+  }
+  aplicarAsistente();
   const tituloEnc   = h('h1', {});
 
   /* ============================================================
@@ -545,10 +587,10 @@ export function vistaEditor(jamId) {
     if (!s) return;
     // ojo: sigue siendo idea. Recién pasa al repertorio cuando la jam ya pasó
     if (s.esIdea) toast(`«${s.titulo}» queda como idea hasta que pase la jam`, '');
-    insertar({
+    insertar(store.firmar({
       tipo: 'song', songId, cantantes: [], notas: '',
       musicos: formacionPorDefecto(),
-    }, at ?? items().length);
+    }), at ?? items().length);
   }
   function quitar(i) { items().splice(i, 1); guardar(); pintarTodo(); }
   function mover(from, to) {
@@ -742,6 +784,23 @@ export function vistaEditor(jamId) {
   /* ---------- nota privada ----------
      Es tuya y de esta máquina: no va a la base compartida. Se escribe
      acá y se lee en el LIVE VIEW, que es cuando hace falta. */
+  /* ============================================================
+     Quién lo sumó
+     ------------------------------------------------------------
+     Solo cuando no fuiste vos. En una lista de cuarenta temas que
+     cargaste casi todos, ver tu propia inicial cuarenta veces no
+     dice nada; las tres que puso otro, sí.
+
+     Va chiquito y al final de la fila: es un dato de quién
+     propuso qué, no algo que haga falta para tocar. */
+  function quienLoSumo(it) {
+    const mail = it && it.agregadoPor;
+    if (!mail || mail === store.email) return null;
+    const nombre = nombreDeMail(mail);
+    const cuando = it.agregadoEl ? ` · ${fechaLinda(it.agregadoEl.slice(0, 10))}` : '';
+    return h('span.sl-quien', { title: `Lo sumó ${nombre}${cuando}` }, avatar(nombre));
+  }
+
   function botonNota(s, traer) {
     const btn = h('button.icon-btn.nota', {
       onclick: e => { e.stopPropagation(); dialogoNota(s, traer, () => pintarNota()); },
@@ -930,6 +989,7 @@ export function vistaEditor(jamId) {
             ? (it.cantantes || []).map(n => h('span.chip.sel', {}, n))
             : chipsPersonas(it.cantantes || [], opcionesGente(), v => { it.cantantes = v; guardar(); pintarTodo(); }, s.cantantes || []),
         )),
+      quienLoSumo(it),
       bloqueada()
         ? h('div.sl-actions', {}, botonNota(s, () => items()[i]), botonCifra(s, () => pintarTodo()))
         : h('div.sl-actions', {},
@@ -1561,7 +1621,7 @@ export function vistaEditor(jamId) {
           onclick: () => {
             const nuevos = hallados.map(l => l.esBreak
               ? { tipo: 'break', label: 'BREAK', minutos: 15 }
-              : { tipo: 'song', songId: l.match.id, cantantes: [], notas: '' });
+              : store.firmar({ tipo: 'song', songId: l.match.id, cantantes: [], notas: '' }));
             jam.items = [...items(), ...nuevos];
             guardar(); pintarTodo();
             toast(`${nuevos.length} agregados a la lista`, 'ok');
@@ -1815,9 +1875,9 @@ export function vistaEditor(jamId) {
     /* El toggle a la otra vista: un toque y estás en la minimalista.
        El botón espejo vive allá, al lado del 🎸. */
     h('button.btn.sm.secundaria', {
-      title: 'Minimalist view — la lista liviana, la del celular',
+      title: 'Mati view — la lista liviana, la del celular',
       onclick: () => { location.hash = `#/jams/${jam.id}/lista`; },
-    }, '▤ Minimalist'),
+    }, '▤ Mati view'),
     h('button.btn.sm.secundaria', {
       title: 'La planilla técnica: un puesto por columna, para imprimir o pegar en el atril',
       onclick: () => { location.hash = `#/tecnica/${jam.id}`; },
@@ -1935,7 +1995,8 @@ export function vistaEditor(jamId) {
           setlistCont,
           insertBar),
         bloqueada() ? null : produccionCard),
-      h('div.editor-side', {}, sidePanel)),
+      lateral),
+    fab,
   );
 }
 
