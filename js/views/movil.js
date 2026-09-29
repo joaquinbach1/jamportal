@@ -1470,6 +1470,16 @@ export function vistaMovil(jamId) {
 
     cont.append(
       h('div.mv-cab', {},
+        /* La salida, primero y a la izquierda, que es donde se la busca.
+           Hasta ahora había que usar el botón del navegador, y esta vista
+           también se abre desde el cockpit en la compu, donde encima no
+           hay gesto de volver. Va a la lista de jams y no atrás en el
+           historial: desde acá se entra por muchos lados —el cockpit, un
+           link compartido, la barra— y «atrás» querría decir algo
+           distinto en cada caso. */
+        store.publico ? null : h('a.mv-btn-cab.icono.mv-volver', {
+          href: '#/jams', title: 'Volver a las jams',
+        }, '←'),
         h('div.mv-cab-txt', {},
           h('h1', {}, jam.nombre || 'Jam sin nombre'),
           h('div.mv-cab-sub', {},

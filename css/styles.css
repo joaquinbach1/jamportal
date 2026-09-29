@@ -2321,8 +2321,18 @@ body.modo-compartido .topbar { display: none; }
 .mv-cab {
   display: flex; align-items: flex-start; gap: 10px;
   padding: 2px 2px calc(var(--tl) + 2px);
+  /* Con la flecha sumada ya no entra todo en una línea en un teléfono.
+     Envolver hace que bajen los botones; sin esto el que se achicaba era
+     el título, que con min-width:0 se comprime hasta 0 y parte el nombre
+     en una palabra por renglón. */
+  flex-wrap: wrap;
 }
-.mv-cab-txt { flex: 1 1 auto; min-width: 0; }
+/* La base de 160px es el punto: con un nombre corto entra todo en una
+   línea como antes, y con uno largo bajan los botones en vez de
+   destrozar el título. */
+.mv-cab-txt { flex: 1 1 160px; min-width: 0; }
+/* la flecha es un <a>, así que hay que darle la pinta de los otros */
+.mv-volver { flex: none; align-self: flex-start; text-decoration: none; }
 .mv-cab h1 { margin: 0; font-size: var(--cab); line-height: 1.25; letter-spacing: -.01em; }
 .mv-cab-sub { margin-top: 3px; font-size: 12.5px; color: var(--txt-3); }
 
