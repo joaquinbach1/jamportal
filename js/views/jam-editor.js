@@ -294,15 +294,17 @@ export function vistaEditor(jamId) {
     const on = verMusicos();
     setlistCont.classList.toggle('vista-musicos', on);
     btnGremios.classList.toggle('on', on);
-    btnGremios.textContent = on ? '🎸 MÚSICOS VIEW' : '🎸 Músicos view';
+    /* Dice qué va a pasar si lo tocás, no en qué estado está: parado
+       frente a la lista se lee como una orden, no como un cartel. */
+    btnGremios.textContent = on ? '🎸 Ocultar músicos' : '🎸 Ver músicos';
     btnGremios.title = on
-      ? 'Cada tema muestra quién toca qué — tocá para volver a la vista de siempre'
+      ? 'Volver a la vista de siempre'
       : 'Ver quién toca qué en cada tema';
   }
 
   /* Prende y apaga: cambia el contenido de la fila, no solo qué se
      esconde, así que hay que volver a dibujar. */
-  const btnGremios = h('button.btn.gremios', {
+  const btnGremios = h('button.btn.xs.gremios', {
     onclick: () => {
       localStorage.setItem(CLAVE_MUSICOS, verMusicos() ? '0' : '1');
       pintarTodo();
@@ -1871,7 +1873,6 @@ export function vistaEditor(jamId) {
       onclick: () => { location.hash = '#/lyrics/' + jam.id; },
       title: 'Las letras de todos los temas, en orden',
     }, '📖 LYRICS VIEW'),
-    btnGremios,
     /* El toggle a la otra vista: un toque y estás en la minimalista.
        El botón espejo vive allá, al lado del 🎸. */
     h('button.btn.sm.secundaria', {
@@ -1982,6 +1983,9 @@ export function vistaEditor(jamId) {
         metaCard,
         h('div.card', { style: { marginTop: '16px' } },
           h('div.card-head', {}, h('h3', {}, 'Lista de temas'),
+            /* Primero el de los músicos: es el que más se usa mientras se
+               arma la lista, y los otros tres son de cómo se ve. */
+            btnGremios,
             btnPantalla,
             bloqueada() ? null : h('button.btn.xs', {
               onclick: dialogoTexto,

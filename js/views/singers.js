@@ -1,9 +1,53 @@
 /* ============================================================
-   views/singers.js — base de cantantes y músicos
+   views/singers.js — la gente de la banda
+   ------------------------------------------------------------
+   Una sección por instrumento, que es como se piensa una banda:
+   «¿a quién tengo para la batería?» y no «buscá en la lista de
+   101 nombres».
+
+   Quién toca qué sale de dos lados y hace falta de los dos: el
+   campo `instrumentos` de cada persona, que está cargado a
+   medias, y la lista de puestos de musicos.js, que es la que
+   usamos para armar cada jam. Sin la segunda, media banda
+   quedaba en OTROS —Nano no tiene nada escrito en su ficha y
+   toca la guitarra en todas las jams.
+
+   Alguien puede estar en más de una: Fede toca la batería y el
+   saxo, y aparece en las dos. Es lo correcto, porque a las dos
+   listas se las mira buscando a quién llamar.
    ============================================================ */
 
 import { store, norm } from '../store.js';
 import { h, frag, clear, modal, field, input, avatar, toast, confirmar, catPill, franjaDot, debounce } from '../ui.js';
+import { PUESTOS } from '../musicos.js';
+
+/* Los grupos, en el orden en que se leen. Cada uno sabe reconocer a los
+   suyos por lo que dice la ficha y por los puestos donde figura. */
+const GRUPOS = [
+  { titulo: 'CANTANTES',   puestos: [],                 texto: /voz|canta/ },
+  { titulo: 'BATERISTAS',  puestos: ['bat', 'percu'],   texto: /bater|percu|tambor/ },
+  { titulo: 'GUITARRISTAS', puestos: ['g1', 'g2'],      texto: /guitarr|viola/ },
+  { titulo: 'BAJISTAS',    puestos: ['bajo'],           texto: /bajo|bass/ },
+  { titulo: 'TECLADISTAS', puestos: ['t1', 't2'],       texto: /tecla|piano|key|sinte/ },
+  { titulo: 'VIENTOS',     puestos: ['saxo'],           texto: /saxo|ca[ñn]o|viento|tromp|tromb|flauta/ },
+];
+
+/** Los nombres que figuran en cada puesto, sacados de musicos.js. */
+const enPuesto = clave => {
+  const p = PUESTOS.find(x => x.clave === clave);
+  return p ? p.gente.map(norm) : [];
+};
+
+/** A qué grupos pertenece alguien. Puede ser a más de uno, o a ninguno. */
+function gruposDe(persona) {
+  const texto = norm((persona.instrumentos || []).join(' '));
+  const nombre = norm(persona.nombre);
+  return GRUPOS.filter(g => {
+    if (g.titulo === 'CANTANTES') return persona.rol !== 'instrumento';
+    if (texto && g.texto.test(texto)) return true;
+    return g.puestos.some(c => enPuesto(c).includes(nombre));
+  });
+}
 
 /**
  * Los temas de una persona: los que canta y los que toca de invitada.
@@ -108,33 +152,86 @@ function ficha(persona, onChange) {
 export function vistaSingers() {
   let q = '';
   let soloActivos = false;
-  const gridCant = h('div.singer-grid');
-  const gridMus = h('div.singer-grid');
+  const cuerpo = h('div');
 
   function tarjeta(p) {
     const temas = temasDe(p.nombre).length;
     const jams = jamsDe(p.nombre).length;
-    return h('div.singer-card' + (p.activo === false ? '.off' : ''), { onclick: () => ficha(p, pintar) },
+    return h('div.singer-card' + (p.activo === false ? '.off' : '') + (p.sinFicha ? '.fantasma' : ''), {
+      title: p.sinFicha ? 'Toca en la banda pero no tiene ficha — tocá para crearla' : '',
+      onclick: () => ficha(p, pintar),
+    },
       avatar(p.nombre),
       h('div', { style: { minWidth: 0 } },
         h('div.sc-name', {}, p.nombre),
-        h('div.sc-meta', {}, (p.rol === 'instrumento'
-          ? (p.instrumentos || []).join(', ') + ` · ${temas} temas`
-          : `${temas} temas · ${jams} jams`)
-          + (p.telefono ? ' · 📱' : '') + (p.email ? ' ✉️' : ''))));
+        h('div.sc-meta', {}, p.sinFicha
+          ? 'sin ficha'
+          : (p.rol === 'instrumento'
+              ? [(p.instrumentos || []).join(', '), `${temas} temas`].filter(Boolean).join(' · ')
+              : `${temas} temas · ${jams} jams`)
+            + (p.telefono ? ' · 📱' : '') + (p.email ? ' ✉️' : ''))));
+  }
+
+  /* Más temas primero: el que más toca es el que más se busca. */
+  const porUso = (a, b) =>
+    temasDe(b.nombre).length - temasDe(a.nombre).length ||
+    a.nombre.localeCompare(b.nombre, 'es');
+
+  /* Los de la lista de puestos que no tienen ficha. Tocan en todas las
+     jams pero nadie los cargó nunca como personas, así que sin esto
+     TECLADISTAS salía vacía aunque Mati y Alva estén en cada tema.
+
+     Se muestran igual, marcados, y el clic abre la ficha con el nombre
+     y el instrumento puestos: el agujero se ve y se tapa de un clic. */
+  function sinFicha(grupo, conocidos, filtro) {
+    const instr = { bat: 'batería', percu: 'percusión', g1: 'guitarra', g2: 'guitarra',
+                    bajo: 'bajo', t1: 'teclados', t2: 'teclados', saxo: 'saxo' };
+    const vistos = new Set();
+    const out = [];
+    for (const clave of grupo.puestos) {
+      const p = PUESTOS.find(x => x.clave === clave);
+      for (const nombre of (p ? p.gente : [])) {
+        if (nombre === 'Invitado' || conocidos.has(norm(nombre)) || vistos.has(nombre)) continue;
+        vistos.add(nombre);
+        const fantasma = { nombre, rol: 'instrumento', activo: true,
+                           instrumentos: [instr[clave] || ''].filter(Boolean), sinFicha: true };
+        if (filtro(fantasma)) out.push(fantasma);
+      }
+    }
+    return out;
   }
 
   function pintar() {
     const n = norm(q);
     const filtro = p => (!n || norm(p.nombre).includes(n)) && (!soloActivos || p.activo !== false);
-    clear(gridCant);
-    store.cantantes.filter(filtro)
-      .sort((a, b) => temasDe(b.nombre).length - temasDe(a.nombre).length || a.nombre.localeCompare(b.nombre))
-      .forEach(p => gridCant.appendChild(tarjeta(p)));
-    clear(gridMus);
-    store.musicos.filter(filtro)
-      .sort((a, b) => (b.temas || 0) - (a.temas || 0))
-      .forEach(p => gridMus.appendChild(tarjeta(p)));
+    const gente = [...store.cantantes, ...store.musicos].filter(filtro);
+    const conocidos = new Set([...store.cantantes, ...store.musicos].map(p => norm(p.nombre)));
+
+    /* Quién quedó sin grupo va a OTROS, que se arma al final con lo que
+       sobró en vez de con una regla propia: así nadie se pierde. */
+    const ubicados = new Set();
+    const secciones = GRUPOS.map(g => {
+      const suyos = gente.filter(p => gruposDe(p).includes(g)).sort(porUso);
+      suyos.forEach(p => ubicados.add(p));
+      return { titulo: g.titulo, suyos: [...suyos, ...sinFicha(g, conocidos, filtro)] };
+    });
+    const otros = gente.filter(p => !ubicados.has(p)).sort(porUso);
+    if (otros.length) secciones.push({ titulo: 'OTROS', suyos: otros });
+
+    clear(cuerpo);
+    const conGente = secciones.filter(x => x.suyos.length);
+    if (!conGente.length) {
+      cuerpo.appendChild(h('div.empty', {}, h('b', {}, 'Nadie con ese nombre')));
+      return;
+    }
+    for (const sec of conGente) {
+      cuerpo.appendChild(h('div.grupo-cab', {},
+        h('h2.sec.grupo-tit', {}, sec.titulo),
+        h('span.dim', {}, `${sec.suyos.length}`)));
+      const grid = h('div.singer-grid');
+      sec.suyos.forEach(p => grid.appendChild(tarjeta(p)));
+      cuerpo.appendChild(grid);
+    }
   }
 
   const buscador = h('input', { type: 'search', placeholder: 'Buscar por nombre…' });
@@ -145,8 +242,8 @@ export function vistaSingers() {
   return frag(
     h('div.page-head', {},
       h('div', {},
-        h('h1', {}, 'Cantantes'),
-        h('p.sub', {}, `${store.cantantes.length} cantantes y ${store.musicos.length} músicos, sacados del historial de jams`)),
+        h('h1', {}, 'Músicos'),
+        h('p.sub', {}, `${store.cantantes.length} cantantes y ${store.musicos.length} instrumentistas, sacados del historial de jams`)),
       h('div.page-actions', {},
         h('button.btn.primary', { onclick: () => ficha({ rol: 'voz', activo: true }, pintar) }, '＋ Cantante'),
         h('button.btn', { onclick: () => ficha({ rol: 'instrumento', activo: true, instrumentos: [] }, pintar) }, '＋ Músico'))),
@@ -157,8 +254,6 @@ export function vistaSingers() {
         h('input', { type: 'checkbox', style: { width: 'auto' }, onchange: e => { soloActivos = e.target.checked; pintar(); } }),
         'Solo activos')),
 
-    gridCant,
-    h('h2.sec', { style: { marginTop: '30px' } }, 'Músicos invitados'),
-    gridMus,
+    cuerpo,
   );
 }

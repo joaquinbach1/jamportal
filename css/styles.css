@@ -285,7 +285,15 @@ h2.sec {
 .btn.danger { color: var(--err); border-color: var(--err-linea); }
 .btn.danger:hover { background: var(--err-fondo); border-color: var(--err-linea); }
 .btn.sm { padding: 5px 10px; font-size: 12.5px; }
-.btn.xs { padding: 3px 8px; font-size: 11.5px; border-radius: 5px; }
+/* Los de la cabecera de la lista —ver músicos, agrandar, editar como
+   texto, compacta. Llevan contorno propio: sin él se confundían con el
+   texto de alrededor y había que buscarlos para darse cuenta de que se
+   podían tocar. */
+.btn.xs {
+  padding: 4px 9px; font-size: 11.5px; border-radius: 6px;
+  border: 1px solid var(--linea); background: var(--panel);
+}
+.btn.xs:hover { border-color: var(--acc); color: var(--txt); background: var(--hover); }
 .btn:disabled { opacity: .4; cursor: not-allowed; }
 
 /* LIVE VIEW: el botón grande de la barra, el que se usa arriba del escenario */
@@ -1809,12 +1817,8 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
    ese instrumento necesita leer de un tema, y esconde el resto.
    El DOM no cambia — solo qué se muestra.
    ============================================================ */
-.btn.gremios {
-  background: var(--panel-2); border-color: var(--line);
-  font-weight: 700; font-size: 13.5px; letter-spacing: .3px;
-  padding: 10px 16px;
-}
-.btn.gremios:hover { border-color: var(--linea-fuerte); background: var(--hover); }
+/* El de los músicos vive entre los otros de la cabecera, así que hereda
+   de .btn.xs; prendido se tiñe para que se vea que está puesto. */
 
 /* ============================================================
    Músicos view
@@ -1862,7 +1866,7 @@ body.en-login #nav, body.en-login .sidebar, body.en-login #storageBadge { displa
 }
 .setlist.compacta .mu-nombre { font-size: 11.5px; padding: 0 4px; }
 .setlist.compacta .sl-item:has(.sub-musicos) { padding-top: 4px; padding-bottom: 4px; }
-.btn.gremios.on { border-color: var(--acc); color: var(--acc); }
+.btn.xs.gremios.on { border-color: var(--acc); color: var(--acc); background: var(--acc-tinte); font-weight: 600; }
 
 /* la trompeta: apagada en gris, encendida cuando el tema lleva vientos */
 .icon-btn.vientos {
@@ -3100,3 +3104,15 @@ tr:hover .ens-x { opacity: .6; }
 .fab-asist { font-size: 22px; }
 .fab-asist.on { background: var(--panel-2); color: var(--txt); border: 1px solid var(--linea-fuerte); }
 @media print { .fab-asist { display: none; } }
+
+/* Los títulos de cada instrumento en la pantalla de Músicos: grandes,
+   porque son lo que se busca al entrar. */
+.grupo-cab { display: flex; align-items: baseline; gap: 10px; margin: 30px 0 12px; }
+.grupo-cab:first-child { margin-top: 4px; }
+.grupo-tit { margin: 0; font-size: 15px; letter-spacing: 2.5px; }
+.grupo-cab .dim { font-size: 12px; font-family: var(--mono); }
+
+/* El que toca en la banda y no tiene ficha: se ve que está, y se ve que
+   le falta algo. Punteado y apagado, como un lugar por llenar. */
+.singer-card.fantasma { border-style: dashed; opacity: .72; }
+.singer-card.fantasma .sc-meta { font-style: italic; color: var(--acc-2); }
