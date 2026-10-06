@@ -2873,6 +2873,15 @@ body.modo-link .view { padding: 20px 16px calc(96px + env(safe-area-inset-bottom
 .ens-tema.e-listo { border-left-color: var(--ok); background: var(--ok-fondo); }
 .ens-tema-txt { flex: 1; min-width: 0; }
 .ens-tema-tit { font-size: 14px; font-weight: 550; }
+/* El cantante, del mismo tamaño que el título pero en otro color: se
+   leen como una sola frase y el color dice cuál es cuál sin jerarquía. */
+.ens-cantante { color: var(--acc-2); font-weight: 550; margin-left: 8px; }
+.ens-cantante + .ens-cantante::before { content: '· '; color: var(--txt-3); font-weight: 400; }
+
+.ens-cuando { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+.ens-cuando-uno { display: flex; align-items: center; gap: 5px; }
+.ens-dia-sel { font-size: 11.5px; padding: 2px 6px; max-width: 150px; }
+.ens-hora.chica { width: 92px; font-size: 11.5px; padding: 2px 6px; }
 .ens-tema-sub { font-size: 11.5px; color: var(--txt-3); display: flex; gap: 10px; }
 .ens-canta { color: var(--acc-2); }
 
@@ -2963,6 +2972,9 @@ tr:hover .ens-x { opacity: .6; }
   .ens-tema { flex-wrap: wrap; }
   .ens-estados { width: 100%; }
   .ens-est { flex: 1; }
+  .ens-cuando { width: 100%; }
+  .ens-cuando-uno { width: 100%; }
+  .ens-dia-sel { flex: 1; max-width: none; }
 }
 
 /* la nota de todos, en el editor y en el celular */

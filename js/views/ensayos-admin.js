@@ -93,10 +93,17 @@ export function vistaEnsayosAdmin(jamId) {
               h('div.ens-tema-txt', {},
                 h('div.ens-tema-tit', {},
                   u.tipo === 'medley' ? h('span.live-tag', {}, 'MEDLEY') : null,
-                  ' ' + u.titulo),
-                h('div.ens-tema-sub', {},
-                  u.detalle || '',
-                  u.cantantes.length ? h('span.ens-canta', {}, '🎤 ' + u.cantantes.join(', ')) : null)),
+                  ' ' + u.titulo,
+                  /* El cantante pegado al título y del mismo tamaño: son
+                     una sola cosa —«Let It Be, la canta Ale»— y leerlos
+                     juntos es lo que se hace mirando esta lista. El color
+                     alcanza para saber cuál es cuál. */
+                  u.cantantes.map(c => h('span.ens-cantante', {}, c))),
+                h('div.ens-tema-sub', {}, u.detalle || '')),
+              /* Cuándo viene cada uno de los que cantan este tema, acá
+                 mismo: mirando el tema se decide si llega a ensayarse, y
+                 tener que bajar a la tabla para eso cortaba la idea. */
+              h('div.ens-cuando', {}, u.cantantes.map(c => cuandoViene(c))),
               /* Los tres botones a la vista y no un ciclo: en una lista
                  larga, adivinar en qué queda cada clic es peor que leer. */
               h('div.ens-estados', {},
@@ -112,6 +119,57 @@ export function vistaEnsayosAdmin(jamId) {
             return fila;
           }))
         : h('div.dim', {}, 'Esta jam no tiene temas todavía.'));
+  }
+
+  /* ============================================================
+     Qué día y a qué hora viene alguien
+     ------------------------------------------------------------
+     Un día y una hora, no una grilla: en la práctica cada
+     cantante viene a un ensayo, y las tablas de abajo siguen
+     estando para el que venga a dos.
+
+     Cambiar el día se lleva la hora: lo que se está diciendo es
+     «viene el 20 y no el 27», no «viene los dos».
+     ============================================================ */
+  function cuandoViene(nombre) {
+    const ensayos = alDia().ensayos || [];
+    if (!ensayos.length) return null;
+
+    const diaActual = ensayos.findIndex((_, i) => (vienen[i] || {})[nombre]);
+    const hora = diaActual >= 0 ? vienen[diaActual][nombre] : '';
+
+    const mover = (dia, h) => {
+      /* Se limpia en todos antes de escribir: así cambiar de día no deja
+         al cantante citado dos veces. */
+      ensayos.forEach((_, i) => {
+        if (vienen[i] && vienen[i][nombre]) { vienen[i] = { ...vienen[i] }; delete vienen[i][nombre]; }
+      });
+      if (dia >= 0 && h) vienen[dia] = { ...(vienen[dia] || {}), [nombre]: h };
+      guardarVienen(jamId, vienen);
+      pintar();
+    };
+
+    const selDia = h('select.ens-dia-sel', {
+      title: `Qué día viene ${nombre}`,
+      onchange: e => {
+        const d = Number(e.target.value);
+        /* Sin hora puesta, la del ensayo: es la respuesta más probable
+           y se puede corregir al lado. */
+        mover(d, d < 0 ? '' : (hora || ensayos[d].hora || '20:00'));
+      },
+    },
+      h('option', { value: -1, selected: diaActual < 0 }, 'no viene'),
+      ensayos.map((e, i) => h('option', { value: i, selected: i === diaActual },
+        e.fecha ? fechaLinda(e.fecha).replace(/ de \d{4}$/, '') : `Ensayo ${i + 1}`)));
+
+    return h('span.ens-cuando-uno', {},
+      selDia,
+      diaActual >= 0
+        ? h('input.ens-hora.chica', {
+            type: 'time', value: hora, title: `A qué hora viene ${nombre}`,
+            onchange: e => mover(diaActual, e.target.value),
+          })
+        : null);
   }
 
   /* ---------- 2. el plan ---------- */
