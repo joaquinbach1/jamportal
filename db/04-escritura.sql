@@ -214,13 +214,21 @@ begin
     from jsonb_array_elements(e->'invitados') with ordinality x(v, i);
   end loop;
 
-  -- temas que la app ya no tiene. No se tocan los descartados (que la
-  -- app no ve) ni los que todavía cuelgan de algún setlist.
+  -- Temas que la app ya no tiene. No se tocan los descartados (que la
+  -- app no ve), ni los que cuelgan de algún setlist, ni los recién
+  -- tocados.
+  --
+  -- Lo último es por un hueco real: la app guarda el catálogo y la jam
+  -- en dos llamadas, y en el medio un tema recién creado existe sin
+  -- estar todavía en ninguna lista. Si ahí entra el guardado de otro
+  -- navegador con su catálogo de antes, el tema se borra y el
+  -- guardar_jam que venía detrás falla entero. Ver db/29.
   delete from song s
    where s.estado <> 'descartado'
      and not exists (select 1 from jsonb_array_elements(c->'songs') js
                       where js->>'id' = s.id)
-     and not exists (select 1 from setlist_item i where i.song_id = s.id);
+     and not exists (select 1 from setlist_item i where i.song_id = s.id)
+     and s.actualizada < now() - barrido_seguro();
 
   -- por confirmar
   -- `where true` no es decorativo: por la API estas funciones corren en

@@ -126,12 +126,26 @@ export class PostgresDriver {
     const docs = documentos(state);
     let ultimaRevision = this.revision;
 
+    /* Si algo falla a mitad de camino, lo que ya se mandó queda anotado
+       como escrito y el reintento lo saltea. Eso dejaba sin arreglo el
+       caso del tema recién creado: el catálogo se había guardado bien,
+       otro lo borró, y la jam fallaba para siempre porque el catálogo
+       «no había cambiado» y no se volvía a mandar.
+
+       Después de un error se olvida todo y el próximo guardado manda el
+       estado entero. Es una llamada de más en un caso raro, a cambio de
+       que el sistema se arregle solo en vez de quedarse trabado. */
+    const alFallar = e => {
+      if (!e.conflicto) this.ultimo.clear();
+      throw e;
+    };
+
     for (const [id, doc] of docs) {
       const json = JSON.stringify(doc);
       if (this.ultimo.get(id) === json) continue;
 
       if (id === 'catalogo') {
-        ultimaRevision = await this.rpc('guardar_catalogo', { c: doc });
+        ultimaRevision = await this.rpc('guardar_catalogo', { c: doc }).catch(alFallar);
       } else {
         // Mandamos la versión que leímos: si en la base hay otra, es que
         // alguien guardó en el medio y la escritura se rechaza.
@@ -143,7 +157,7 @@ export class PostgresDriver {
           });
         } catch (e) {
           if (e.conflicto) { e.jamId = doc.id; e.jamNombre = doc.nombre; }
-          throw e;
+          alFallar(e);
         }
         // La base hace version + 1 y solo llegamos acá si coincidían.
         this.versiones.set(doc.id, (v ?? 0) + 1);

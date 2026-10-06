@@ -46,6 +46,9 @@ function emit() { listeners.forEach(fn => fn()); }
    decidió que su versión gana. Se vacía en cuanto se usa. */
 let aPisar = new Set();
 
+/* Para no entrar en un ciclo de reintentos cuando la base está caída. */
+let reintentando = false;
+
 function persist() {
   if (!driver) return;          // todavía no arrancamos, o la base no contestó
   clearTimeout(saveTimer);
@@ -55,7 +58,18 @@ function persist() {
     try {
       await driver.write(state, pisar);
     } catch (e) {
-      if (!e.conflicto) { console.error('No se pudo guardar', e); return; }
+      if (!e.conflicto) {
+        console.error('No se pudo guardar', e);
+        /* El driver ya se olvidó de lo que creía escrito, así que el
+           reintento manda todo de nuevo y suele arreglarse solo —el caso
+           típico es un tema que otro borró en el medio y hay que volver a
+           darlo de alta. Una sola vez: si falla otra, es otra cosa. */
+        if (!reintentando) {
+          reintentando = true;
+          setTimeout(() => { reintentando = false; persist(); }, 1500);
+        }
+        return;
+      }
       /* Chocamos con otro que guardó la misma jam. Se juntan las dos
          versiones; solo si eso no se puede, alguien tiene que decidir. */
       if (!(await fusionar(e)) && alChocar) alChocar(e);
