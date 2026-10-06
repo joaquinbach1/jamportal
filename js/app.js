@@ -119,6 +119,23 @@ async function pintarCompartido(paquete) {
 function render(forzar = false) {
   const ruta = (location.hash || '#/jams').slice(1);
   if (!forzar && ruta === rutaActual) return;
+
+  /* Ir al tope es cosa de navegar, no de redibujar. Cuando esto corre
+     porque entró un cambio de otra persona o se juntaron dos ediciones,
+     la ruta es la misma y quien está mirando sigue donde estaba: tirarlo
+     arriba en medio de una lista de cuarenta temas es perder el lugar
+     por algo que no pidió.
+
+     Se guarda y se repone en vez de solo no hacer nada, porque clear()
+     deja la página en cero de alto y el navegador baja el scroll solo. */
+  const mismaRuta = ruta === rutaActual;
+  const scrollPrevio = window.scrollY;
+  /* Sostener el alto durante el cambio. Parte de la vista se dibuja un
+     instante después —stats, convocados— y en ese hueco la página queda
+     más corta: el navegador recorta el scroll solo, sin que nadie se lo
+     pida, y reponerlo después ya es tarde. Con el alto sostenido no hay
+     nada que recortar. */
+  if (mismaRuta) view.style.minHeight = view.offsetHeight + 'px';
   rutaActual = ruta;
 
   /* Puede llegar acá navegando dentro de la app (el hash cambia y la
@@ -154,7 +171,13 @@ function render(forzar = false) {
     console.error(err);
     view.appendChild(h('div.empty', {}, h('b', {}, 'Se rompió algo al dibujar esta vista'), h('code.mono', {}, err.message)));
   }
-  window.scrollTo({ top: 0 });
+  if (!mismaRuta) { window.scrollTo({ top: 0 }); return; }
+
+  window.scrollTo({ top: scrollPrevio });
+  /* Y se suelta cuando lo que faltaba ya está. No se usa
+     requestAnimationFrame porque no corre con la pestaña en segundo
+     plano, que es justo cuando entra el cambio de otra persona. */
+  setTimeout(() => { view.style.minHeight = ''; }, 400);
 }
 
 window.addEventListener('hashchange', () => render());
