@@ -216,6 +216,23 @@ export class PostgresDriver {
     return this.rpc('abrir_jam', { jid: jamId, codigo });
   }
 
+  /**
+   * La última versión de esta jam que este navegador escribió o leyó.
+   *
+   * Es la base para fusionar cuando dos personas guardan a la vez: sin
+   * ella no se puede saber si un tema que está en una versión y no en la
+   * otra lo agregó uno o lo borró el otro.
+   */
+  baseDeJam(jamId) {
+    const json = this.ultimo.get('jam:' + jamId);
+    try { return json ? JSON.parse(json) : null; } catch { return null; }
+  }
+
+  /** Acepta la versión que tiene el servidor, para reescribir sobre ella. */
+  fijarVersion(jamId, version) {
+    this.versiones.set(jamId, version ?? null);
+  }
+
   async clear() {
     await this.rpc('vaciar_todo');
     this.ultimo.clear();

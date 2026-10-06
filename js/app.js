@@ -2,7 +2,7 @@
    app.js — arranque + router por hash
    ============================================================ */
 
-import { store, alHaberCambiosAjenos, alChocarConOtro, realtimeConectado } from './store.js';
+import { store, alHaberCambiosAjenos, alChocarConOtro, alJuntarConOtro, realtimeConectado } from './store.js';
 import { h, clear, $, $$, toast, modal } from './ui.js';
 import { iniciarTema, botonTema } from './tema.js';
 
@@ -176,9 +176,24 @@ alHaberCambiosAjenos(() => {
    mirando, y el aviso cuenta qué pasó por si querés ir a buscar lo del
    otro. Es una decisión tomada a conciencia: lo que la otra persona
    había guardado en esa jam se pisa. */
+/* Lo normal es que se junten solas y esto no se vea: avisamos qué pasó
+   para que nadie se asuste de ver aparecer un tema que no puso. */
+alJuntarConOtro(({ jamNombre, resumen }) => {
+  const r = resumen || {};
+  const partes = [];
+  if (r.agregadosPorEl) partes.push(`${r.agregadosPorEl} que sumó otra persona`);
+  if (r.agregadosPorMi) partes.push(`${r.agregadosPorMi} tuyo${r.agregadosPorMi > 1 ? 's' : ''}`);
+  toast(partes.length
+    ? `${jamNombre || 'La jam'}: junté los cambios — ${partes.join(' y ')}`
+    : `${jamNombre || 'La jam'}: junté tu cambio con el de otra persona`, 'ok');
+  render(true);
+});
+
+/* Solo si la fusión no se pudo: ahí sí hay que elegir, y elige quien
+   tiene la pantalla delante. */
 alChocarConOtro(e => {
   store.pisarJam(e.jamId);
-  toast(`Guardé lo tuyo en ${e.jamNombre || 'esa jam'} — pisó lo que había guardado otra persona`);
+  toast(`Guardé lo tuyo en ${e.jamNombre || 'esa jam'} — pisó lo que había guardado otra persona`, 'err');
 });
 
 /**

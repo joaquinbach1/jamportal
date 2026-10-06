@@ -35,6 +35,7 @@ const BASE = [
   './js/lookup.js',
   './js/magiclist.js',
   './js/musicos.js',
+  './js/fusionar-jam.js',
   './js/views/tecnica.js',
   './js/ensayada.js',
   './js/ensayos-plan.js',

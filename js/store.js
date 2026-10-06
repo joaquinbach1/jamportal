@@ -55,12 +55,55 @@ function persist() {
     try {
       await driver.write(state, pisar);
     } catch (e) {
-      // Un choque no es un error a loguear y olvidar: alguien tiene que
-      // decidir qué versión queda, y eso no lo puede decidir el store.
-      if (e.conflicto && alChocar) alChocar(e);
-      else console.error('No se pudo guardar', e);
+      if (!e.conflicto) { console.error('No se pudo guardar', e); return; }
+      /* Chocamos con otro que guardó la misma jam. Se juntan las dos
+         versiones; solo si eso no se puede, alguien tiene que decidir. */
+      if (!(await fusionar(e)) && alChocar) alChocar(e);
     }
   }, 120);
+}
+
+/* ============================================================
+   Cuando dos personas guardan la misma jam
+   ------------------------------------------------------------
+   Antes esto lo resolvía la vista pisando: la versión del que
+   llegaba segundo reemplazaba entera la del primero, con su tema
+   adentro. Era perder trabajo de alguien, todas las veces.
+
+   Ahora se juntan. Hace falta la versión del servidor y la base
+   —la última que este navegador escribió o leyó—, que es lo que
+   permite distinguir «esto lo agregó él» de «esto lo borré yo».
+
+   Dos intentos y no más: si mientras fusionábamos entró un
+   tercer guardado, se vuelve a intentar una vez; a la segunda ya
+   es otra cosa y conviene que lo mire una persona.
+   ============================================================ */
+async function fusionar(e, intento = 1) {
+  if (!driver.baseDeJam || intento > 2) return false;
+  try {
+    const remoto = await driver.read();
+    const suya = (remoto.jams || []).find(j => j.id === e.jamId);
+    const mia = (state.jams || []).find(j => j.id === e.jamId);
+    if (!suya || !mia) return false;
+
+    const { fusionarJam } = await import('./fusionar-jam.js');
+    const { jam, resumen } = fusionarJam(driver.baseDeJam(e.jamId), mia, suya);
+
+    /* Se escribe encima del objeto que ya está en el estado en vez de
+       reemplazarlo: las vistas que lo tengan agarrado siguen mirando el
+       mismo, y lo que se dibuje ahora ya tiene las dos partes. */
+    Object.assign(mia, jam);
+    driver.fijarVersion(e.jamId, suya.version);
+
+    await driver.write(state);
+    emit();
+    if (alFusionar) alFusionar({ jamId: e.jamId, jamNombre: mia.nombre, resumen });
+    return true;
+  } catch (otro) {
+    if (otro.conflicto) return fusionar(otro, intento + 1);
+    console.error('No se pudo fusionar', otro);
+    return false;
+  }
 }
 
 function touch() { persist(); emit(); }
@@ -81,6 +124,10 @@ let ultimoSondeo = 0;
 export function alHaberCambiosAjenos(fn) { alSincronizar = fn; }
 /** Se llama cuando otro guardó la misma jam mientras vos la editabas. */
 export function alChocarConOtro(fn) { alChocar = fn; }
+
+let alFusionar = null;
+/** Avisa que se juntó tu edición con la de otro, para contarlo. */
+export function alJuntarConOtro(fn) { alFusionar = fn; }
 export function realtimeConectado() { return !!(rt && rt.conectado); }
 
 function detenerSondeo() {
