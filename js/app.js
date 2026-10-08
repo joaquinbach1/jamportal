@@ -278,7 +278,10 @@ $('#temaSlot').appendChild(botonTema(h));
     document.body.classList.add('modo-link');
     await store.initPublico(link[1]);
     if (store.problema) { pintarProblema(); return; }
-    const jam = store.jams[0];
+    /* La del link, no la primera de la lista. Mientras el link devolvía
+       una sola jam daban lo mismo; ahora devuelve todas para que se
+       pueda mirar el historial, y jams[0] es la que ordene primero. */
+    const jam = store.jam(store.jamDelLink) || store.jams[0];
     if (!jam) { pintarProblema('link'); return; }
     /* Siempre la vista de lista, ancha o angosta: es lo que un invitado
        necesita, y el editor completo trae media app que no le toca. */
@@ -286,6 +289,9 @@ $('#temaSlot').appendChild(botonTema(h));
     clear(view);
     view.appendChild(vistaMovil(jam.id));
     alHaberCambiosAjenos(() => {
+      /* Solo mientras se siga mirando el link: desde acá se puede salir a
+         las otras jams, y ahí el que redibuja es el router. */
+      if (!location.hash.startsWith('#/v/')) { render(true); return; }
       const escribiendo = document.activeElement &&
         /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
       if (escribiendo || document.querySelector('.modal-back, .hoja-back')) return;
