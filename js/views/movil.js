@@ -1477,7 +1477,7 @@ export function vistaMovil(jamId) {
            historial: desde acá se entra por muchos lados —el cockpit, un
            link compartido, la barra— y «atrás» querría decir algo
            distinto en cada caso. */
-        store.publico ? null : h('a.mv-btn-cab.icono.mv-volver', {
+        h('a.mv-btn-cab.icono.mv-volver', {
           href: '#/jams', title: 'Volver a las jams',
         }, '←'),
         h('div.mv-cab-txt', {},
@@ -1488,8 +1488,8 @@ export function vistaMovil(jamId) {
         h('div.mv-cab-acc', {},
           /* El toggle a la otra vista: un toque y estás en el cockpit.
              Por el link no va: el cockpit sin sesión no carga nada. */
-          store.publico ? null : h('button.mv-btn-cab.icono', {
-            title: 'Cockpit view — el editor completo',
+          h('button.mv-btn-cab.icono', {
+            title: 'Cockpit view — la lista entera, con todo',
             onclick: () => { location.hash = `#/jams/${jam.id}/editar`; },
           }, '🎛'),
           /* leer las notas también es leer: va aunque la jam esté cerrada */

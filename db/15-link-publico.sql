@@ -74,10 +74,12 @@ language sql stable as $fn$
         'songs', (select coalesce(jsonb_agg(jsonb_build_object(
                     'songId', h.song_id, 'notas', h.notas,
                     'ensayada', h.ensayada,
+                    'musicos', h.musicos, 'notaTecnica', h.nota_tecnica,
                     'cantantes', cantantes_de(h.id)) order by h.orden), '[]'::jsonb)
                   from setlist_item h where h.parent_id = i.id))
       else jsonb_build_object('tipo', 'song', 'songId', i.song_id,
                               'notas', i.notas, 'ensayada', i.ensayada,
+                              'musicos', i.musicos, 'notaTecnica', i.nota_tecnica,
                               'cantantes', cantantes_de(i.id))
     end as item
     from setlist_item i
@@ -218,6 +220,11 @@ create or replace function estado_publico(t text) returns jsonb
 language sql stable security definer set search_path = public as $fn$
 select case when jam_del_token(t) is null then null else jsonb_build_object(
 
+  /* Cuál es la jam del link. El link deja ver todas pero escribir solo
+     esta, así que la app necesita saber en cuál está parada para no
+     ofrecer editar algo que la base va a rechazar. */
+  'jamDelLink', jam_del_token(t),
+
   'version', 3,
   'esAdmin', false,
   'publico', true,
@@ -255,7 +262,7 @@ select case when jam_del_token(t) is null then null else jsonb_build_object(
              'fecha', coalesce(to_char(j.fecha, 'YYYY-MM-DD'), ''),
              'hora',  coalesce(to_char(j.hora,  'HH24:MI'),    ''),
              'lugar', j.lugar,
-             'notas', '',                       -- las notas son de la banda
+             'notas', j.notas,
              'historica', j.historica, 'conOrden', j.con_orden,
              'cerrada', j.cerrada, 'codigo', '',
              'vivoIndice', j.vivo_indice, 'version', j.version,
@@ -266,7 +273,10 @@ select case when jam_del_token(t) is null then null else jsonb_build_object(
              'ensayos', '[]'::jsonb,            -- quién ensaya y cuándo, tampoco
              'items', items_de_jam(j.id)
            )), '[]'::jsonb)
-    from jam j where j.id = jam_del_token(t)),
+    /* Todas, no solo la del token: el link es para que la banda vea la
+       lista entera, y el historial es parte de eso. Lo que no viaja es
+       lo que no es música —contactos y ensayos, abajo. */
+    from jam j),
 
   -- Solo los nombres: son los que se eligen como cantantes de un tema.
   'cantantes', (

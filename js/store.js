@@ -245,6 +245,8 @@ export const store = {
   get auth() { return auth; },
   /** ¿Entramos por un link compartido y no con cuenta? */
   get publico() { return !!state.publico; },
+  /** Cuál es la jam del link: es la única que se puede editar desde él. */
+  get jamDelLink() { return state.jamDelLink || null; },
   /** Por qué no se pudo arrancar, si no se pudo. La app frena y lo cuenta. */
   get problema() { return problema; },
   /** Entraste bien, pero tu mail no está habilitado en esta base. */
@@ -376,9 +378,11 @@ export const store = {
   /**
    * Arranca desde un link compartido, sin cuenta.
    *
-   * La base devuelve UNA jam y el repertorio, y nada de lo que es de la
-   * banda: teléfonos, mails, ensayos, las otras jams. Lo que se puede
-   * escribir lo decide la base, no esto.
+   * La base devuelve las jams y el repertorio, y nada de lo que es de la
+   * banda: teléfonos, mails y los ensayos. Lo musical sí va entero —la
+   * lista, quién toca cada puesto, las notas, qué se ensayó— y también
+   * las otras jams, para leerlas: escribir solo se puede en la del
+   * link, y eso lo decide la base, no esto.
    */
   async initPublico(token) {
     const nube = this.configNube();

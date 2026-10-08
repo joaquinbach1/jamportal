@@ -246,7 +246,12 @@ export function vistaEditor(jamId) {
   /* Las jams históricas son el registro de lo que ya pasó: se abren cerradas
      para no romperlas sin querer. El candado se puede abrir a propósito, y
      queda abierto aunque la vista se vuelva a dibujar (hasta recargar). */
-  const bloqueada = () => (jam.historica || jam.cerrada) && !desbloqueadas.has(jam.id);
+  /* Por el link se puede editar la jam del link y ninguna otra: la base
+     rechaza el resto, así que ofrecerlo sería prometer algo que no va a
+     pasar. Las demás se abren igual, para leerlas. */
+  const soloLectura = () => store.publico && jam.id !== store.jamDelLink;
+  const bloqueada = () =>
+    soloLectura() || ((jam.historica || jam.cerrada) && !desbloqueadas.has(jam.id));
 
   /* ---------- densidad de la lista ---------- */
 
@@ -1327,6 +1332,15 @@ export function vistaEditor(jamId) {
 
   function pintarSide() {
     clear(sidePanel);
+    if (soloLectura()) {
+      sidePanel.append(
+        h('h2.sec', {}, 'Link compartido'),
+        h('div.method-hint', {},
+          'Estás viendo esta jam desde un link. Se puede mirar entera —la lista, ',
+          'quién toca cada tema, las notas— pero editar solo se puede en la jam ',
+          'para la que te pasaron el link.'));
+      return;
+    }
     if (bloqueada() && jam.cerrada && !jam.historica) {
       sidePanel.append(
         h('h2.sec', {}, 'Jam cerrada'),
