@@ -3133,3 +3133,7 @@ tr:hover .ens-x { opacity: .6; }
    cualquier fila arrastrada y los temas que se lleva quedan marcados al
    costado, para ver dónde termina lo que uno agarró. */
 .sl-item.en-seccion { box-shadow: inset 3px 0 0 var(--acc); }
+
+/* Arrastrando un bloque en la lista del celular viaja su sección: los
+   temas que van de acompañantes llevan filete, para ver dónde termina. */
+.mv-en-seccion { box-shadow: inset 3px 0 0 var(--acc); }

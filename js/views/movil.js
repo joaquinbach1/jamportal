@@ -1067,8 +1067,19 @@ export function vistaMovil(jamId) {
       /* La captura es lo que hace que el dedo siga mandando aunque se salga
          de la manija. Si el navegador la niega, el arrastre igual arranca. */
       try { asa.setPointerCapture(e.pointerId); } catch { /* seguimos igual */ }
-      arrastre = { fila, y0: e.clientY, y: e.clientY, movio: false };
-      fila.classList.add('mv-arrastrando');
+      /* Un bloque se lleva su sección: todo lo que va hasta el bloque
+         siguiente. El rótulo es el encabezado de esos temas, no una fila
+         más, y moverlo solo los dejaría donde estaban. */
+      const filas = [fila];
+      if (fila.classList.contains('mv-bloque')) {
+        for (let n = fila.nextElementSibling; n; n = n.nextElementSibling) {
+          if (n.dataset.i === undefined || n.classList.contains('mv-bloque')) break;
+          filas.push(n);
+        }
+      }
+      arrastre = { fila, filas, y0: e.clientY, y: e.clientY, movio: false };
+      filas.forEach(f => f.classList.add('mv-arrastrando'));
+      if (filas.length > 1) filas.slice(1).forEach(f => f.classList.add('mv-en-seccion'));
       document.body.classList.add('mv-arrastrando-algo');
       autoScroll();
     });
@@ -1081,9 +1092,11 @@ export function vistaMovil(jamId) {
 
     const soltar = () => {
       if (!arrastre) return;
-      const fila = arrastre.fila;
-      fila.style.transform = '';
-      fila.classList.remove('mv-arrastrando');
+      const { filas } = arrastre;
+      filas.forEach(f => {
+        f.style.transform = '';
+        f.classList.remove('mv-arrastrando', 'mv-en-seccion');
+      });
       document.body.classList.remove('mv-arrastrando-algo');
       const movio = arrastre.movio;
       arrastre = null;
@@ -1106,27 +1119,35 @@ export function vistaMovil(jamId) {
 
   /** Mueve la fila y, si cruzó a una vecina, la reubica en el DOM. */
   function acomodar() {
-    const { fila } = arrastre;
-    fila.style.transform = `translateY(${arrastre.y - arrastre.y0}px)`;
+    const { filas } = arrastre;
+    const dy = arrastre.y - arrastre.y0;
+    const correr = () => filas.forEach(f => { f.style.transform = `translateY(${arrastre.y - arrastre.y0}px)`; });
+    correr();
 
-    const r = fila.getBoundingClientRect();
-    const centro = r.top + r.height / 2;
+    /* El centro es el del grupo entero, no el de la primera fila: con una
+       sección de cuatro temas, mirar solo el rótulo la hacía saltar de
+       lugar mucho antes de que el dedo pasara al vecino. */
+    const primera = filas[0].getBoundingClientRect();
+    const ultima = filas[filas.length - 1].getBoundingClientRect();
+    const centro = (primera.top + ultima.bottom) / 2;
 
     const reubicar = (ref, antes) => {
-      const y1 = fila.getBoundingClientRect().top;
-      lista.insertBefore(fila, antes ? ref : ref.nextSibling);
-      /* corrige el origen para que la fila no salte al cambiar de lugar */
-      arrastre.y0 += fila.getBoundingClientRect().top - y1;
+      const y1 = filas[0].getBoundingClientRect().top;
+      /* De atrás para adelante al insertar después, para que el grupo
+         quede en su orden y no dado vuelta. */
+      if (antes) filas.forEach(f => lista.insertBefore(f, ref));
+      else [...filas].reverse().forEach(f => lista.insertBefore(f, ref.nextSibling));
+      arrastre.y0 += filas[0].getBoundingClientRect().top - y1;
       arrastre.movio = true;
-      fila.style.transform = `translateY(${arrastre.y - arrastre.y0}px)`;
+      correr();
     };
 
-    const prev = fila.previousElementSibling;
+    const prev = filas[0].previousElementSibling;
     if (prev) {
       const rp = prev.getBoundingClientRect();
       if (centro < rp.top + rp.height / 2) { reubicar(prev, true); return; }
     }
-    const sig = fila.nextElementSibling;
+    const sig = filas[filas.length - 1].nextElementSibling;
     if (sig) {
       const rs = sig.getBoundingClientRect();
       if (centro > rs.top + rs.height / 2) reubicar(sig, false);
