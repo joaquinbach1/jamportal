@@ -486,17 +486,29 @@ export function vistaMovil(jamId) {
      Quién canta este tema, en esta jam
      ------------------------------------------------------------
      Chips para tocar: primero los que la cantan siempre, después
-     el resto de la banda. Un nombre que no está se escribe abajo.
+     el resto de la banda. Arriba hay un campo único que hace las
+     dos cosas: mientras escribís filtra los chips, y si el nombre
+     no existe lo suma. Es un solo campo y no dos porque uno teclea
+     el nombre igual en los dos casos —no sabe de antemano si está
+     en la lista— y dos cajas al lado obligan a elegir primero.
      ============================================================ */
   function dialogoCantantes(f, s, poner) {
     const elegidos = [...(f.cantantes || [])];
     const habituales = (s && s.cantantes) || [];
     const todos = [...new Set([...habituales, ...store.nombresCantantes(), ...elegidos])];
 
+    let filtro = '';
     const chips = h('div.mv-chips');
+    const aviso = h('div.method-hint', { style: { marginTop: '8px' } });
+
     function pintarChips() {
       clear(chips);
-      todos.forEach(n => chips.appendChild(
+      /* Los ya elegidos quedan a la vista aunque el filtro no los
+         alcance: si no, uno escribe un nombre y pierde de vista lo que
+         había marcado recién. */
+      const q = norm(filtro);
+      const visibles = todos.filter(n => elegidos.includes(n) || !q || norm(n).includes(q));
+      visibles.forEach(n => chips.appendChild(
         h('button.chip' + (elegidos.includes(n) ? '.sel' : ''), {
           onclick: () => {
             const i = elegidos.indexOf(n);
@@ -504,19 +516,36 @@ export function vistaMovil(jamId) {
             pintarChips();
           },
         }, n)));
+      const hayCoincidencia = !q || todos.some(n => norm(n).includes(q));
+      aviso.textContent = hayCoincidencia
+        ? '' : 'Nadie se llama así. Tocá Sumar y queda agregado.';
     }
     pintarChips();
 
-    const fOtro = input({ placeholder: 'Otro nombre…' });
+    const fOtro = input({ placeholder: 'Buscar o escribir un nombre…' });
     const sumarOtro = () => {
       const n = fOtro.value.trim();
       if (!n) return;
       if (!todos.includes(n)) todos.push(n);
       if (!elegidos.includes(n)) elegidos.push(n);
       fOtro.value = '';
+      filtro = '';
       pintarChips();
     };
-    fOtro.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sumarOtro(); } });
+    fOtro.addEventListener('input', () => { filtro = fOtro.value.trim(); pintarChips(); });
+    fOtro.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      /* Enter sobre un nombre que ya existe lo marca, no lo duplica: es
+         el final natural de haberlo buscado. */
+      const q = norm(fOtro.value.trim());
+      const ya = todos.find(n => norm(n) === q);
+      if (!ya) return sumarOtro();
+      if (!elegidos.includes(ya)) elegidos.push(ya);
+      fOtro.value = '';
+      filtro = '';
+      pintarChips();
+    });
 
     const m = modal({
       title: 'Quién canta «' + s.titulo + '»',
@@ -524,9 +553,15 @@ export function vistaMovil(jamId) {
         habituales.length
           ? h('div.method-hint', {}, 'La cantan siempre: ' + habituales.join(', '))
           : null,
+        /* El botón se queda con lo justo: .row reparte mitad y mitad, y en
+           un teléfono eso dejaba el campo tan angosto que no entraba ni el
+           texto de ayuda. */
+        h('div.row', { style: { marginBottom: '10px', alignItems: 'center', gap: '8px' } },
+          fOtro,
+          h('button.btn.sm.ghost',
+            { style: { flex: '0 0 auto', minWidth: 'auto' }, onclick: sumarOtro }, 'Sumar')),
         chips,
-        h('div.row', { style: { marginTop: '10px', alignItems: 'center', gap: '8px' } },
-          fOtro, h('button.btn.sm.ghost', { onclick: sumarOtro }, 'Sumar')),
+        aviso,
       ],
       footer: [
         h('button.btn.ghost', { onclick: () => m.close() }, 'Cancelar'),
