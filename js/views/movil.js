@@ -1077,21 +1077,33 @@ export function vistaMovil(jamId) {
           filas.push(n);
         }
       }
-      arrastre = { fila, filas, y0: e.clientY, y: e.clientY, movio: false };
+      arrastre = { fila, filas, id: e.pointerId, y0: e.clientY, y: e.clientY, movio: false };
       filas.forEach(f => f.classList.add('mv-arrastrando'));
       if (filas.length > 1) filas.slice(1).forEach(f => f.classList.add('mv-en-seccion'));
       document.body.classList.add('mv-arrastrando-algo');
+      /* El resto del arrastre lo escucha el window y no la manija. Con el
+         mouse la captura se pierde en cuanto la fila cambia de lugar en el
+         DOM —que es lo primero que hace el arrastre—, así que el pointerup
+         aterrizaba en cualquier otro lado y la fila quedaba pegada al
+         cursor. El dedo no lo sufría: la captura del touch es implícita y
+         sobrevive a la mudanza. */
+      window.addEventListener('pointermove', mover);
+      window.addEventListener('pointerup', soltar);
+      window.addEventListener('pointercancel', soltar);
       autoScroll();
     });
 
-    asa.addEventListener('pointermove', e => {
-      if (!arrastre) return;
+    const mover = e => {
+      if (!arrastre || e.pointerId !== arrastre.id) return;
       arrastre.y = e.clientY;
       acomodar();
-    });
+    };
 
-    const soltar = () => {
-      if (!arrastre) return;
+    const soltar = e => {
+      if (!arrastre || (e && e.pointerId !== arrastre.id)) return;
+      window.removeEventListener('pointermove', mover);
+      window.removeEventListener('pointerup', soltar);
+      window.removeEventListener('pointercancel', soltar);
       const { filas } = arrastre;
       filas.forEach(f => {
         f.style.transform = '';
@@ -1111,8 +1123,6 @@ export function vistaMovil(jamId) {
       pintar();
       toast('Lista reordenada', 'ok');
     };
-    asa.addEventListener('pointerup', soltar);
-    asa.addEventListener('pointercancel', soltar);
 
     return asa;
   }
@@ -1127,9 +1137,9 @@ export function vistaMovil(jamId) {
     /* El centro es el del grupo entero, no el de la primera fila: con una
        sección de cuatro temas, mirar solo el rótulo la hacía saltar de
        lugar mucho antes de que el dedo pasara al vecino. */
-    const primera = filas[0].getBoundingClientRect();
-    const ultima = filas[filas.length - 1].getBoundingClientRect();
-    const centro = (primera.top + ultima.bottom) / 2;
+    const centroDelGrupo = () =>
+      (filas[0].getBoundingClientRect().top +
+       filas[filas.length - 1].getBoundingClientRect().bottom) / 2;
 
     const reubicar = (ref, antes) => {
       const y1 = filas[0].getBoundingClientRect().top;
@@ -1142,15 +1152,23 @@ export function vistaMovil(jamId) {
       correr();
     };
 
-    const prev = filas[0].previousElementSibling;
-    if (prev) {
-      const rp = prev.getBoundingClientRect();
-      if (centro < rp.top + rp.height / 2) { reubicar(prev, true); return; }
-    }
-    const sig = filas[filas.length - 1].nextElementSibling;
-    if (sig) {
-      const rs = sig.getBoundingClientRect();
-      if (centro > rs.top + rs.height / 2) reubicar(sig, false);
+    /* Un tirón grande puede cruzar varias vecinas de una, así que se sigue
+       acomodando mientras el centro quede del otro lado: con una vecina por
+       llamada, un movimiento rápido dejaba al grupo a mitad de camino. La
+       vuelta termina igual cuando se acaba la lista. */
+    for (let vueltas = lista.children.length; vueltas > 0; vueltas--) {
+      const centro = centroDelGrupo();
+      const prev = filas[0].previousElementSibling;
+      if (prev) {
+        const rp = prev.getBoundingClientRect();
+        if (centro < rp.top + rp.height / 2) { reubicar(prev, true); continue; }
+      }
+      const sig = filas[filas.length - 1].nextElementSibling;
+      if (sig) {
+        const rs = sig.getBoundingClientRect();
+        if (centro > rs.top + rs.height / 2) { reubicar(sig, false); continue; }
+      }
+      return;
     }
   }
 
