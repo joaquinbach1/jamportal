@@ -600,6 +600,47 @@ export function vistaEditor(jamId) {
     }), at ?? items().length);
   }
   function quitar(i) { items().splice(i, 1); guardar(); pintarTodo(); }
+
+  /* ============================================================
+     Las secciones
+     ------------------------------------------------------------
+     Un bloque no es una fila más: es el encabezado de todo lo que
+     viene hasta el bloque siguiente. Arrastrarlo solo a él dejaba
+     sus temas donde estaban, que es lo contrario de lo que uno
+     quiere al mover «PIANO BAR» más arriba.
+
+     La sección no está guardada en ningún lado: se deduce de la
+     lista. Es lo correcto —mover un tema de una sección a otra es
+     arrastrarlo y nada más, sin tocar ninguna pertenencia.
+     ============================================================ */
+  function largoDeSeccion(i) {
+    const lista = items();
+    let n = 1;
+    while (i + n < lista.length && lista[i + n].tipo !== 'bloque') n++;
+    return n;
+  }
+
+  /** Pinta —o despinta— las filas de una sección mientras se arrastra. */
+  function marcarSeccion(i, cuantos, on) {
+    /* Solo las filas de ítems: el cuadro del ＋ se inserta entre medio
+       cuando está abierto, y contando todos los hijos se marcaban las
+       filas corridas. */
+    const filas = [...setlistCont.querySelectorAll(':scope > .sl-item, :scope > .sl-medley')];
+    for (let k = i; k < i + cuantos && k < filas.length; k++) {
+      filas[k].classList.toggle('dragging', on);
+      filas[k].classList.toggle('en-seccion', on && k > i);
+    }
+  }
+
+  function moverSeccion(desde, cuantos, to) {
+    /* Soltar una sección adentro de sí misma no es nada: ni mover al
+       lugar donde ya está, ni al medio de sus propios temas. */
+    if (to >= desde && to <= desde + cuantos) return;
+    const lista = items();
+    const trozo = lista.splice(desde, cuantos);
+    lista.splice(desde < to ? to - cuantos : to, 0, ...trozo);
+    guardar(); pintarTodo();
+  }
   function mover(from, to) {
     if (from === to || from + 1 === to) return;
     const [it] = items().splice(from, 1);
@@ -698,7 +739,8 @@ export function vistaEditor(jamId) {
     e.preventDefault();
     const indice = indiceParaY(e.clientY);
     limpiarLineas();
-    if (arrastre.tipo === 'item') mover(arrastre.index, indice);
+    if (arrastre.tipo === 'seccion') moverSeccion(arrastre.index, arrastre.cuantos, indice);
+    else if (arrastre.tipo === 'item') mover(arrastre.index, indice);
     else {
       const id = songIdDeArrastre(arrastre);        // paleta o propuesta de MagicList
       if (id) agregarSong(id, indice);
@@ -1034,10 +1076,18 @@ export function vistaEditor(jamId) {
 
   function filaBloque(it, i) {
     const row = h('div.sl-item.sl-bloque', {
-      ondragstart: e => { arrastre = { tipo: 'item', index: i }; row.classList.add('dragging'); e.dataTransfer.setData('text/plain', it.label || 'BLOQUE'); },
-      ondragend: () => { row.classList.remove('dragging'); arrastre = null; },
+      ondragstart: e => {
+        const cuantos = largoDeSeccion(i);
+        arrastre = { tipo: 'seccion', index: i, cuantos };
+        /* Se marcan todas las filas de la sección, no solo el rótulo:
+           hay que ver qué se está llevando uno. */
+        marcarSeccion(i, cuantos, true);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', it.label || 'BLOQUE');
+      },
+      ondragend: () => { marcarSeccion(i, largoDeSeccion(i), false); arrastre = null; },
     },
-      bloqueada() ? null : manija(),
+      bloqueada() ? null : manija('Arrastrar la sección entera'),
       h('div.sl-main', {},
         h('input', { value: it.label || '', disabled: bloqueada(), placeholder: 'Nombre del bloque (ROCK NACIONAL, 2000s, PIANO BAR…)',
           oninput: e => { it.label = e.target.value; guardar(); } })),

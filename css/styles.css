@@ -3128,3 +3128,8 @@ tr:hover .ens-x { opacity: .6; }
    le falta algo. Punteado y apagado, como un lugar por llenar. */
 .singer-card.fantasma { border-style: dashed; opacity: .72; }
 .singer-card.fantasma .sc-meta { font-style: italic; color: var(--acc-2); }
+
+/* Arrastrando un bloque viaja la sección entera: el rótulo se apaga como
+   cualquier fila arrastrada y los temas que se lleva quedan marcados al
+   costado, para ver dónde termina lo que uno agarró. */
+.sl-item.en-seccion { box-shadow: inset 3px 0 0 var(--acc); }
